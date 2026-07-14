@@ -1,0 +1,123 @@
+{
+	"info": {
+		"_postman_id": "9a385fe9-38b4-41d6-8438-bb4e63d83863",
+		"name": "Delete Account Module APIs",
+		"description": "Collection for testing the OTP-verified secure Delete Account feature in Auditee Backend.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Send Delete Account OTP",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"user@example.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5001/api/account/delete/send-otp",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"account",
+						"delete",
+						"send-otp"
+					]
+				},
+				"description": "Requests a 6-digit OTP code to authorize account deletion. The backend generates a code, saves it to PostgreSQL (valid for 5 minutes), and prints an Ethereal Test Mail link to the server console log."
+			},
+			"response": []
+		},
+		{
+			"name": "2. Verify Delete Account OTP",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"user@example.com\",\n    \"otp\": \"123456\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5001/api/account/delete/verify-otp",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"account",
+						"delete",
+						"verify-otp"
+					]
+				},
+				"description": "Submits the 6-digit OTP received via email to verify the user's authorization attempt. Marks the code as verified if it is correct and not expired."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Delete Account",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"user@example.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5001/api/account/delete",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"account",
+						"delete"
+					]
+				},
+				"description": "Permanently deletes the user record from the database. This request is only authorized if Step 2 (OTP verification) was completed successfully."
+			},
+			"response": []
+		}
+	]
+}

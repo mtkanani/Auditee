@@ -16,9 +16,18 @@ const generate6DigitOtp = () => {
  */
 const requestOtp = async (email) => {
   const normalizedEmail = email.toLowerCase().trim();
+
+  // Check if email is already registered before sending OTP
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+  if (existingUser) {
+    throw new BadRequestError('Email already registered');
+  }
+
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-  // 1. Spam Prevention: Max 5 OTP requests per hour per email
+  // 1. Spam Prevention: Max 10 OTP requests per hour per email
   const hourlyAttempts = await prisma.otpRequestLog.count({
     where: {
       email: normalizedEmail,
@@ -28,8 +37,8 @@ const requestOtp = async (email) => {
     },
   });
 
-  if (hourlyAttempts >= 5) {
-    throw new RateLimitError('Maximum of 5 OTP requests per hour per email exceeded. Please try again later.');
+  if (hourlyAttempts >= 10) {
+    throw new RateLimitError('Maximum of 10 OTP requests per hour per email exceeded. Please try again later.');
   }
 
   // 2. Generate secure 6-digit OTP
@@ -333,7 +342,7 @@ const requestForgotPasswordOtp = async (email) => {
     throw new NotFoundError('User not found');
   }
 
-  // 2. Rate limiting check (max 5 requests per hour)
+  // 2. Rate limiting check (max 10 requests per hour)
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
   const hourlyAttempts = await prisma.otpRequestLog.count({
     where: {
@@ -343,8 +352,8 @@ const requestForgotPasswordOtp = async (email) => {
       },
     },
   });
-  if (hourlyAttempts >= 5) {
-    throw new RateLimitError('Maximum of 5 OTP requests per hour per email exceeded. Please try again later.');
+  if (hourlyAttempts >= 10) {
+    throw new RateLimitError('Maximum of 10 OTP requests per hour per email exceeded. Please try again later.');
   }
 
   // 3. Generate random 6-digit OTP

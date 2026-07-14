@@ -78,3 +78,15 @@ model ForgotPasswordOtp {
   @@map("forgot_password_otps")
 }
 
+model DeleteAccountOtp {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String
+  otp       String
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("delete_account_otps")
+}
+
+

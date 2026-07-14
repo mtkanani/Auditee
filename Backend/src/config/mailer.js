@@ -29,8 +29,23 @@ const getTransporter = async () => {
       console.log(`✉️ Test SMTP configured. Username: ${testAccount.user}`);
       return transporterInstance;
     } catch (error) {
-      console.error('❌ Failed to create Ethereal Mail test account:', error);
-      throw error;
+      console.error('❌ Failed to create Ethereal Mail test account:', error.message || error);
+      console.warn('⚠️ Falling back to Mock/Console Mail Transporter (emails will be printed to console)...');
+      transporterInstance = {
+        sendMail: async (mailOptions) => {
+          console.log('\n====================================================');
+          console.log('✉️  [MOCK EMAIL SENT]');
+          console.log(`To:      ${mailOptions.to}`);
+          console.log(`Subject: ${mailOptions.subject}`);
+          console.log(`Text:    ${mailOptions.text}`);
+          console.log('====================================================\n');
+          return {
+            messageId: 'mock-id-' + Date.now(),
+            envelope: { from: mailOptions.from, to: [mailOptions.to] },
+          };
+        }
+      };
+      return transporterInstance;
     }
   }
 

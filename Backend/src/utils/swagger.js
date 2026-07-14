@@ -843,6 +843,164 @@ const options = {
           },
         },
       },
+      '/api/account/delete/send-otp': {
+        post: {
+          summary: 'Delete Account: Request OTP',
+          description: 'Validates target user email, triggers a secure random 6-digit OTP code, saves it with a 5-minute expiry in PostgreSQL, and sends the code to the user via Nodemailer. Limited to 5 OTP requests per hour.',
+          tags: ['Account Management'],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['email'],
+                  properties: {
+                    email: {
+                      type: 'string',
+                      format: 'email',
+                      example: 'user@example.com',
+                      description: 'The email address associated with the account to be deleted.'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'OTP sent successfully.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'OTP sent successfully' }
+                    }
+                  }
+                }
+              }
+            },
+            400: {
+              description: 'Invalid input or validation error.',
+            },
+            404: {
+              description: 'User account not found.',
+            },
+            429: {
+              description: 'Rate limit exceeded (Max 5 OTP requests per hour).',
+            },
+            500: {
+              description: 'Internal server error.'
+            }
+          }
+        }
+      },
+      '/api/account/delete/verify-otp': {
+        post: {
+          summary: 'Delete Account: Verify OTP',
+          description: 'Matches the 6-digit verification code sent to the email and validates its expiration. If correct, marks the OTP as verified.',
+          tags: ['Account Management'],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['email', 'otp'],
+                  properties: {
+                    email: {
+                      type: 'string',
+                      format: 'email',
+                      example: 'user@example.com',
+                      description: 'The email address associated with the account.'
+                    },
+                    otp: {
+                      type: 'string',
+                      example: '123456',
+                      description: 'The 6-digit verification code.'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'OTP verified successfully.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'OTP verified successfully' }
+                    }
+                  }
+                }
+              }
+            },
+            400: {
+              description: 'Invalid, incorrect, or expired OTP code.',
+            },
+            500: {
+              description: 'Internal server error.'
+            }
+          }
+        }
+      },
+      '/api/account/delete': {
+        delete: {
+          summary: 'Delete Account: Confirm Deletion',
+          description: 'Permanently deletes the user record from the database. Requires that the deletion OTP for the given email has already been successfully verified. Cascades to clear active user sessions and related database OTP records.',
+          tags: ['Account Management'],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['email'],
+                  properties: {
+                    email: {
+                      type: 'string',
+                      format: 'email',
+                      example: 'user@example.com',
+                      description: 'The email address associated with the account to be deleted.'
+                    }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Account deleted successfully.',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'Account deleted successfully' }
+                    }
+                  }
+                }
+              }
+            },
+            400: {
+              description: 'Email verification using OTP is required prior to deletion.',
+            },
+            404: {
+              description: 'User account not found.',
+            },
+            500: {
+              description: 'Internal server error.'
+            }
+          }
+        }
+      },
     },
   },
   apis: [], // Paths are explicitly documented above
