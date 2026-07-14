@@ -27,6 +27,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', deleteAccountRoutes);
 
+// Root route status check
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Auditee API is running successfully!',
+    timestamp: new Date(),
+  });
+});
+
 // Catch-all route for unmatched paths (throws 404 error)
 app.use((req, res, next) => {
   next(new NotFoundError(`API Route ${req.originalUrl} not found on this server.`));
