@@ -115,6 +115,27 @@ router.post(
 );
 
 /**
+ * Route: POST /api/auth/login/verify-otp
+ * Validates email and OTP format and logs the user in (generates sessions).
+ */
+router.post(
+  '/login/verify-otp',
+  [
+    body('email')
+      .trim()
+      .notEmpty().withMessage('Email address is required.')
+      .isEmail().withMessage('Invalid email address format.'),
+    body('otp')
+      .trim()
+      .notEmpty().withMessage('OTP code is required.')
+      .isLength({ min: 6, max: 6 }).withMessage('OTP must be exactly 6 digits.')
+      .isNumeric().withMessage('OTP code must be numeric.'),
+    validate,
+  ],
+  authController.loginVerifyOtp
+);
+
+/**
  * Route: POST /api/auth/change-password
  * Validates credentials, checks new password complexity, and forwards to change-password controller.
  */

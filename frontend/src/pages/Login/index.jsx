@@ -9,9 +9,12 @@ import InputField from '../../components/InputField';
 import Button from '../../components/Button';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, verifyLoginOtp } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpValue, setOtpValue] = useState('');
 
   const {
     register,
@@ -28,13 +31,38 @@ const Login = () => {
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      await login(data.email, data.password);
-      toast.success('Welcome back! Login successful.', {
-        position: 'top-right',
-        autoClose: 3000,
-        theme: 'dark',
-      });
-      navigate('/profile');
+      if (showOtpInput) {
+        if (!otpValue || otpValue.length !== 6) {
+          toast.error('Please enter a valid 6-digit OTP code.');
+          setSubmitting(false);
+          return;
+        }
+        await verifyLoginOtp(otpEmail, otpValue);
+        toast.success('Welcome back! Login successful.', {
+          position: 'top-right',
+          autoClose: 3000,
+          theme: 'dark',
+        });
+        navigate('/profile');
+      } else {
+        const result = await login(data.email, data.password);
+        if (result && result.requireOtp) {
+          setOtpEmail(data.email);
+          setShowOtpInput(true);
+          toast.info('Please check your email for the verification code.', {
+            position: 'top-right',
+            autoClose: 4000,
+            theme: 'dark',
+          });
+        } else {
+          toast.success('Welcome back! Login successful.', {
+            position: 'top-right',
+            autoClose: 3000,
+            theme: 'dark',
+          });
+          navigate('/profile');
+        }
+      }
     } catch (error) {
       toast.error(error.message || 'Login failed. Please check your credentials.', {
         position: 'top-right',
@@ -48,69 +76,119 @@ const Login = () => {
 
   return (
     <AuthLayout 
-      title="Welcome Back" 
-      subtitle="Sign in to your Auditee account to continue"
+      title={showOtpInput ? "Verify Login" : "Welcome Back"} 
+      subtitle={showOtpInput ? `We sent a verification code to ${otpEmail}` : "Sign in to your Auditee account to continue"}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Email Input */}
-        <InputField
-          label="Email Address"
-          name="email"
-          type="email"
-          placeholder="name@example.com"
-          icon={Mail}
-          error={errors.email}
-          {...register('email', {
-            required: 'Email address is required',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Invalid email address format',
-            },
-          })}
-        />
+      <form 
+        onSubmit={(e) => {
+          if (showOtpInput) {
+            e.preventDefault();
+            onSubmit();
+          } else {
+            handleSubmit(onSubmit)(e);
+          }
+        }} 
+        className="space-y-5"
+      >
+        {showOtpInput ? (
+          <>
+            {/* OTP Input */}
+            <InputField
+              label="Verification Code (OTP)"
+              name="otp"
+              type="text"
+              placeholder="123456"
+              value={otpValue}
+              onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              icon={Lock}
+            />
 
-        {/* Password Input */}
-        <div className="relative">
-          <div className="flex justify-between items-center mb-1.5 absolute right-0 top-0 z-10">
-            <Link
-              to="/forgot-password"
-              className="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+            {/* Submit button */}
+            <Button 
+              type="submit" 
+              loading={submitting} 
+              className="mt-6"
             >
-              Forgot Password?
-            </Link>
-          </div>
-          <InputField
-            label="Password"
-            name="password"
-            type="password"
-            placeholder="••••••••"
-            icon={Lock}
-            error={errors.password}
-            {...register('password', {
-              required: 'Password is required',
-            })}
-          />
-        </div>
+              Verify & Sign In
+            </Button>
 
-        {/* Submit button */}
-        <Button 
-          type="submit" 
-          loading={submitting} 
-          className="mt-6"
-        >
-          Sign In
-        </Button>
+            {/* Back to Login link */}
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOtpInput(false);
+                  setOtpValue('');
+                }}
+                className="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+              >
+                Back to Login
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Email Input */}
+            <InputField
+              label="Email Address"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              icon={Mail}
+              error={errors.email}
+              {...register('email', {
+                required: 'Email address is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address format',
+                },
+              })}
+            />
 
-        {/* Signup redirection */}
-        <p className="text-center text-sm text-slate-400 mt-6">
-          Don't have an account?{' '}
-          <Link
-            to="/register"
-            className="font-semibold text-brand-400 hover:text-brand-300 transition-colors"
-          >
-            Sign up
-          </Link>
-        </p>
+            {/* Password Input */}
+            <div className="relative">
+              <div className="flex justify-between items-center mb-1.5 absolute right-0 top-0 z-10">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+              <InputField
+                label="Password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                icon={Lock}
+                error={errors.password}
+                {...register('password', {
+                  required: 'Password is required',
+                })}
+              />
+            </div>
+
+            {/* Submit button */}
+            <Button 
+              type="submit" 
+              loading={submitting} 
+              className="mt-6"
+            >
+              Sign In
+            </Button>
+
+            {/* Signup redirection */}
+            <p className="text-center text-sm text-slate-400 mt-6">
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                className="font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+              >
+                Sign up
+              </Link>
+            </p>
+          </>
+        )}
       </form>
     </AuthLayout>
   );

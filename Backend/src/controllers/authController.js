@@ -59,6 +59,22 @@ const login = async (req, res, next) => {
     const result = await authService.loginUser(email, password);
     return res.status(200).json({
       success: true,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller for User Login OTP Verification.
+ */
+const loginVerifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const result = await authService.verifyLoginOtpAndGenerateSession(email, otp);
+    return res.status(200).json({
+      success: true,
       message: 'Login successful',
       tokens: result.tokens,
       user: result.user,
@@ -137,6 +153,7 @@ module.exports = {
   verifyOtp,
   register,
   login,
+  loginVerifyOtp,
   changePassword,
   sendForgotPasswordOtp,
   verifyForgotPasswordOtp,

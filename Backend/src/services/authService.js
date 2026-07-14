@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const prisma = require('../config/db');
-const { sendOtpEmail, sendForgotPasswordEmail } = require('./emailService');
+const { sendOtpEmail, sendForgotPasswordEmail, sendLoginOtpEmail } = require('./emailService');
 const { BadRequestError, RateLimitError, NotFoundError, UnauthorizedError } = require('../utils/errors');
 
 /**
@@ -240,12 +240,107 @@ const loginUser = async (email, password) => {
     },
   });
 
-  // 4. Generate secure random tokens using crypto.randomBytes
+  // 4. Generate secure 6-digit OTP
+  const otp = generate6DigitOtp();
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+
+  // 5. Database operations (Transactional to guarantee integrity)
+  await prisma.$transaction([
+    // Log the OTP request attempt
+    prisma.otpRequestLog.create({
+      data: {
+        email: normalizedEmail,
+      },
+    }),
+    // Delete any previous OTP records for the same email
+    prisma.otp.deleteMany({
+      where: {
+        email: normalizedEmail,
+      },
+    }),
+    // Create the new OTP record
+    prisma.otp.create({
+      data: {
+        email: normalizedEmail,
+        otp,
+        verified: false,
+        expiresAt,
+      },
+    }),
+  ]);
+
+  // 6. Send login verification email to user
+  await sendLoginOtpEmail(normalizedEmail, otp);
+
+  return {
+    requireOtp: true,
+    email: normalizedEmail,
+    message: 'OTP sent successfully to your email.',
+  };
+};
+
+/**
+ * Business logic for verifying login OTP and generating active sessions.
+ */
+const verifyLoginOtpAndGenerateSession = async (email, otp) => {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // 1. Find user by email
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  // 2. Find the latest OTP record for this email
+  const otpRecord = await prisma.otp.findFirst({
+    where: {
+      email: normalizedEmail,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  // 3. Check if OTP record exists
+  if (!otpRecord) {
+    throw new BadRequestError('Invalid or expired OTP request. Please log in again.');
+  }
+
+  // 4. Check if stored OTP matches entered OTP
+  if (otpRecord.otp !== otp) {
+    throw new BadRequestError('Invalid OTP code. Please try again.');
+  }
+
+  // 5. Check whether OTP has expired
+  if (new Date() > new Date(otpRecord.expiresAt)) {
+    throw new BadRequestError('OTP has expired. Please log in again.');
+  }
+
+  // 6. Purge expired sessions and delete the OTP inside a transaction to ensure integrity
+  await prisma.$transaction([
+    prisma.userSession.deleteMany({
+      where: {
+        refreshTokenExpiresAt: {
+          lt: new Date(),
+        },
+      },
+    }),
+    prisma.otp.deleteMany({
+      where: {
+        email: normalizedEmail,
+      },
+    }),
+  ]);
+
+  // 7. Generate secure random tokens using crypto.randomBytes
   const accessToken = crypto.randomBytes(64).toString('hex');
   const refreshToken = crypto.randomBytes(128).toString('hex');
   const idToken = crypto.randomBytes(64).toString('hex');
 
-  // 5. Read expirations from env configurations
+  // 8. Read expirations from env configurations
   const accessTokenExpiryMinutes = parseInt(process.env.ACCESS_TOKEN_EXPIRY_MINUTES || '15', 10);
   const refreshTokenExpiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '7', 10);
   const idTokenExpiryMinutes = parseInt(process.env.ID_TOKEN_EXPIRY_MINUTES || '60', 10);
@@ -254,7 +349,7 @@ const loginUser = async (email, password) => {
   const refreshTokenExpiresAt = new Date(Date.now() + refreshTokenExpiryDays * 24 * 60 * 60 * 1000);
   const idTokenExpiresAt = new Date(Date.now() + idTokenExpiryMinutes * 60 * 1000);
 
-  // 6. Save new user session in the PostgreSQL database
+  // 9. Save new user session in the PostgreSQL database
   await prisma.userSession.create({
     data: {
       userId: user.id,
@@ -267,7 +362,7 @@ const loginUser = async (email, password) => {
     },
   });
 
-  // 7. Return success details with mapped lowercase role
+  // 10. Return success details with mapped lowercase role
   return {
     tokens: {
       accessToken,
@@ -472,6 +567,7 @@ module.exports = {
   verifyOtp,
   registerUser,
   loginUser,
+  verifyLoginOtpAndGenerateSession,
   updateUserPassword,
   requestForgotPasswordOtp,
   verifyForgotPasswordOtp,

@@ -29,13 +29,18 @@ export const authApi = {
     return response.data;
   },
 
-  /**
-   * User login
-   * @param {string} email
-   * @param {string} password
-   */
   login: async (email, password) => {
     const response = await axiosInstance.post('/auth/login', { email, password });
+    return response.data;
+  },
+
+  /**
+   * Verify login OTP to get access tokens
+   * @param {string} email
+   * @param {string} otp
+   */
+  loginVerifyOTP: async (email, otp) => {
+    const response = await axiosInstance.post('/auth/login/verify-otp', { email, otp });
     return response.data;
   },
 

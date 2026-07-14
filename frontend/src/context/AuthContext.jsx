@@ -35,15 +35,48 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  /**
-   * Log in user using email and password
-   * @param {string} email
-   * @param {string} password
-   */
   const login = async (email, password) => {
     setIsLoading(true);
     try {
       const data = await authApi.login(email, password);
+      
+      // If backend requires OTP verification, return early so frontend can prompt for it
+      if (data.requireOtp) {
+        return data;
+      }
+
+      const { tokens, user: basicUser } = data;
+
+      // Store tokens temporarily in localStorage to authorize subsequent getProfile call
+      localStorage.setItem('accessToken', tokens.accessToken);
+      localStorage.setItem('userEmail', basicUser.email);
+
+      // Fetch user profile to populate all fields (like city and mobileNumber)
+      const fullProfile = await userApi.getProfile(basicUser.email);
+
+      setUser(fullProfile);
+      setAccessToken(tokens.accessToken);
+      setIsAuthenticated(true);
+      
+      return fullProfile;
+    } catch (error) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('userEmail');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Verify login OTP and complete authentication
+   * @param {string} email
+   * @param {string} otp
+   */
+  const verifyLoginOtp = async (email, otp) => {
+    setIsLoading(true);
+    try {
+      const data = await authApi.loginVerifyOTP(email, otp);
       const { tokens, user: basicUser } = data;
 
       // Store tokens temporarily in localStorage to authorize subsequent getProfile call
@@ -112,6 +145,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         isLoading,
         login,
+        verifyLoginOtp,
         logout,
         refreshProfile,
         updateUserState,
