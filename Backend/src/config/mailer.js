@@ -58,6 +58,12 @@ const getTransporter = async () => {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    connectionTimeout: 5000, // 5 seconds connection timeout
+    greetingTimeout: 5000,   // 5 seconds greeting timeout
+    socketTimeout: 10000,    // 10 seconds socket timeout
+    tls: {
+      rejectUnauthorized: false // Prevents certificate verification issues on cloud environments
+    }
   });
 
   return transporterInstance;
