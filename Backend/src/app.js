@@ -9,29 +9,8 @@ const { NotFoundError } = require('./utils/errors');
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5000',
-  'http://localhost:5001'
-];
-
-if (process.env.FRONTEND_URL) {
-  const envOrigins = process.env.FRONTEND_URL.split(',').map(o => o.trim());
-  allowedOrigins.push(...envOrigins);
-}
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
-      }
-    },
-    credentials: true,
-  })
-);
+// Global middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -42,15 +21,6 @@ setupSwagger(app);
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', deleteAccountRoutes);
-
-// Root route status check
-app.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Auditee API is running successfully!',
-    timestamp: new Date(),
-  });
-});
 
 // Catch-all route for unmatched paths (throws 404 error)
 app.use((req, res, next) => {
