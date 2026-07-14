@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -29,11 +26,6 @@ model OtpRequestLog {
   @@map("otp_request_logs")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
   id                String        @id @default(uuid()) @db.Uuid
   firstName         String
@@ -44,9 +36,9 @@ model User {
   city              String
   role              Role          @default(USER)
   isVerified        Boolean       @default(true)
-  passwordChangedAt DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  passwordChangedAt DateTime?
   sessions          UserSession[]
 
   @@map("users")
@@ -89,4 +81,7 @@ model DeleteAccountOtp {
   @@map("delete_account_otps")
 }
 
-
+enum Role {
+  USER
+  ADMIN
+}
