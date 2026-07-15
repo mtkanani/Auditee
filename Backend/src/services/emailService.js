@@ -7,7 +7,7 @@ const { getTransporter } = require('../config/mailer');
 const sendEmail = async ({ from, to, subject, text, html }) => {
   if (process.env.RESEND_API_KEY) {
     console.log(`Sending email to ${to} via Resend HTTP API...`);
-    const fromAddress = process.env.SMTP_FROM || 'onboarding@resend.dev';
+    const fromAddress = process.env.RESEND_FROM || 'onboarding@resend.dev';
     
     try {
       const response = await fetch('https://api.resend.com/emails', {
