@@ -49,6 +49,22 @@ const getTransporter = async () => {
     }
   }
 
+  // Configure Gmail OAuth2 if client credentials are provided (bypasses SMTP blocks)
+  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
+    console.log('🔌 Configuring Gmail OAuth2 Transport...');
+    transporterInstance = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.SMTP_USER,
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+      },
+    });
+    return transporterInstance;
+  }
+
   // Create transporter with environment SMTP credentials
   transporterInstance = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.ethereal.email',
