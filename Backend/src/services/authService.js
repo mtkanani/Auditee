@@ -240,42 +240,49 @@ const loginUser = async (email, password) => {
     },
   });
 
-  // 4. Generate secure 6-digit OTP
-  const otp = generate6DigitOtp();
-  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+  // 4. Generate secure random tokens using crypto.randomBytes
+  const accessToken = crypto.randomBytes(64).toString('hex');
+  const refreshToken = crypto.randomBytes(128).toString('hex');
+  const idToken = crypto.randomBytes(64).toString('hex');
 
-  // 5. Database operations (Transactional to guarantee integrity)
-  await prisma.$transaction([
-    // Log the OTP request attempt
-    prisma.otpRequestLog.create({
-      data: {
-        email: normalizedEmail,
-      },
-    }),
-    // Delete any previous OTP records for the same email
-    prisma.otp.deleteMany({
-      where: {
-        email: normalizedEmail,
-      },
-    }),
-    // Create the new OTP record
-    prisma.otp.create({
-      data: {
-        email: normalizedEmail,
-        otp,
-        verified: false,
-        expiresAt,
-      },
-    }),
-  ]);
+  // 5. Read expirations from env configurations
+  const accessTokenExpiryMinutes = parseInt(process.env.ACCESS_TOKEN_EXPIRY_MINUTES || '15', 10);
+  const refreshTokenExpiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '7', 10);
+  const idTokenExpiryMinutes = parseInt(process.env.ID_TOKEN_EXPIRY_MINUTES || '60', 10);
 
-  // 6. Send login verification email to user
-  await sendLoginOtpEmail(normalizedEmail, otp);
+  const accessTokenExpiresAt = new Date(Date.now() + accessTokenExpiryMinutes * 60 * 1000);
+  const refreshTokenExpiresAt = new Date(Date.now() + refreshTokenExpiryDays * 24 * 60 * 60 * 1000);
+  const idTokenExpiresAt = new Date(Date.now() + idTokenExpiryMinutes * 60 * 1000);
 
+  // 6. Save active session to the database
+  const session = await prisma.userSession.create({
+    data: {
+      userId: user.id,
+      accessToken,
+      refreshToken,
+      idToken,
+      accessTokenExpiresAt,
+      refreshTokenExpiresAt,
+      idTokenExpiresAt,
+    },
+  });
+
+  // 7. Map enum role back to lowercase for consistent client-side response contracts
   return {
-    requireOtp: true,
-    email: normalizedEmail,
-    message: 'OTP sent successfully to your email.',
+    tokens: {
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      idToken: session.idToken,
+    },
+    user: {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      mobileNumber: user.mobileNumber,
+      city: user.city,
+      role: user.role.toLowerCase(),
+    },
   };
 };
 
