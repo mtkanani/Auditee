@@ -2,13 +2,69 @@ const nodemailer = require('nodemailer');
 const { getTransporter } = require('../config/mailer');
 
 /**
+ * Helper function to send email via Resend HTTP API (if key is set) or Nodemailer SMTP fallback.
+ */
+const sendEmail = async ({ from, to, subject, text, html }) => {
+  if (process.env.RESEND_API_KEY) {
+    console.log(`Sending email to ${to} via Resend HTTP API...`);
+    const fromAddress = process.env.SMTP_FROM || 'onboarding@resend.dev';
+    
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: to,
+          subject: subject,
+          text: text,
+          html: html,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || JSON.stringify(data));
+      }
+      console.log(`✅ Email sent successfully via Resend! ID: ${data.id}`);
+      return data;
+    } catch (error) {
+      console.error('❌ Resend API Error:', error.message || error);
+      throw error;
+    }
+  }
+
+  // Fallback to Nodemailer SMTP
+  console.log(`Sending email to ${to} via Nodemailer SMTP...`);
+  const transporter = await getTransporter();
+  const info = await transporter.sendMail({
+    from: from || process.env.SMTP_FROM || 'noreply@example.com',
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  const testUrl = nodemailer.getTestMessageUrl(info);
+  if (testUrl) {
+    console.log('----------------------------------------------------');
+    console.log(`✉️  Ethereal Test Mail sent!`);
+    console.log(`🔗  Preview URL: ${testUrl}`);
+    console.log('----------------------------------------------------');
+  }
+
+  return info;
+};
+
+/**
  * Sends an OTP email to the user.
  * @param {string} toEmail Recipient email address.
  * @param {string} otp The 6-digit OTP string.
  */
 const sendOtpEmail = async (toEmail, otp) => {
-  const transporter = await getTransporter();
-
   const mailOptions = {
     from: process.env.SMTP_FROM || 'noreply@example.com',
     to: toEmail,
@@ -94,18 +150,7 @@ const sendOtpEmail = async (toEmail, otp) => {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-
-  // If using Ethereal test mail service, print link to console
-  const testUrl = nodemailer.getTestMessageUrl(info);
-  if (testUrl) {
-    console.log('----------------------------------------------------');
-    console.log(`✉️  Ethereal Test Mail sent!`);
-    console.log(`🔗  Preview URL: ${testUrl}`);
-    console.log('----------------------------------------------------');
-  }
-
-  return info;
+  return await sendEmail(mailOptions);
 };
 
 /**
@@ -114,8 +159,6 @@ const sendOtpEmail = async (toEmail, otp) => {
  * @param {string} otp The 6-digit OTP string.
  */
 const sendForgotPasswordEmail = async (toEmail, otp) => {
-  const transporter = await getTransporter();
-
   const mailOptions = {
     from: process.env.SMTP_FROM || 'noreply@example.com',
     to: toEmail,
@@ -201,17 +244,7 @@ const sendForgotPasswordEmail = async (toEmail, otp) => {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-
-  const testUrl = nodemailer.getTestMessageUrl(info);
-  if (testUrl) {
-    console.log('----------------------------------------------------');
-    console.log(`✉️  Ethereal Test Forgot Password Mail sent!`);
-    console.log(`🔗  Preview URL: ${testUrl}`);
-    console.log('----------------------------------------------------');
-  }
-
-  return info;
+  return await sendEmail(mailOptions);
 };
 
 /**
@@ -220,8 +253,6 @@ const sendForgotPasswordEmail = async (toEmail, otp) => {
  * @param {string} otp The 6-digit OTP string.
  */
 const sendDeleteAccountEmail = async (toEmail, otp) => {
-  const transporter = await getTransporter();
-
   const mailOptions = {
     from: process.env.SMTP_FROM || 'noreply@example.com',
     to: toEmail,
@@ -307,17 +338,7 @@ const sendDeleteAccountEmail = async (toEmail, otp) => {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-
-  const testUrl = nodemailer.getTestMessageUrl(info);
-  if (testUrl) {
-    console.log('----------------------------------------------------');
-    console.log(`✉️  Ethereal Test Delete Account Mail sent!`);
-    console.log(`🔗  Preview URL: ${testUrl}`);
-    console.log('----------------------------------------------------');
-  }
-
-  return info;
+  return await sendEmail(mailOptions);
 };
 
 /**
@@ -326,8 +347,6 @@ const sendDeleteAccountEmail = async (toEmail, otp) => {
  * @param {string} otp The 6-digit OTP string.
  */
 const sendLoginOtpEmail = async (toEmail, otp) => {
-  const transporter = await getTransporter();
-
   const mailOptions = {
     from: process.env.SMTP_FROM || 'noreply@example.com',
     to: toEmail,
@@ -413,17 +432,7 @@ const sendLoginOtpEmail = async (toEmail, otp) => {
     `,
   };
 
-  const info = await transporter.sendMail(mailOptions);
-
-  const testUrl = nodemailer.getTestMessageUrl(info);
-  if (testUrl) {
-    console.log('----------------------------------------------------');
-    console.log(`✉️  Ethereal Test Login Mail sent!`);
-    console.log(`🔗  Preview URL: ${testUrl}`);
-    console.log('----------------------------------------------------');
-  }
-
-  return info;
+  return await sendEmail(mailOptions);
 };
 
 module.exports = {
