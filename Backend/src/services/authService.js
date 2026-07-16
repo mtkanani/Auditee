@@ -173,8 +173,14 @@ const registerUser = async (userData) => {
   // 4. Hash password using bcryptjs
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Map input role string to Prisma enum Role
-  const mappedRole = role && role.toLowerCase() === 'admin' ? 'ADMIN' : 'USER';
+  // Map input role string to Prisma enum Role dynamically
+  let mappedRole = 'USER';
+  if (role) {
+    const roleUpper = role.toUpperCase();
+    if (['SUPER_ADMIN', 'FIRM_ADMIN', 'USER', 'EMPLOYEE', 'CLIENT', 'ADMIN'].includes(roleUpper)) {
+      mappedRole = roleUpper;
+    }
+  }
 
   // 5. Create new user and delete active OTP inside a transaction to ensure integrity
   const [newUser] = await prisma.$transaction([

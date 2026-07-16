@@ -483,10 +483,104 @@ const sendLoginOtpEmail = async (toEmail, otp) => {
   return await sendEmail(mailOptions);
 };
 
+/**
+ * Sends newly created Firm Admin login credentials.
+ * @param {string} toEmail Recipient email address.
+ * @param {string} tempPassword The temporary or assigned password.
+ * @param {string} firmName The firm name.
+ */
+const sendCredentialsEmail = async (toEmail, tempPassword, firmName) => {
+  const mailOptions = {
+    from: process.env.SMTP_FROM || 'noreply@example.com',
+    to: toEmail,
+    subject: 'Welcome to Auditee - Firm Admin Access Credentials',
+    text: `Welcome to Auditee!\n\nYour firm "${firmName}" has been successfully registered.\n\nHere are your login credentials:\nEmail: ${toEmail}\nPassword: ${tempPassword}\n\nPlease change your password after logging in.`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Auditee Firm Registration</title>
+        <style>
+          body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+          }
+          .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #ffffff;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+          }
+          .header {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 24px;
+          }
+          .content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #374151;
+            margin-bottom: 24px;
+          }
+          .credentials-container {
+            margin: 20px 0;
+            background-color: #eff6ff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+          }
+          .credentials-item {
+            margin: 8px 0;
+            font-size: 14px;
+          }
+          .footer {
+            font-size: 12px;
+            color: #9ca3af;
+            text-align: center;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 20px;
+            margin-top: 28px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">Auditee Firm Registration</div>
+          <div class="content">
+            <p>Hello,</p>
+            <p>Your firm <strong>${firmName}</strong> has been successfully registered on the Auditee platform by the Super Admin.</p>
+            <p>You have been assigned as the <strong>Firm Admin</strong>. Here are your temporary login credentials to access the platform:</p>
+            <div class="credentials-container">
+              <div class="credentials-item"><strong>Login Email:</strong> ${toEmail}</div>
+              <div class="credentials-item"><strong>Password:</strong> ${tempPassword}</div>
+            </div>
+            <p>For security reasons, we strongly recommend that you log in and change your password immediately.</p>
+          </div>
+          <div class="footer">
+            This is an automated system notification from Auditee. Please do not reply.
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  return await sendEmail(mailOptions);
+};
+
 module.exports = {
   sendOtpEmail,
   sendForgotPasswordEmail,
   sendDeleteAccountEmail,
   sendLoginOtpEmail,
+  sendCredentialsEmail,
 };
 

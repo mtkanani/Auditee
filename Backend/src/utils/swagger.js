@@ -1,5 +1,6 @@
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const { firmSchemas, firmPaths } = require('../swagger/firm.swagger');
 
 // Explicit configuration definitions for Swagger OpenApi 3.0 specification
 const options = {
@@ -1005,6 +1006,10 @@ const options = {
   },
   apis: [], // Paths are explicitly documented above
 };
+
+// Merge dynamically loaded swagger paths and schemas
+Object.assign(options.definition.components.schemas, firmSchemas);
+Object.assign(options.definition.paths, firmPaths);
 
 const swaggerSpec = swaggerJSDoc(options);
 

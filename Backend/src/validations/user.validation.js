@@ -16,7 +16,7 @@ const getAllUsersValidation = [
     .optional()
     .trim()
     .toLowerCase()
-    .isIn(['user', 'admin']).withMessage('Role must be either user or admin.'),
+    .isIn(['user', 'admin', 'super_admin', 'firm_admin', 'employee', 'client']).withMessage('Role must be one of: user, admin, super_admin, firm_admin, employee, client.'),
   query('sortBy')
     .optional()
     .trim()
@@ -33,9 +33,9 @@ const getAllUsersValidation = [
  */
 const updateUserProfileValidation = [
   body('userId')
-    .trim()
     .notEmpty().withMessage('User ID is required.')
-    .isUUID().withMessage('User ID must be a valid UUID.'),
+    .isInt({ min: 1 }).withMessage('User ID must be a valid positive integer.')
+    .toInt(),
   body('firstName')
     .optional()
     .trim()

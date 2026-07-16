@@ -12,7 +12,10 @@ const fetchUsers = async (queryParams) => {
 
   // 1. Role Filter mapping lowercase user input to DB Enum
   if (role) {
-    where.role = role.toLowerCase() === 'admin' ? 'ADMIN' : 'USER';
+    const roleUpper = role.toUpperCase();
+    if (['SUPER_ADMIN', 'FIRM_ADMIN', 'USER', 'EMPLOYEE', 'CLIENT', 'ADMIN'].includes(roleUpper)) {
+      where.role = roleUpper;
+    }
   }
 
   // 2. Case-Insensitive Search logic across multiple columns

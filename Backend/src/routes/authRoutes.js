@@ -90,7 +90,8 @@ router.post(
     body('role')
       .optional()
       .trim()
-      .isIn(['user', 'admin']).withMessage('Role must be either user or admin.'),
+      .toLowerCase()
+      .isIn(['user', 'admin', 'super_admin', 'firm_admin', 'employee', 'client']).withMessage('Role must be one of: user, admin, super_admin, firm_admin, employee, client.'),
     validate,
   ],
   authController.register

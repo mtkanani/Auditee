@@ -3,6 +3,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/user.routes');
 const deleteAccountRoutes = require('./routes/deleteAccountRoutes');
+const firmRoutes = require('./routes/firmRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
 const { NotFoundError } = require('./utils/errors');
@@ -47,6 +48,7 @@ setupSwagger(app);
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', deleteAccountRoutes);
+app.use('/api/admin/firms', firmRoutes);
 
 // Root route status check
 app.get('/', (req, res) => {
