@@ -56,7 +56,8 @@ const AdminRoute = ({ children }) => {
     return <Loader message="Verifying admin access..." />;
   }
 
-  return isAuthenticated && (user?.role === 'admin' || user?.role === 'super_admin') ? children : <Navigate to="/profile" replace />;
+  const role = user?.role?.toLowerCase();
+  return isAuthenticated && (role === 'admin' || role === 'super_admin') ? children : <Navigate to="/profile" replace />;
 };
 
 const AppRoutes = () => {

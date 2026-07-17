@@ -25,7 +25,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ];
 
   // Dynamically inject Admin-only links
-  if (user?.role === 'admin' || user?.role === 'super_admin') {
+  const role = user?.role?.toLowerCase();
+  if (role === 'admin' || role === 'super_admin') {
     menuItems.splice(1, 0, {
       name: 'Manage Users',
       path: '/admin/users',
