@@ -8,6 +8,7 @@ import StatusModal from '../../components/FirmManagement/StatusModal';
 import DeleteModal from '../../components/FirmManagement/DeleteModal';
 import ResetPasswordModal from '../../components/FirmManagement/ResetPasswordModal';
 import { useFirm } from '../../hooks/useFirm';
+import { firmService } from '../../services/firmService';
 
 const FirmList = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const FirmList = () => {
   // Fetch overall statistics for the cards
   const fetchStats = useCallback(async () => {
     try {
-      const res = await getFirms({ page: 1, limit: 1000 });
+      const res = await firmService.getFirms({ page: 1, limit: 1000 });
       if (res && res.data) {
         const data = res.data;
         const total = data.length;
@@ -51,7 +52,7 @@ const FirmList = () => {
     } catch (e) {
       console.error('Error fetching statistics', e);
     }
-  }, [getFirms]);
+  }, []);
 
   // Load paginated list of firms
   const loadFirms = useCallback(() => {
