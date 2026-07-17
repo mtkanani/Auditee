@@ -40,7 +40,7 @@ const FirmList = () => {
   // Fetch overall statistics for the cards
   const fetchStats = useCallback(async () => {
     try {
-      const res = await firmService.getFirms({ page: 1, limit: 1000 });
+      const res = await firmService.getFirms({ page: 1, limit: 100 });
       if (res && res.data) {
         const data = res.data;
         const total = data.length;
