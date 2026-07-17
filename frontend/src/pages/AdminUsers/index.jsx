@@ -72,7 +72,7 @@ const AdminUsers = () => {
   const formatDate = (d) =>
     new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
-  const adminCount = users.filter((u) => u.role === 'admin').length;
+  const adminCount = users.filter((u) => u.role?.toLowerCase() === 'super_admin' || u.role?.toLowerCase() === 'admin').length;
 
   return (
     <DashboardLayout title="Manage Users">
@@ -142,14 +142,18 @@ const AdminUsers = () => {
           <div className="admin-toolbar__controls">
 
             <div className="admin-tabs">
-              {['all', 'user', 'admin'].map((r) => (
+              {[
+                { value: 'all', label: 'All Roles' },
+                { value: 'firm_admin', label: 'Firm_admin' },
+                { value: 'super_admin', label: 'super_admin' },
+              ].map((tab) => (
                 <button
-                  key={r}
+                  key={tab.value}
                   type="button"
-                  onClick={() => changeFilter('role', r)}
-                  className={`admin-tab ${roleFilter === r ? 'admin-tab--active' : ''}`}
+                  onClick={() => changeFilter('role', tab.value)}
+                  className={`admin-tab ${roleFilter === tab.value ? 'admin-tab--active' : ''}`}
                 >
-                  {r === 'all' ? 'All Roles' : `${r}s`}
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -199,7 +203,7 @@ const AdminUsers = () => {
             {/* Cards Grid */}
             <div className="admin-grid">
               {users.map((item) => {
-                const isAdmin = item.role === 'admin';
+                const isAdmin = item.role?.toLowerCase() === 'super_admin' || item.role?.toLowerCase() === 'admin';
                 const roleClass = isAdmin ? 'admin' : 'user';
                 return (
                   <div key={item.id} className={`user-card user-card--${roleClass}`}>
