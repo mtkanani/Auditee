@@ -176,7 +176,10 @@ const registerUser = async (userData) => {
   // Map input role string to Prisma enum Role dynamically
   let mappedRole = 'USER';
   if (role) {
-    const roleUpper = role.toUpperCase();
+    let roleUpper = role.toUpperCase();
+    if (roleUpper === 'ADMIN') {
+      roleUpper = 'SUPER_ADMIN';
+    }
     if (['SUPER_ADMIN', 'FIRM_ADMIN', 'USER', 'EMPLOYEE', 'CLIENT', 'ADMIN'].includes(roleUpper)) {
       mappedRole = roleUpper;
     }
