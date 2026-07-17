@@ -27,6 +27,7 @@ export const useFirm = () => {
           totalRecords: 0,
           totalPages: 0,
         });
+        return res;
       } else {
         throw new Error(res.message || 'Failed to fetch firms');
       }

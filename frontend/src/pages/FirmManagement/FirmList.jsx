@@ -39,8 +39,9 @@ const FirmList = () => {
   // Fetch overall statistics for the cards
   const fetchStats = useCallback(async () => {
     try {
-      const { data } = await getFirms({ page: 1, limit: 1000 });
-      if (data) {
+      const res = await getFirms({ page: 1, limit: 1000 });
+      if (res && res.data) {
+        const data = res.data;
         const total = data.length;
         const active = data.filter((f) => f.status === 'ACTIVE').length;
         const inactive = data.filter((f) => f.status === 'INACTIVE').length;
