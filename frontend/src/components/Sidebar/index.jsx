@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, KeyRound, LogOut, X, Trash2, Users } from 'lucide-react';
+import { User, KeyRound, LogOut, X, Trash2, Users, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -25,11 +25,16 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ];
 
   // Dynamically inject Admin-only links
-  if (user?.role === 'admin') {
+  if (user?.role === 'admin' || user?.role === 'super_admin') {
     menuItems.splice(1, 0, {
       name: 'Manage Users',
       path: '/admin/users',
       icon: Users,
+    });
+    menuItems.splice(2, 0, {
+      name: 'Manage Firms',
+      path: '/admin/firms',
+      icon: Building2,
     });
   }
 

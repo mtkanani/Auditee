@@ -12,6 +12,10 @@ import Profile from '../pages/Profile';
 import ChangePassword from '../pages/ChangePassword';
 import DeleteAccount from '../pages/DeleteAccount';
 import AdminUsers from '../pages/AdminUsers';
+import FirmList from '../pages/FirmManagement/FirmList';
+import CreateFirm from '../pages/FirmManagement/CreateFirm';
+import EditFirm from '../pages/FirmManagement/EditFirm';
+import FirmDetails from '../pages/FirmManagement/FirmDetails';
 
 /**
  * Route Guard: Restricted to non-authenticated users only (e.g. login, register).
@@ -52,7 +56,7 @@ const AdminRoute = ({ children }) => {
     return <Loader message="Verifying admin access..." />;
   }
 
-  return isAuthenticated && user?.role === 'admin' ? children : <Navigate to="/profile" replace />;
+  return isAuthenticated && (user?.role === 'admin' || user?.role === 'super_admin') ? children : <Navigate to="/profile" replace />;
 };
 
 const AppRoutes = () => {
@@ -122,6 +126,38 @@ const AppRoutes = () => {
         element={
           <AdminRoute>
             <AdminUsers />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/firms"
+        element={
+          <AdminRoute>
+            <FirmList />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/firms/create"
+        element={
+          <AdminRoute>
+            <CreateFirm />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/firms/:id"
+        element={
+          <AdminRoute>
+            <FirmDetails />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/firms/:id/edit"
+        element={
+          <AdminRoute>
+            <EditFirm />
           </AdminRoute>
         }
       />
