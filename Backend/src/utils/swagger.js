@@ -1,15 +1,20 @@
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const { firmSchemas, firmPaths } = require('../swagger/firm.swagger');
+const { userSchemas, userPaths } = require('../modules/users/user.swagger');
+const { clientSchemas, clientPaths } = require('../modules/clients/client.swagger');
+const { assignmentSchemas, assignmentPaths } = require('../modules/clientAssignments/assignment.swagger');
+const { publicUserSchemas, publicUserPaths } = require('../modules/publicUser/publicUser.swagger');
+const { publicClientSchemas, publicClientPaths } = require('../modules/publicClient/publicClient.swagger');
 
 // Explicit configuration definitions for Swagger OpenApi 3.0 specification
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'OTP Verification Backend API',
+      title: 'Auditee Backend API Documentation',
       version: '1.0.0',
-      description: 'Production-ready OTP Verification API using Node.js, Express, PostgreSQL, Prisma ORM, and Nodemailer. Includes built-in hourly rate limiting.',
+      description: 'Production-ready Auditee multi-tenant SaaS API documentation including Firms, Employee Users, Clients, Client Assignments, Public User, and Public Client endpoints.',
     },
     servers: [
       {
@@ -1007,9 +1012,9 @@ const options = {
   apis: [], // Paths are explicitly documented above
 };
 
-// Merge dynamically loaded swagger paths and schemas
-Object.assign(options.definition.components.schemas, firmSchemas);
-Object.assign(options.definition.paths, firmPaths);
+// Merge dynamically loaded swagger paths and schemas from all modules
+Object.assign(options.definition.components.schemas, firmSchemas, userSchemas, clientSchemas, assignmentSchemas, publicUserSchemas, publicClientSchemas);
+Object.assign(options.definition.paths, firmPaths, userPaths, clientPaths, assignmentPaths, publicUserPaths, publicClientPaths);
 
 const swaggerSpec = swaggerJSDoc(options);
 

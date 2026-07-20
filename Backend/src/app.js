@@ -1,9 +1,18 @@
 const express = require('express');
 const cors = require('cors');
+
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/user.routes');
+const oldUserRoutes = require('./routes/user.routes');
 const deleteAccountRoutes = require('./routes/deleteAccountRoutes');
 const firmRoutes = require('./routes/firmRoutes');
+
+// Import modular domain routes
+const firmAdminUserRoutes = require('./modules/users/user.routes');
+const firmAdminClientRoutes = require('./modules/clients/client.routes');
+const assignmentRoutes = require('./modules/clientAssignments/assignment.routes');
+const publicUserRoutes = require('./modules/publicUser/publicUser.routes');
+const publicClientRoutes = require('./modules/publicClient/publicClient.routes');
+
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
 const { NotFoundError } = require('./utils/errors');
@@ -46,9 +55,16 @@ setupSwagger(app);
 
 // Application routes
 app.use('/api/auth', authRoutes);
-app.use('/api', userRoutes);
+app.use('/api', oldUserRoutes);
 app.use('/api', deleteAccountRoutes);
 app.use('/api/admin/firms', firmRoutes);
+
+// Modular Auditee SaaS routes
+app.use('/api/firm-admin/users', firmAdminUserRoutes);
+app.use('/api/firm-admin/clients', firmAdminClientRoutes);
+app.use('/api/firm-admin', assignmentRoutes);
+app.use('/api/user', publicUserRoutes);
+app.use('/api/client', publicClientRoutes);
 
 // Root route status check
 app.get('/', (req, res) => {

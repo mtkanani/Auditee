@@ -225,22 +225,35 @@ const registerUser = async (userData) => {
 const loginUser = async (email, password) => {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // 1. Find user by email
-  const user = await prisma.user.findUnique({
+  // 1. Try finding user in User table
+  let user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
 
+  let client = null;
   if (!user) {
-    throw new NotFoundError('User not found');
+    // 2. If not found in User, try finding in Client table
+    client = await prisma.client.findFirst({
+      where: { email: normalizedEmail, deletedAt: null },
+    });
   }
 
-  // 2. Compare password using bcrypt.compare()
-  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!user && !client) {
+    throw new NotFoundError('User or Client account not found');
+  }
+
+  const account = user || client;
+  if (!account.password) {
+    throw new UnauthorizedError('Password is not set for this account');
+  }
+
+  // 3. Compare password using bcrypt.compare()
+  const isPasswordValid = await bcrypt.compare(password, account.password);
   if (!isPasswordValid) {
     throw new UnauthorizedError('Invalid email or password');
   }
 
-  // 3. Purge expired sessions automatically during login to prevent database bloat
+  // 4. Purge expired sessions automatically during login to prevent database bloat
   await prisma.userSession.deleteMany({
     where: {
       refreshTokenExpiresAt: {
@@ -249,12 +262,12 @@ const loginUser = async (email, password) => {
     },
   });
 
-  // 4. Generate secure random tokens using crypto.randomBytes
+  // 5. Generate secure random tokens using crypto.randomBytes
   const accessToken = crypto.randomBytes(64).toString('hex');
   const refreshToken = crypto.randomBytes(128).toString('hex');
   const idToken = crypto.randomBytes(64).toString('hex');
 
-  // 5. Read expirations from env configurations
+  // 6. Read expirations from env configurations
   const accessTokenExpiryMinutes = parseInt(process.env.ACCESS_TOKEN_EXPIRY_MINUTES || '15', 10);
   const refreshTokenExpiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '7', 10);
   const idTokenExpiryMinutes = parseInt(process.env.ID_TOKEN_EXPIRY_MINUTES || '60', 10);
@@ -263,36 +276,60 @@ const loginUser = async (email, password) => {
   const refreshTokenExpiresAt = new Date(Date.now() + refreshTokenExpiryDays * 24 * 60 * 60 * 1000);
   const idTokenExpiresAt = new Date(Date.now() + idTokenExpiryMinutes * 60 * 1000);
 
-  // 6. Save active session to the database
+  // 7. Save active session to database
+  const sessionData = {
+    accessToken,
+    refreshToken,
+    idToken,
+    accessTokenExpiresAt,
+    refreshTokenExpiresAt,
+    idTokenExpiresAt,
+  };
+
+  if (user) {
+    sessionData.userId = user.id;
+  } else {
+    sessionData.clientId = client.id;
+  }
+
   const session = await prisma.userSession.create({
-    data: {
-      userId: user.id,
-      accessToken,
-      refreshToken,
-      idToken,
-      accessTokenExpiresAt,
-      refreshTokenExpiresAt,
-      idTokenExpiresAt,
-    },
+    data: sessionData,
   });
 
-  // 7. Map enum role back to lowercase for consistent client-side response contracts
-  return {
-    tokens: {
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      idToken: session.idToken,
-    },
-    user: {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      mobileNumber: user.mobileNumber,
-      city: user.city,
-      role: user.role.toLowerCase(),
-    },
-  };
+  // 8. Return response
+  if (user) {
+    return {
+      tokens: {
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        idToken: session.idToken,
+      },
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        city: user.city,
+        role: user.role.toLowerCase(),
+      },
+    };
+  } else {
+    return {
+      tokens: {
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        idToken: session.idToken,
+      },
+      user: {
+        id: client.id,
+        clientName: client.clientName,
+        email: client.email,
+        phone: client.phone,
+        role: 'client',
+      },
+    };
+  }
 };
 
 /**

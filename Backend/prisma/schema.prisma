@@ -27,30 +27,148 @@ model OtpRequestLog {
 }
 
 model User {
-  id                Int           @id @default(autoincrement())
+  id                Int          @id @default(autoincrement())
   firstName         String
   lastName          String
-  mobileNumber      String?       @unique
+  mobileNumber      String?      @unique
   phone             String?
-  email             String        @unique
+  email             String       @unique
   password          String
   city              String?
-  role              Role          @default(USER)
-  isVerified        Boolean       @default(true)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  designation       String?
+  role              Role         @default(USER)
+  status            UserStatus   @default(ACTIVE)
+  profileImage      String?
+  joiningDate       DateTime?
+  createdBy         Int?
+  isVerified        Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
   passwordChangedAt DateTime?
-  sessions          UserSession[]
+
   firmId            Int?
-  firm              Firm?         @relation("FirmUsers", fields: [firmId], references: [id])
-  administeredFirm Firm?         @relation("FirmAdmin")
+  firm              Firm?        @relation("FirmUsers", fields: [firmId], references: [id])
+  administeredFirm Firm?        @relation("FirmAdmin")
+  sessions          UserSession[]
+
+  clientAssignments ClientAssignment[] @relation("UserClientAssignments")
+  createdAssignments ClientAssignment[] @relation("AssignmentCreatedBy")
+  assignedTasks     Task[]             @relation("TaskAssignedUser")
+  createdTasks      Task[]             @relation("TaskCreatedByUser")
+  timeEntries       TimeEntry[]
 
   @@map("users")
 }
 
+model Client {
+  id           Int          @id @default(autoincrement())
+  firmId       Int
+  clientType   String       @default("INDIVIDUAL")
+  clientName   String
+  companyName  String?
+  email        String       @unique
+  phone        String?
+  password     String?
+  gstNumber    String?
+  panNumber    String?
+  businessType String?
+  address      String?
+  city         String?
+  state        String?
+  country      String?
+  pincode      String?
+  status       ClientStatus @default(ACTIVE)
+  createdBy    Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+
+  firm         Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  assignments  ClientAssignment[]
+  tasks        Task[]
+  sessions     UserSession[]
+
+  @@map("clients")
+}
+
+model ClientAssignment {
+  id         Int      @id @default(autoincrement())
+  clientId   Int
+  userId     Int
+  assignedBy Int?
+  assignedAt DateTime @default(now())
+
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user       User     @relation("UserClientAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  assigner   User?    @relation("AssignmentCreatedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
+
+  @@unique([clientId, userId])
+  @@map("client_assignments")
+}
+
+model Task {
+  id            Int            @id @default(autoincrement())
+  firmId        Int
+  clientId      Int
+  userId        Int?
+  title         String
+  description   String?
+  priority      TaskPriority   @default(MEDIUM)
+  status        TaskStatus     @default(PENDING)
+  dueDate       DateTime?
+  createdByType CreatedByType  @default(CLIENT)
+  createdBy     Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  firm          Firm           @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user          User?          @relation("TaskAssignedUser", fields: [userId], references: [id], onDelete: SetNull)
+  creator       User?          @relation("TaskCreatedByUser", fields: [createdBy], references: [id], onDelete: SetNull)
+  documents     TaskDocument[]
+  timeEntries   TimeEntry[]
+
+  @@map("tasks")
+}
+
+model TaskDocument {
+  id           Int      @id @default(autoincrement())
+  taskId       Int
+  fileName     String
+  fileUrl      String
+  fileType     String?
+  fileSize     Int?
+  uploadedBy   Int?
+  uploadedRole String?
+  createdAt    DateTime @default(now())
+
+  task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_documents")
+}
+
+model TimeEntry {
+  id          Int      @id @default(autoincrement())
+  taskId      Int
+  userId      Int
+  hours       Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("time_entries")
+}
+
 model UserSession {
   id                    String   @id @default(uuid()) @db.Uuid
-  userId                Int
+  userId                Int?
+  clientId              Int?
   accessToken           String   @unique
   refreshToken          String   @unique
   idToken               String   @unique
@@ -58,7 +176,9 @@ model UserSession {
   refreshTokenExpiresAt DateTime
   idTokenExpiresAt      DateTime
   createdAt             DateTime @default(now())
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user                  User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client                Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("user_sessions")
 }
@@ -100,6 +220,8 @@ model Firm {
   firmAdminId Int        @unique
   firmAdmin   User       @relation("FirmAdmin", fields: [firmAdminId], references: [id], onDelete: Restrict)
   users       User[]     @relation("FirmUsers")
+  clients     Client[]
+  tasks       Task[]
 
   deletedAt   DateTime?
 
@@ -124,3 +246,32 @@ enum FirmStatus {
   SUSPENDED
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CreatedByType {
+  FIRM_ADMIN
+  USER
+  CLIENT
+}
