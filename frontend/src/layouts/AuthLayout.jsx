@@ -1,46 +1,32 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
-const AuthLayout = ({ children, title, subtitle }) => {
+export const AuthLayout = () => {
   return (
-    <div className="min-height-screen flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
-      {/* Decorative background glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-500/10 rounded-full blur-[120px] pointer-events-none -z-10 animate-pulse-slow"></div>
-      <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none -z-10 animate-pulse-slow" style={{ animationDelay: '1.5s' }}></div>
-      
-      {/* Header Logo */}
-      <div className="flex flex-col items-center mb-8 animate-fade-in">
-        <img src="/auditee logo.svg" alt="Auditee Logo" className="h-10 w-auto mb-2.5 object-contain" />
-        <p className="text-slate-500 text-[10px] tracking-widest uppercase font-bold">Enterprise Auth System</p>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+      {/* Dynamic Animated Background Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[450px] h-[450px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-600/20 blur-[140px] pointer-events-none" />
 
-      {/* Main Glassmorphic Form Card */}
-      <div className="w-full max-w-md glow-card-container animate-slide-up">
-        <div className="glass-panel p-8 rounded-2xl shadow-glass-lg">
-          {(title || subtitle) && (
-            <div className="mb-6 text-center">
-              {title && (
-                <h2 className="text-2xl font-bold font-sans text-white tracking-tight">
-                  {title}
-                </h2>
-              )}
-              {subtitle && (
-                <p className="text-sm text-slate-400 mt-2 font-medium">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          )}
-          
-          {children}
+      {/* Main Glassmorphic Container */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-md bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-8 shadow-2xl relative z-10 my-8"
+      >
+        {/* Brand Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 items-center justify-center font-extrabold text-white text-xl shadow-xl shadow-indigo-500/30 mb-3">
+            A
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-100 tracking-tight">AUDITEE</h2>
+          <p className="text-xs text-slate-400 mt-1">Enterprise CA Firm SaaS Platform</p>
         </div>
-      </div>
-      
-      {/* Footer Branding */}
-      <div className="mt-8 text-xs text-slate-500 tracking-wide font-medium animate-fade-in">
-        &copy; {new Date().getFullYear()} Auditee. All rights reserved.
-      </div>
+
+        <Outlet />
+      </motion.div>
     </div>
   );
 };
-
-export default AuthLayout;

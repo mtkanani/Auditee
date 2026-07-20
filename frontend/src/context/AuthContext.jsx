@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { authApi } from '../api/authApi';
-import { userApi } from '../api/userApi';
+import axiosInstance from '../services/axiosInstance';
 
 const AuthContext = createContext(null);
 
@@ -10,131 +9,121 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from local storage on load
+  // Determine initial role dashboard path
+  const getRoleDashboardPath = (role) => {
+    if (!role) return '/login';
+    const r = role.toLowerCase();
+    if (r === 'super_admin') return '/super-admin/dashboard';
+    if (r === 'firm_admin' || r === 'admin') return '/firm-admin/dashboard';
+    if (r === 'client') return '/client/dashboard';
+    return '/user/dashboard';
+  };
+
+  // Initialize auth state from localStorage or fetch /api/auth/me
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('accessToken');
-      const storedEmail = localStorage.getItem('userEmail');
+      const storedUser = localStorage.getItem('userData');
 
-      if (storedToken && storedEmail) {
+      if (storedToken) {
+        setAccessToken(storedToken);
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+            setIsAuthenticated(true);
+          } catch {
+            // parsing error
+          }
+        }
+
         try {
-          // Verify session token by fetching the fresh user profile
-          const profile = await userApi.getProfile(storedEmail);
-          setUser(profile);
-          setAccessToken(storedToken);
-          setIsAuthenticated(true);
+          // Verify & fetch fresh session profile from backend
+          const res = await axiosInstance.get('/auth/me');
+          if (res.data?.data) {
+            const userData = res.data.data;
+            setUser(userData);
+            localStorage.setItem('userData', JSON.stringify(userData));
+            localStorage.setItem('userRole', userData.role || 'user');
+            setIsAuthenticated(true);
+          }
         } catch (error) {
-          console.error('Session validation failed. Logging out...', error);
-          // Token expired or invalid
-          logout();
+          console.warn('Session check failed:', error?.message);
+          // If token invalid, trigger logout
+          if (error?.status === 401) {
+            logout();
+          }
         }
       }
       setIsLoading(false);
     };
 
     initializeAuth();
+
+    // Listen for unauthorized 401 events from axios interceptor
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const login = async (email, password) => {
     setIsLoading(true);
     try {
-      const data = await authApi.login(email, password);
-      
-      // If backend requires OTP verification, return early so frontend can prompt for it
-      if (data.requireOtp) {
-        return data;
-      }
+      const res = await axiosInstance.post('/auth/login', { email, password });
+      const data = res.data;
 
-      const { tokens, user: basicUser } = data;
+      const { tokens, user: userData } = data;
+      const token = tokens.accessToken;
 
-      // Store tokens temporarily in localStorage to authorize subsequent getProfile call
-      localStorage.setItem('accessToken', tokens.accessToken);
-      localStorage.setItem('userEmail', basicUser.email);
+      localStorage.setItem('accessToken', token);
+      localStorage.setItem('userEmail', userData.email);
+      localStorage.setItem('userData', JSON.stringify(userData));
+      localStorage.setItem('userRole', userData.role || 'user');
 
-      // Fetch user profile to populate all fields (like city and mobileNumber)
-      const fullProfile = await userApi.getProfile(basicUser.email);
-
-      setUser(fullProfile);
-      setAccessToken(tokens.accessToken);
+      setAccessToken(token);
+      setUser(userData);
       setIsAuthenticated(true);
-      
-      return fullProfile;
+
+      const redirectPath = getRoleDashboardPath(userData.role);
+      return { user: userData, redirectPath };
     } catch (error) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userEmail');
+      logout();
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  /**
-   * Verify login OTP and complete authentication
-   * @param {string} email
-   * @param {string} otp
-   */
-  const verifyLoginOtp = async (email, otp) => {
+  const register = async (payload) => {
     setIsLoading(true);
     try {
-      const data = await authApi.loginVerifyOTP(email, otp);
-      const { tokens, user: basicUser } = data;
-
-      // Store tokens temporarily in localStorage to authorize subsequent getProfile call
-      localStorage.setItem('accessToken', tokens.accessToken);
-      localStorage.setItem('userEmail', basicUser.email);
-
-      // Fetch user profile to populate all fields (like city and mobileNumber)
-      const fullProfile = await userApi.getProfile(basicUser.email);
-
-      setUser(fullProfile);
-      setAccessToken(tokens.accessToken);
-      setIsAuthenticated(true);
-      
-      return fullProfile;
-    } catch (error) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('userEmail');
-      throw error;
+      const res = await axiosInstance.post('/auth/register', payload);
+      return res.data;
     } finally {
       setIsLoading(false);
     }
   };
 
-  /**
-   * Log out current user and clear sessions
-   */
   const logout = () => {
     setUser(null);
     setAccessToken(null);
     setIsAuthenticated(false);
     localStorage.removeItem('accessToken');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userRole');
   };
 
-  /**
-   * Refresh user profile details from backend
-   */
-  const refreshProfile = async () => {
-    if (!user?.email) return;
-    try {
-      const updatedProfile = await userApi.getProfile(user.email);
-      setUser(updatedProfile);
-      return updatedProfile;
-    } catch (error) {
-      console.error('Error refreshing profile:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Manually update user state (e.g. after a profile update response)
-   * @param {object} updatedUserData
-   */
   const updateUserState = (updatedUserData) => {
-    setUser((prev) => ({
-      ...prev,
-      ...updatedUserData,
-    }));
+    setUser((prev) => {
+      const updated = { ...prev, ...updatedUserData };
+      localStorage.setItem('userData', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
@@ -145,10 +134,10 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         isLoading,
         login,
-        verifyLoginOtp,
+        register,
         logout,
-        refreshProfile,
         updateUserState,
+        getRoleDashboardPath,
       }}
     >
       {children}
