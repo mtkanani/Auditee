@@ -18,7 +18,11 @@ const options = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 5001}`,
+        url: '/',
+        description: 'Current Environment Server (Relative to Hosted URL - Railway / Production / Localhost)',
+      },
+      {
+        url: `http://localhost:${process.env.PORT || 8080}`,
         description: 'Local development server',
       },
       {
