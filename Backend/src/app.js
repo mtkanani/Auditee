@@ -22,7 +22,9 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5000',
-  'http://localhost:5001'
+  'http://localhost:5001',
+  'http://localhost:8080',
+  'http://localhost:3000'
 ];
 
 if (process.env.FRONTEND_URL) {
