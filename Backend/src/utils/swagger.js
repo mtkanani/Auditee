@@ -19,11 +19,11 @@ const options = {
     servers: [
       {
         url: `http://localhost:${process.env.PORT || 5001}`,
-        description: 'Local development server (Port 5001)',
+        description: 'Local development server',
       },
       {
-        url: 'http://localhost:8080',
-        description: 'Local server (Port 8080)',
+        url: 'https://auditee-backend.onrender.com',
+        description: 'Production Render server',
       },
     ],
     components: {
