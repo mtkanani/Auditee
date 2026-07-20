@@ -148,6 +148,20 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller to get current authenticated session profile & role.
+ */
+const getMe = async (req, res, next) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      user: req.user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   sendOtp,
   verifyOtp,
@@ -158,4 +172,5 @@ module.exports = {
   sendForgotPasswordOtp,
   verifyForgotPasswordOtp,
   resetPassword,
+  getMe,
 };

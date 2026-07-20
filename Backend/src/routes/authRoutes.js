@@ -232,4 +232,12 @@ router.post(
   authController.resetPassword
 );
 
+const { authenticateSession } = require('../middlewares/auth.middleware');
+
+/**
+ * Route: GET /api/auth/me
+ * Returns the currently authenticated user/client session profile and role.
+ */
+router.get('/me', authenticateSession, authController.getMe);
+
 module.exports = router;
