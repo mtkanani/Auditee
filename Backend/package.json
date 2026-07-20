@@ -4,10 +4,11 @@
   "description": "Production-ready OTP verification backend module using Node.js, Express, PostgreSQL, Prisma, Nodemailer, and Swagger.",
   "main": "src/index.js",
   "scripts": {
-    "start": "npx prisma generate && npx prisma db push && node src/index.js",
+    "postinstall": "node node_modules/prisma/build/index.js generate",
+    "start": "node node_modules/prisma/build/index.js generate && node node_modules/prisma/build/index.js db push && node src/index.js",
     "dev": "nodemon src/index.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:generate": "node node_modules/prisma/build/index.js generate",
+    "prisma:migrate": "node node_modules/prisma/build/index.js migrate dev"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
