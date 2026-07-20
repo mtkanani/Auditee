@@ -34,18 +34,7 @@ if (process.env.FRONTEND_URL) {
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (
-        !origin || 
-        allowedOrigins.includes(origin) || 
-        origin.endsWith('.vercel.app') || 
-        allowedOrigins.some(o => origin.startsWith(o))
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
-      }
-    },
+    origin: true,
     credentials: true,
   })
 );
