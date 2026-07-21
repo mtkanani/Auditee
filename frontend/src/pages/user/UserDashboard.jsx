@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { KanbanBoard } from '../../components/tasks/KanbanBoard';
+import { NoticeBanner } from '../../components/announcements/NoticeBanner';
 import { userService } from '../../services/userService';
 import { FiBriefcase, FiCheckSquare, FiClock, FiCheckCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -37,6 +38,9 @@ export const UserDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* High Priority Unread Notice Alert Banner */}
+      <NoticeBanner />
+
       <PageHeader
         title="Employee Dashboard"
         subtitle="Track your assigned clients, audit tasks, time logs, and compliance items"

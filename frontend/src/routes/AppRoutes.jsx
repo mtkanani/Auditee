@@ -25,11 +25,13 @@ import { FirmAdminDashboard } from '../pages/firm-admin/FirmAdminDashboard';
 import { UserManagement } from '../pages/firm-admin/UserManagement';
 import { ClientManagement } from '../pages/firm-admin/ClientManagement';
 import { ClientAssignments } from '../pages/firm-admin/ClientAssignments';
+import { FirmAnnouncements } from '../pages/firm-admin/FirmAnnouncements';
 import { Compliance } from '../pages/firm-admin/Compliance';
 import { Reports } from '../pages/firm-admin/Reports';
 
 // User / Employee Pages
 import { UserDashboard } from '../pages/user/UserDashboard';
+import { UserAnnouncements } from '../pages/user/UserAnnouncements';
 import { MyTasks } from '../pages/user/MyTasks';
 import { MyClients } from '../pages/user/MyClients';
 import { TimeEntries } from '../pages/user/TimeEntries';
@@ -81,6 +83,7 @@ export const AppRoutes = () => {
           <Route path="/firm-admin/users" element={<UserManagement />} />
           <Route path="/firm-admin/clients" element={<ClientManagement />} />
           <Route path="/firm-admin/assignments" element={<ClientAssignments />} />
+          <Route path="/firm-admin/announcements" element={<FirmAnnouncements />} />
           <Route path="/firm-admin/compliance" element={<Compliance />} />
           <Route path="/firm-admin/reports" element={<Reports />} />
         </Route>
@@ -88,6 +91,7 @@ export const AppRoutes = () => {
         {/* EMPLOYEE USER ROUTES */}
         <Route element={<ProtectedRoute allowedRoles={['USER', 'EMPLOYEE']} />}>
           <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/user/announcements" element={<UserAnnouncements />} />
           <Route path="/user/tasks" element={<MyTasks />} />
           <Route path="/user/clients" element={<MyClients />} />
           <Route path="/user/time-entries" element={<TimeEntries />} />

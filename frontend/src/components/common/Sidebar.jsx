@@ -15,6 +15,8 @@ import {
   FiFolder,
   FiUser,
   FiX,
+  FiRadio,
+  FiBell,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { formatRoleName, normalizeRole } from '../../utils/helpers';
@@ -37,6 +39,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { path: '/firm-admin/users', name: 'User Management', icon: FiUsers },
           { path: '/firm-admin/clients', name: 'Client Management', icon: FiBriefcase },
           { path: '/firm-admin/assignments', name: 'Client Assignment', icon: FiUserCheck },
+          { path: '/firm-admin/announcements', name: 'Notice Board', icon: FiRadio },
           { path: '/firm-admin/compliance', name: 'Compliance', icon: FiShield },
           { path: '/firm-admin/reports', name: 'Reports', icon: FiFileText },
         ];
@@ -51,6 +54,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       default:
         return [
           { path: '/user/dashboard', name: 'Dashboard', icon: FiGrid },
+          { path: '/user/announcements', name: 'Firm Notices', icon: FiBell },
           { path: '/user/tasks', name: 'My Tasks', icon: FiCheckSquare },
           { path: '/user/clients', name: 'My Clients', icon: FiBriefcase },
           { path: '/user/time-entries', name: 'Time Entries', icon: FiClock },

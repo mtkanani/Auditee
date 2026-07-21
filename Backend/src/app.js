@@ -12,6 +12,7 @@ const firmAdminClientRoutes = require('./modules/clients/client.routes');
 const assignmentRoutes = require('./modules/clientAssignments/assignment.routes');
 const publicUserRoutes = require('./modules/publicUser/publicUser.routes');
 const publicClientRoutes = require('./modules/publicClient/publicClient.routes');
+const { adminRouter: announcementAdminRoutes, userRouter: announcementUserRoutes } = require('./modules/announcements/announcement.routes');
 
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
@@ -60,6 +61,8 @@ app.use('/api/admin/firms', firmRoutes);
 // Modular Auditee SaaS routes
 app.use('/api/firm-admin/users', firmAdminUserRoutes);
 app.use('/api/firm-admin/clients', firmAdminClientRoutes);
+app.use('/api/firm-admin/announcements', announcementAdminRoutes);
+app.use('/api/user/announcements', announcementUserRoutes);
 app.use('/api/firm-admin', assignmentRoutes);
 app.use('/api/user', publicUserRoutes);
 app.use('/api/client', publicClientRoutes);

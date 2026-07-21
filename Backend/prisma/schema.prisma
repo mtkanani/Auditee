@@ -57,6 +57,8 @@ model User {
   assignedTasks     Task[]             @relation("TaskAssignedUser")
   createdTasks      Task[]             @relation("TaskCreatedByUser")
   timeEntries       TimeEntry[]
+  createdAnnouncements Announcement[]  @relation("AnnouncementCreator")
+  announcementReads    AnnouncementRead[]
 
   @@map("users")
 }
@@ -222,6 +224,7 @@ model Firm {
   users       User[]     @relation("FirmUsers")
   clients     Client[]
   tasks       Task[]
+  announcements Announcement[]
 
   deletedAt   DateTime?
 
@@ -229,6 +232,40 @@ model Firm {
   updatedAt   DateTime   @updatedAt
 
   @@map("firms")
+}
+
+model Announcement {
+  id          Int                 @id @default(autoincrement())
+  firmId      Int
+  title       String
+  content     String
+  category    String              @default("GENERAL")
+  priority    NoticePriority      @default(INFO)
+  createdBy   Int
+  expiresAt   DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
+
+  firm        Firm                @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  creator     User                @relation("AnnouncementCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  reads       AnnouncementRead[]
+
+  @@map("announcements")
+}
+
+model AnnouncementRead {
+  id             Int          @id @default(autoincrement())
+  announcementId Int
+  userId         Int
+  readAt         DateTime     @default(now())
+  acknowledgedAt DateTime?
+
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@map("announcement_reads")
 }
 
 enum Role {
@@ -267,6 +304,12 @@ enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+  URGENT
+}
+
+enum NoticePriority {
+  INFO
+  WARNING
   URGENT
 }
 
