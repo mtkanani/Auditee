@@ -51,32 +51,32 @@ const createUserValidation = [
 
 const getUsersValidation = [
   query('page')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1 })
     .withMessage('Page must be a positive integer')
     .toInt(),
   query('limit')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100')
     .toInt(),
   query('search')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim(),
   query('sortBy')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['firstName', 'lastName', 'email', 'designation', 'status', 'createdAt'])
     .withMessage('Invalid sortBy field'),
   query('sortOrder')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['asc', 'desc'])
     .withMessage('sortOrder must be asc or desc'),
   query('status')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['ACTIVE', 'INACTIVE'])
     .withMessage('Status filter must be ACTIVE or INACTIVE'),
   query('designation')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim(),
 ];
 

@@ -105,6 +105,20 @@ class UserController {
       next(error);
     }
   }
+
+  async getDashboard(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const data = await userService.getDashboard(firmId);
+      return res.status(200).json({
+        success: true,
+        message: 'Firm Admin dashboard metrics fetched successfully',
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new UserController();

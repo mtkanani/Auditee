@@ -1,5 +1,6 @@
 const express = require('express');
 const assignmentController = require('./assignment.controller');
+const userController = require('../users/user.controller');
 const {
   createAssignmentValidation,
   assignmentIdParamValidation,
@@ -16,6 +17,9 @@ const router = express.Router();
 
 router.use(authenticateSession);
 router.use(authorizeRoles('FIRM_ADMIN'));
+
+// Base URL: /api/firm-admin/dashboard
+router.get('/dashboard', userController.getDashboard);
 
 // Base URL: /api/firm-admin/client-assignments
 router.post('/client-assignments', createAssignmentValidation, validate, assignmentController.assignClient);

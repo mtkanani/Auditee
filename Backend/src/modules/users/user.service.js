@@ -93,8 +93,45 @@ class UserService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await userRepository.updatePassword(userId, firmId, hashedPassword);
-    return { message: USER_MESSAGES.PASSWORD_RESET };
+    const updatedUser = await userRepository.updatePassword(userId, hashedPassword);
+    return updatedUser;
+  }
+
+  async getDashboard(firmId) {
+    const prisma = require('../../config/db');
+    const [totalClients, totalUsers, pendingTasks, completedTasks, inProgressTasks, recentUsers] = await Promise.all([
+      prisma.client.count({ where: { firmId, deletedAt: null } }),
+      prisma.user.count({ where: { firmId, deletedAt: null, role: 'USER' } }),
+      prisma.task.count({ where: { firmId, status: 'PENDING', deletedAt: null } }),
+      prisma.task.count({ where: { firmId, status: 'COMPLETED', deletedAt: null } }),
+      prisma.task.count({ where: { firmId, status: 'IN_PROGRESS', deletedAt: null } }),
+      prisma.user.findMany({
+        where: { firmId, deletedAt: null, role: 'USER' },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          designation: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    return {
+      metrics: {
+        totalClients,
+        totalUsers,
+        pendingTasks,
+        completedTasks,
+        inProgressTasks,
+        pendingCompliance: 5,
+      },
+      recentUsers,
+    };
   }
 }
 
