@@ -83,6 +83,37 @@ class AssignmentService {
 
     return await assignmentRepository.update(assignmentId, payload);
   }
+
+  async createTask(taskData, firmId, createdBy) {
+    const { userId, clientId, title, description, priority, dueDate } = taskData;
+
+    const user = await userRepository.findByIdAndFirmId(userId, firmId);
+    if (!user) {
+      throw new NotFoundError('Target User not found in your firm');
+    }
+
+    if (clientId) {
+      const client = await clientRepository.findByIdAndFirmId(clientId, firmId);
+      if (!client) {
+        throw new NotFoundError('Target Client not found in your firm');
+      }
+    }
+
+    return await assignmentRepository.createTask({
+      firmId,
+      clientId: clientId || null,
+      userId,
+      title,
+      description,
+      priority,
+      dueDate,
+      createdBy,
+    });
+  }
+
+  async getFirmTasks(firmId) {
+    return await assignmentRepository.findTasksByFirm(firmId);
+  }
 }
 
 module.exports = new AssignmentService();

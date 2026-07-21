@@ -31,4 +31,14 @@ export const assignmentService = {
     });
     return res.data;
   },
+
+  createTask: async (taskData) => {
+    const res = await axiosInstance.post('/firm-admin/tasks', taskData);
+    return res.data;
+  },
+
+  getFirmTasks: async (params = {}) => {
+    const res = await axiosInstance.get('/firm-admin/tasks', { params });
+    return res.data;
+  },
 };

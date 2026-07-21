@@ -6,6 +6,7 @@ const {
   updateAssignmentValidation,
   userIdParamValidation,
   clientIdParamValidation,
+  createTaskValidation,
 } = require('./assignment.validation');
 const validate = require('../../middlewares/validate');
 const { authenticateSession } = require('../../middlewares/auth.middleware');
@@ -21,6 +22,10 @@ router.post('/client-assignments', createAssignmentValidation, validate, assignm
 router.get('/client-assignments', assignmentController.getAllAssignments);
 router.delete('/client-assignments/:assignmentId', assignmentIdParamValidation, validate, assignmentController.removeAssignment);
 router.patch('/client-assignments/:assignmentId', updateAssignmentValidation, validate, assignmentController.changeAssignment);
+
+// Direct Tasks routes (/api/firm-admin/tasks)
+router.post('/tasks', createTaskValidation, validate, assignmentController.createTask);
+router.get('/tasks', assignmentController.getFirmTasks);
 
 // Sub routes
 router.get('/users/:userId/clients', userIdParamValidation, validate, assignmentController.getUserClients);

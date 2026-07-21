@@ -9,22 +9,25 @@ export const ClientAssignments = () => {
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
   const [assignments, setAssignments] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [clientsRes, usersRes, assignRes] = await Promise.all([
+      const [clientsRes, usersRes, assignRes, tasksRes] = await Promise.all([
         firmAdminService.getClients({ limit: 100 }),
         firmAdminService.getUsers({ limit: 100 }),
         assignmentService.getAllAssignments(),
+        assignmentService.getFirmTasks(),
       ]);
 
       setClients(clientsRes.data || clientsRes.clients || []);
       setUsers(usersRes.data || usersRes.users || []);
       setAssignments(assignRes.data || assignRes.assignments || []);
+      setTasks(tasksRes.data || tasksRes.tasks || []);
     } catch (error) {
-      toast.error('Failed to load assignment data');
+      toast.error('Failed to load assignment workstation data');
     } finally {
       setIsLoading(false);
     }
@@ -54,19 +57,32 @@ export const ClientAssignments = () => {
     }
   };
 
+  const handleCreateTask = async (taskData) => {
+    try {
+      await assignmentService.createTask(taskData);
+      toast.success('Task created and assigned successfully!');
+      fetchData();
+    } catch (error) {
+      toast.error(error.message || 'Failed to create task.');
+      throw error;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Client Assignment Workstation"
-        subtitle="Pair CA firm clients with dedicated staff accountants and auditors using dual-panel controls"
+        subtitle="Pair CA firm clients with staff members or assign direct tasks directly to dedicated auditors"
       />
 
       <DualPanelAssignment
         clients={clients}
         users={users}
         assignments={assignments}
+        tasks={tasks}
         onAssign={handleAssign}
         onUnassign={handleUnassign}
+        onCreateTask={handleCreateTask}
         isLoading={isLoading}
       />
     </div>

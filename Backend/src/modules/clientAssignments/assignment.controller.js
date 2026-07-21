@@ -88,6 +88,35 @@ class AssignmentController {
       next(error);
     }
   }
+
+  async createTask(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const createdBy = req.user.id;
+      const task = await assignmentService.createTask(req.body, firmId, createdBy);
+      return res.status(201).json({
+        success: true,
+        message: 'Task created and assigned successfully',
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getFirmTasks(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const tasks = await assignmentService.getFirmTasks(firmId);
+      return res.status(200).json({
+        success: true,
+        message: 'Firm tasks fetched successfully',
+        data: tasks,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AssignmentController();

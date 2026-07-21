@@ -110,7 +110,7 @@ model ClientAssignment {
 model Task {
   id            Int            @id @default(autoincrement())
   firmId        Int
-  clientId      Int
+  clientId      Int?
   userId        Int?
   title         String
   description   String?
@@ -124,7 +124,7 @@ model Task {
   deletedAt     DateTime?
 
   firm          Firm           @relation(fields: [firmId], references: [id], onDelete: Cascade)
-  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client        Client?        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   user          User?          @relation("TaskAssignedUser", fields: [userId], references: [id], onDelete: SetNull)
   creator       User?          @relation("TaskCreatedByUser", fields: [createdBy], references: [id], onDelete: SetNull)
   documents     TaskDocument[]

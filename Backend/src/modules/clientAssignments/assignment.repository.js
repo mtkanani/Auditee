@@ -173,6 +173,70 @@ class AssignmentRepository {
       where: { id },
     });
   }
+
+  async createTask({ firmId, clientId, userId, title, description, priority, dueDate, createdBy }) {
+    return await prisma.task.create({
+      data: {
+        firmId,
+        clientId: clientId || null,
+        userId: userId || null,
+        title,
+        description: description || null,
+        priority: priority || 'MEDIUM',
+        dueDate: dueDate ? new Date(dueDate) : null,
+        createdByType: 'FIRM_ADMIN',
+        createdBy: createdBy || null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            designation: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            clientName: true,
+            companyName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findTasksByFirm(firmId) {
+    return await prisma.task.findMany({
+      where: {
+        firmId,
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            designation: true,
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            clientName: true,
+            companyName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
 
 module.exports = new AssignmentRepository();
