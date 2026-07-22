@@ -1,45 +1,44 @@
 const express = require('express');
 const router = express.Router();
 const documentController = require('./document.controller');
-const { authenticate, authorize } = require('../../middlewares/auth');
-const { validateRequest } = require('../../middlewares/validateRequest');
+const { authenticateSession } = require('../../middlewares/auth.middleware');
+const authorizeRoles = require('../../middlewares/roleMiddleware');
+const validate = require('../../middlewares/validate');
 const { uploadDocumentValidation } = require('./document.validation');
 
-// Firm Admin Routes
+// All document routes require authentication
+router.use(authenticateSession);
+
+// Upload a document to the vault (Firm Admin, Employee, Client)
 router.post(
   '/upload',
-  authenticate,
-  authorize(['FIRM_ADMIN', 'ADMIN', 'USER', 'CLIENT']),
   uploadDocumentValidation,
-  validateRequest,
+  validate,
   documentController.uploadDocument.bind(documentController)
 );
 
+// Firm Admin — get all firm documents
 router.get(
   '/firm',
-  authenticate,
-  authorize(['FIRM_ADMIN', 'ADMIN']),
+  authorizeRoles('FIRM_ADMIN'),
   documentController.getFirmVault.bind(documentController)
 );
 
+// Client — get client documents
 router.get(
   '/client',
-  authenticate,
-  authorize(['CLIENT', 'FIRM_ADMIN', 'ADMIN']),
   documentController.getClientVault.bind(documentController)
 );
 
+// Employee (User) — get user vault documents
 router.get(
   '/user',
-  authenticate,
-  authorize(['USER', 'FIRM_ADMIN', 'ADMIN']),
   documentController.getUserVault.bind(documentController)
 );
 
+// Delete a document (soft delete)
 router.delete(
   '/:id',
-  authenticate,
-  authorize(['FIRM_ADMIN', 'ADMIN', 'USER']),
   documentController.deleteDocument.bind(documentController)
 );
 
