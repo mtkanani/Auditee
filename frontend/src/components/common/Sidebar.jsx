@@ -36,6 +36,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       case 'FIRM_ADMIN':
         return [
           { path: '/firm-admin/dashboard', name: 'Dashboard', icon: FiGrid },
+          { path: '/firm-admin/tasks', name: 'Task Workstation', icon: FiCheckSquare },
           { path: '/firm-admin/users', name: 'User Management', icon: FiUsers },
           { path: '/firm-admin/clients', name: 'Client Management', icon: FiBriefcase },
           { path: '/firm-admin/assignments', name: 'Client Assignment', icon: FiUserCheck },

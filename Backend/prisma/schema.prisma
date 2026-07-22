@@ -59,6 +59,7 @@ model User {
   timeEntries       TimeEntry[]
   createdAnnouncements Announcement[]  @relation("AnnouncementCreator")
   announcementReads    AnnouncementRead[]
+  taskAssignees        TaskAssignee[]
 
   @@map("users")
 }
@@ -190,6 +191,7 @@ model Task {
   dueDate       DateTime?
   createdByType CreatedByType  @default(CLIENT)
   createdBy     Int?
+  templateId    Int?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
@@ -200,8 +202,98 @@ model Task {
   creator       User?          @relation("TaskCreatedByUser", fields: [createdBy], references: [id], onDelete: SetNull)
   documents     TaskDocument[]
   timeEntries   TimeEntry[]
+  assignees     TaskAssignee[]
+  subtasks      TaskSubtask[]
+  comments      TaskComment[]
+  history       TaskHistory[]
+  dependencies  TaskDependency[] @relation("TaskSuccessor")
+  prerequisites TaskDependency[] @relation("TaskPredecessor")
 
   @@map("tasks")
+}
+
+model TaskAssignee {
+  id         Int      @id @default(autoincrement())
+  taskId     Int
+  userId     Int
+  assignedAt DateTime @default(now())
+
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_assignees")
+}
+
+model TaskSubtask {
+  id          Int       @id @default(autoincrement())
+  taskId      Int
+  title       String
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+  completedBy Int?
+  createdAt   DateTime  @default(now())
+
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_subtasks")
+}
+
+model TaskComment {
+  id            Int      @id @default(autoincrement())
+  taskId        Int
+  userId        Int?
+  clientId      Int?
+  commenterName String
+  commenterRole String   @default("EMPLOYEE")
+  comment       String
+  fileUrl       String?
+  createdAt     DateTime @default(now())
+
+  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}
+
+model TaskHistory {
+  id            Int      @id @default(autoincrement())
+  taskId        Int
+  action        String
+  details       String
+  performedBy   Int?
+  performedName String
+  createdAt     DateTime @default(now())
+
+  task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_history")
+}
+
+model TaskTemplate {
+  id              Int          @id @default(autoincrement())
+  firmId          Int
+  title           String
+  category        String       @default("GENERAL")
+  priority        TaskPriority @default(MEDIUM)
+  description     String?
+  defaultSubtasks String?
+  createdAt       DateTime     @default(now())
+
+  firm            Firm         @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  @@map("task_templates")
+}
+
+model TaskDependency {
+  id              Int  @id @default(autoincrement())
+  taskId          Int
+  dependsOnTaskId Int
+
+  task            Task @relation("TaskSuccessor", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTask   Task @relation("TaskPredecessor", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnTaskId])
+  @@map("task_dependencies")
 }
 
 model TaskDocument {
@@ -294,6 +386,7 @@ model Firm {
   clients     Client[]
   tasks       Task[]
   announcements Announcement[]
+  taskTemplates TaskTemplate[]
 
   deletedAt   DateTime?
 
@@ -365,8 +458,10 @@ enum ClientStatus {
 enum TaskStatus {
   PENDING
   IN_PROGRESS
+  UNDER_REVIEW
   COMPLETED
   CANCELLED
+  REQUESTED
 }
 
 enum TaskPriority {
