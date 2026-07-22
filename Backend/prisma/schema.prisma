@@ -63,6 +63,7 @@ model User {
   attendanceRecords    AttendanceRecord[]
   leaveRequests        LeaveRequest[]
   leaveBalances        LeaveBalance[]
+  documentVaults       DocumentVault[]
 
   @@map("users")
 }
@@ -121,6 +122,7 @@ model Client {
   complianceItems          ComplianceItem[]
   convertedLead            Lead?
   invoices                 Invoice[]
+  documentVaults           DocumentVault[]
 
   @@map("clients")
 }
@@ -214,6 +216,7 @@ model Task {
   history       TaskHistory[]
   dependencies  TaskDependency[] @relation("TaskSuccessor")
   prerequisites TaskDependency[] @relation("TaskPredecessor")
+  documentVaults DocumentVault[]
 
   @@map("tasks")
 }
@@ -399,6 +402,7 @@ model Firm {
   attendanceRecords AttendanceRecord[]
   leaveRequests     LeaveRequest[]
   leaveBalances     LeaveBalance[]
+  documentVaults    DocumentVault[]
 
   deletedAt   DateTime?
 
@@ -770,4 +774,40 @@ enum LeaveRequestStatus {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+model DocumentVault {
+  id             Int              @id @default(autoincrement())
+  firmId         Int
+  clientId       Int?
+  taskId         Int?
+  uploadedBy     Int
+  title          String
+  fileName       String
+  fileUrl        String
+  fileSize       Int              @default(0)
+  mimeType       String           @default("application/pdf")
+  category       DocumentCategory @default(GENERAL)
+  isConfidential Boolean          @default(false)
+  notes          String?
+  deletedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  firm           Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  client         Client?          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  task           Task?            @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  uploader       User             @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@map("document_vaults")
+}
+
+enum DocumentCategory {
+  GST_FILINGS
+  INCOME_TAX
+  AUDIT_REPORTS
+  ROC_MCA
+  FINANCIAL_STATEMENTS
+  KYC_LEGAL
+  GENERAL
 }

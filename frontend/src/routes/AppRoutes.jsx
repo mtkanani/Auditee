@@ -32,6 +32,7 @@ import { FirmAnnouncements } from '../pages/firm-admin/FirmAnnouncements';
 import { Compliance } from '../pages/firm-admin/Compliance';
 import { AttendanceManagement } from '../pages/firm-admin/AttendanceManagement';
 import { LeaveManagement } from '../pages/firm-admin/LeaveManagement';
+import { DocumentVault } from '../pages/firm-admin/DocumentVault';
 import { Reports } from '../pages/firm-admin/Reports';
 
 // User / Employee Pages
@@ -95,6 +96,7 @@ export const AppRoutes = () => {
           <Route path="/firm-admin/compliance" element={<Compliance />} />
           <Route path="/firm-admin/attendance" element={<AttendanceManagement />} />
           <Route path="/firm-admin/leave-management" element={<LeaveManagement />} />
+          <Route path="/firm-admin/document-vault" element={<DocumentVault />} />
           <Route path="/firm-admin/reports" element={<Reports />} />
         </Route>
 
@@ -107,6 +109,7 @@ export const AppRoutes = () => {
           <Route path="/user/leaves" element={<LeaveManagement />} />
           <Route path="/user/clients" element={<MyClients />} />
           <Route path="/user/time-entries" element={<TimeEntries />} />
+          <Route path="/user/document-vault" element={<DocumentVault />} />
           <Route path="/user/profile" element={<UserProfile />} />
         </Route>
 
@@ -115,6 +118,7 @@ export const AppRoutes = () => {
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/client/work-requests" element={<WorkRequests />} />
           <Route path="/client/tasks" element={<ClientTasks />} />
+          <Route path="/client/document-vault" element={<DocumentVault />} />
           <Route path="/client/profile" element={<ClientProfile />} />
         </Route>
       </Route>
