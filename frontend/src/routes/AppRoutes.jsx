@@ -30,6 +30,7 @@ import { ClientAssignments } from '../pages/firm-admin/ClientAssignments';
 import { FirmTaskManagement } from '../pages/firm-admin/FirmTaskManagement';
 import { FirmAnnouncements } from '../pages/firm-admin/FirmAnnouncements';
 import { Compliance } from '../pages/firm-admin/Compliance';
+import { AttendanceManagement } from '../pages/firm-admin/AttendanceManagement';
 import { Reports } from '../pages/firm-admin/Reports';
 
 // User / Employee Pages
@@ -91,6 +92,7 @@ export const AppRoutes = () => {
           <Route path="/firm-admin/assignments" element={<ClientAssignments />} />
           <Route path="/firm-admin/announcements" element={<FirmAnnouncements />} />
           <Route path="/firm-admin/compliance" element={<Compliance />} />
+          <Route path="/firm-admin/attendance" element={<AttendanceManagement />} />
           <Route path="/firm-admin/reports" element={<Reports />} />
         </Route>
 
@@ -99,6 +101,7 @@ export const AppRoutes = () => {
           <Route path="/user/dashboard" element={<UserDashboard />} />
           <Route path="/user/announcements" element={<UserAnnouncements />} />
           <Route path="/user/tasks" element={<MyTasks />} />
+          <Route path="/user/attendance" element={<AttendanceManagement />} />
           <Route path="/user/clients" element={<MyClients />} />
           <Route path="/user/time-entries" element={<TimeEntries />} />
           <Route path="/user/profile" element={<UserProfile />} />

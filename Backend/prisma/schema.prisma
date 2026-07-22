@@ -60,6 +60,7 @@ model User {
   createdAnnouncements Announcement[]  @relation("AnnouncementCreator")
   announcementReads    AnnouncementRead[]
   taskAssignees        TaskAssignee[]
+  attendanceRecords    AttendanceRecord[]
 
   @@map("users")
 }
@@ -393,6 +394,7 @@ model Firm {
   complianceItems ComplianceItem[]
   leads       Lead[]
   invoices    Invoice[]
+  attendanceRecords AttendanceRecord[]
 
   deletedAt   DateTime?
 
@@ -675,4 +677,37 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
+}
+
+model AttendanceRecord {
+  id               Int              @id @default(autoincrement())
+  firmId           Int
+  userId           Int
+  date             DateTime
+  checkInTime      DateTime         @default(now())
+  checkOutTime     DateTime?
+  workingHours     Float            @default(0.0)
+  status           AttendanceStatus @default(PRESENT)
+  checkInLat       Float?
+  checkInLng       Float?
+  checkInLocation  String?
+  checkOutLat      Float?
+  checkOutLng      Float?
+  checkOutLocation String?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  firm             Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("attendance_records")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  HALF_DAY
+  ABSENT
+  ON_LEAVE
 }

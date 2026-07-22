@@ -17,6 +17,7 @@ const taskRoutes = require('./modules/tasks/task.routes');
 const complianceRoutes = require('./modules/compliance/compliance.routes');
 const leadRoutes = require('./modules/leads/lead.routes');
 const invoiceRoutes = require('./modules/invoices/invoice.routes');
+const attendanceRoutes = require('./modules/attendance/attendance.routes');
 
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
@@ -76,6 +77,7 @@ app.use('/api/user/compliance', complianceRoutes);
 app.use('/api/firm-admin/leads', leadRoutes);
 app.use('/api/firm-admin/invoices', invoiceRoutes);
 app.use('/api/client/invoices', invoiceRoutes);
+app.use('/api/attendance', attendanceRoutes);
 app.use('/api/user', publicUserRoutes);
 app.use('/api/client', publicClientRoutes);
 
