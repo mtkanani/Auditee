@@ -22,6 +22,7 @@ import { FirmManagement } from '../pages/super-admin/FirmManagement';
 
 // Firm Admin Pages
 import { FirmAdminDashboard } from '../pages/firm-admin/FirmAdminDashboard';
+import { LeadManagement } from '../pages/firm-admin/LeadManagement';
 import { UserManagement } from '../pages/firm-admin/UserManagement';
 import { ClientManagement } from '../pages/firm-admin/ClientManagement';
 import { ClientAssignments } from '../pages/firm-admin/ClientAssignments';
@@ -81,6 +82,7 @@ export const AppRoutes = () => {
         {/* FIRM ADMIN ROUTES */}
         <Route element={<ProtectedRoute allowedRoles={['FIRM_ADMIN', 'ADMIN']} />}>
           <Route path="/firm-admin/dashboard" element={<FirmAdminDashboard />} />
+          <Route path="/firm-admin/leads" element={<LeadManagement />} />
           <Route path="/firm-admin/tasks" element={<FirmTaskManagement />} />
           <Route path="/firm-admin/users" element={<UserManagement />} />
           <Route path="/firm-admin/clients" element={<ClientManagement />} />
