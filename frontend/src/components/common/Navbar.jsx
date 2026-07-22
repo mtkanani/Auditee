@@ -211,12 +211,12 @@ export const Navbar = ({ onMenuClick }) => {
           {/* Top Bar Adjustable Leave Widget */}
           {isAdmin ? (
             <button
-              onClick={() => setIsLeaveDrawerOpen(true)}
+              onClick={() => navigate('/firm-admin/leave-management')}
               className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/30 text-xs font-extrabold flex items-center gap-1.5 shadow-md relative"
-              title="Open Leave Applications Approval Inbox"
+              title="Open Leave Management Workstation"
             >
               <FiCalendar className="w-3.5 h-3.5 text-purple-400" />
-              <span>Leave Inbox</span>
+              <span>Leave Management</span>
               {pendingLeaveCount > 0 && (
                 <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
                   {pendingLeaveCount}
@@ -225,12 +225,12 @@ export const Navbar = ({ onMenuClick }) => {
             </button>
           ) : (
             <button
-              onClick={() => setIsApplyLeaveModalOpen(true)}
+              onClick={() => navigate('/user/leaves', { state: { openApplyModal: true } })}
               className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/30 text-xs font-extrabold flex items-center gap-1.5 shadow-md"
-              title="Click to Apply for Leave"
+              title="Open Leave Management Workstation"
             >
               <FiCalendar className="w-3.5 h-3.5 text-purple-400" />
-              <span>Apply Leave</span>
+              <span>Leave Management</span>
             </button>
           )}
         </div>

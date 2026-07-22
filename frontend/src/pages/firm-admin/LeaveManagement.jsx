@@ -18,10 +18,12 @@ import {
 } from 'react-icons/fi';
 import { leaveService } from '../../services/leaveService';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const LeaveManagement = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
 
   const [myLeaveData, setMyLeaveData] = useState({ balance: null, requests: [] });
@@ -34,7 +36,7 @@ export const LeaveManagement = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(Boolean(location.state?.openApplyModal));
   const [adminRemarks, setAdminRemarks] = useState({});
 
   const fetchLeaveData = async () => {
