@@ -7,6 +7,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { FiUsers, FiBriefcase, FiCheckSquare, FiShield, FiPlus, FiUserPlus, FiFileText } from 'react-icons/fi';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import { firmAdminService } from '../../services/firmAdminService';
+import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -67,35 +68,43 @@ export const FirmAdminDashboard = () => {
         }
       />
 
-      {/* 4 Summary Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard
-          title="Total Clients"
-          value={data?.metrics?.totalClients || 42}
-          icon={FiBriefcase}
-          color="indigo"
-          change="14%"
-        />
-        <StatsCard
-          title="Total Employees"
-          value={data?.metrics?.totalUsers || 18}
-          icon={FiUsers}
-          color="emerald"
-          change="8%"
-        />
-        <StatsCard
-          title="Pending Tasks"
-          value={data?.metrics?.pendingTasks || 14}
-          icon={FiCheckSquare}
-          color="amber"
-          trend="down"
-        />
-        <StatsCard
-          title="Pending Compliance"
-          value={data?.metrics?.pendingCompliance || 5}
-          icon={FiShield}
-          color="rose"
-        />
+      {/* Main Grid: Stats + Attendance Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* 4 Summary Stats Cards (2/3 width) */}
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <StatsCard
+            title="Total Clients"
+            value={data?.metrics?.totalClients || 42}
+            icon={FiBriefcase}
+            color="indigo"
+            change="14%"
+          />
+          <StatsCard
+            title="Total Employees"
+            value={data?.metrics?.totalUsers || 18}
+            icon={FiUsers}
+            color="emerald"
+            change="8%"
+          />
+          <StatsCard
+            title="Pending Tasks"
+            value={data?.metrics?.pendingTasks || 14}
+            icon={FiCheckSquare}
+            color="amber"
+            trend="down"
+          />
+          <StatsCard
+            title="Pending Compliance"
+            value={data?.metrics?.pendingCompliance || 5}
+            icon={FiShield}
+            color="rose"
+          />
+        </div>
+
+        {/* Attendance Widget (1/3 width) */}
+        <div className="lg:col-span-1">
+          <AttendanceWidget />
+        </div>
       </div>
 
       {/* Charts Grid */}
