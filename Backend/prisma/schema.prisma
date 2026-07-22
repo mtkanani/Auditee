@@ -115,6 +115,7 @@ model Client {
   services                 ClientServiceItem[]
   documents                ClientDocument[]
   activityLogs             ClientActivityLog[]
+  complianceItems          ComplianceItem[]
 
   @@map("clients")
 }
@@ -387,6 +388,7 @@ model Firm {
   tasks       Task[]
   announcements Announcement[]
   taskTemplates TaskTemplate[]
+  complianceItems ComplianceItem[]
 
   deletedAt   DateTime?
 
@@ -394,6 +396,35 @@ model Firm {
   updatedAt   DateTime   @updatedAt
 
   @@map("firms")
+}
+
+model ComplianceItem {
+  id             Int              @id @default(autoincrement())
+  firmId         Int
+  clientId       Int?
+  title          String
+  category       String           @default("GST")
+  dueDate        DateTime
+  period         String?
+  priority       TaskPriority     @default(MEDIUM)
+  status         ComplianceStatus @default(UPCOMING)
+  penaltyDetails String?
+  autoTaskId     Int?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  firm           Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  client         Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@map("compliance_items")
+}
+
+enum ComplianceStatus {
+  UPCOMING
+  IN_PROGRESS
+  FILED
+  OVERDUE
+  EXTENDED
 }
 
 model Announcement {
