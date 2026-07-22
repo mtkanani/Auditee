@@ -19,6 +19,7 @@ import {
   FiBell,
   FiTrendingUp,
   FiDollarSign,
+  FiCalendar,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { formatRoleName, normalizeRole } from '../../utils/helpers';
@@ -47,6 +48,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { path: '/firm-admin/announcements', name: 'Notice Board', icon: FiRadio },
           { path: '/firm-admin/compliance', name: 'Compliance', icon: FiShield },
           { path: '/firm-admin/attendance', name: 'Attendance Report', icon: FiClock },
+          { path: '/firm-admin/leave-management', name: 'Leave Management', icon: FiCalendar },
           { path: '/firm-admin/reports', name: 'Reports', icon: FiFileText },
         ];
       case 'CLIENT':
@@ -63,6 +65,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { path: '/user/announcements', name: 'Firm Notices', icon: FiBell },
           { path: '/user/tasks', name: 'My Tasks', icon: FiCheckSquare },
           { path: '/user/attendance', name: 'My Attendance', icon: FiClock },
+          { path: '/user/leaves', name: 'My Leaves', icon: FiCalendar },
           { path: '/user/clients', name: 'My Clients', icon: FiBriefcase },
           { path: '/user/time-entries', name: 'Time Entries', icon: FiClock },
           { path: '/user/profile', name: 'Profile & Settings', icon: FiUser },

@@ -11,6 +11,7 @@ import {
   FiCheckCircle,
   FiClock,
   FiMapPin,
+  FiCalendar,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -18,6 +19,9 @@ import { Avatar } from './Avatar';
 import { formatRoleName } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
 import { attendanceService } from '../../services/attendanceService';
+import { leaveService } from '../../services/leaveService';
+import { LeaveAdminDrawer } from '../leave/LeaveAdminDrawer';
+import { ApplyLeaveModal } from '../leave/ApplyLeaveModal';
 import toast from 'react-hot-toast';
 
 export const Navbar = ({ onMenuClick }) => {
@@ -31,6 +35,13 @@ export const Navbar = ({ onMenuClick }) => {
   // Attendance Widget State
   const [attendanceStatus, setAttendanceStatus] = useState(null);
   const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
+
+  // Leave Widget State
+  const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
+  const [isLeaveDrawerOpen, setIsLeaveDrawerOpen] = useState(false);
+  const [isApplyLeaveModalOpen, setIsApplyLeaveModalOpen] = useState(false);
+
+  const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
 
   // Sample system notifications
   const [notifications] = useState([
@@ -49,8 +60,21 @@ export const Navbar = ({ onMenuClick }) => {
     }
   };
 
+  const fetchPendingLeaves = async () => {
+    if (!user || user.role === 'SUPER_ADMIN' || user.role === 'CLIENT') return;
+    if (isAdmin) {
+      try {
+        const res = await leaveService.getPendingRequests();
+        setPendingLeaveCount(res.data?.count || 0);
+      } catch (err) {
+        console.log('Error fetching pending leave count:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     fetchAttendanceStatus();
+    fetchPendingLeaves();
   }, [user]);
 
   const handleGPSCheckIn = async () => {
@@ -145,40 +169,69 @@ export const Navbar = ({ onMenuClick }) => {
         </div>
       </div>
 
-      {/* Center / Right section: Top Navbar Attendance GPS Widget */}
+      {/* Top Navbar Widgets Section (GPS Attendance & Top Bar Leave Widget) */}
       {user && user.role !== 'SUPER_ADMIN' && user.role !== 'CLIENT' && (
-        <div className="hidden md:flex items-center gap-2 mr-3 p-1 rounded-xl bg-slate-950 border border-slate-800">
-          {!attendanceStatus?.isCheckedIn ? (
-            <button
-              disabled={isAttendanceLoading}
-              onClick={handleGPSCheckIn}
-              className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg flex items-center gap-1.5 transition-all"
-              title="Click to Clock In with GPS Verification"
-            >
-              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-              <FiMapPin className="w-3.5 h-3.5" />
-              <span>Check In (GPS)</span>
-            </button>
-          ) : !attendanceStatus?.isCheckedOut ? (
-            <div className="flex items-center gap-2 px-2">
-              <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Working: {attendanceStatus.workingHours || 0} hrs</span>
-              </div>
+        <div className="hidden md:flex items-center gap-3 mr-3">
+          {/* Top Bar GPS Attendance Widget */}
+          <div className="flex items-center gap-2 p-1 rounded-xl bg-slate-950 border border-slate-800">
+            {!attendanceStatus?.isCheckedIn ? (
               <button
                 disabled={isAttendanceLoading}
-                onClick={handleGPSCheckOut}
-                className="py-1 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md flex items-center gap-1"
-                title="Click to Clock Out"
+                onClick={handleGPSCheckIn}
+                className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-lg flex items-center gap-1.5 transition-all"
+                title="Click to Clock In with GPS Verification"
               >
-                <span>Check Out</span>
+                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                <FiMapPin className="w-3.5 h-3.5" />
+                <span>Check In (GPS)</span>
               </button>
-            </div>
+            ) : !attendanceStatus?.isCheckedOut ? (
+              <div className="flex items-center gap-2 px-2">
+                <div className="flex items-center gap-1 text-[11px] text-emerald-400 font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Working: {attendanceStatus.workingHours || 0} hrs</span>
+                </div>
+                <button
+                  disabled={isAttendanceLoading}
+                  onClick={handleGPSCheckOut}
+                  className="py-1 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md flex items-center gap-1"
+                  title="Click to Clock Out"
+                >
+                  <span>Check Out</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 px-3 py-1 text-xs font-bold text-slate-300">
+                <FiCheckCircle className="text-emerald-400" />
+                <span>Checked Out ({attendanceStatus.workingHours || 0} hrs)</span>
+              </div>
+            )}
+          </div>
+
+          {/* Top Bar Adjustable Leave Widget */}
+          {isAdmin ? (
+            <button
+              onClick={() => setIsLeaveDrawerOpen(true)}
+              className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/30 text-xs font-extrabold flex items-center gap-1.5 shadow-md relative"
+              title="Open Leave Applications Approval Inbox"
+            >
+              <FiCalendar className="w-3.5 h-3.5 text-purple-400" />
+              <span>Leave Inbox</span>
+              {pendingLeaveCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+                  {pendingLeaveCount}
+                </span>
+              )}
+            </button>
           ) : (
-            <div className="flex items-center gap-1 px-3 py-1 text-xs font-bold text-slate-300">
-              <FiCheckCircle className="text-emerald-400" />
-              <span>Checked Out ({attendanceStatus.workingHours || 0} hrs)</span>
-            </div>
+            <button
+              onClick={() => setIsApplyLeaveModalOpen(true)}
+              className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/30 text-xs font-extrabold flex items-center gap-1.5 shadow-md"
+              title="Click to Apply for Leave"
+            >
+              <FiCalendar className="w-3.5 h-3.5 text-purple-400" />
+              <span>Apply Leave</span>
+            </button>
           )}
         </div>
       )}
@@ -279,6 +332,19 @@ export const Navbar = ({ onMenuClick }) => {
           )}
         </div>
       </div>
+
+      {/* Top Bar Triggered Modals & Drawers */}
+      <LeaveAdminDrawer
+        isOpen={isLeaveDrawerOpen}
+        onClose={() => setIsLeaveDrawerOpen(false)}
+        onRefresh={fetchPendingLeaves}
+      />
+
+      <ApplyLeaveModal
+        isOpen={isApplyLeaveModalOpen}
+        onClose={() => setIsApplyLeaveModalOpen(false)}
+        onSuccess={fetchPendingLeaves}
+      />
     </header>
   );
 };
