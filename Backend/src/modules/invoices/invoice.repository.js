@@ -71,7 +71,7 @@ class InvoiceRepository {
     return await prisma.invoice.findFirst({
       where: { id, firmId, deletedAt: null },
       include: {
-        firm: { select: { id: true, firmName: true, email: true, phone: true, gstNumber: true, address: true, city: true, state: true } },
+        firm: { select: { id: true, firmName: true, email: true, phone: true, address: true, city: true, state: true } },
         client: { select: { id: true, clientName: true, companyName: true, email: true, phone: true, gstNumber: true, panNumber: true, billingAddress: true } },
         items: true,
         payments: { orderBy: { createdAt: 'desc' } },
