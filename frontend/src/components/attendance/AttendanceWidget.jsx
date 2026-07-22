@@ -232,7 +232,7 @@ export const AttendanceWidget = () => {
               Today's Punches ({entries.length})
             </span>
           </div>
-          <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-[152px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {entries.map((entry, i) => {
               const isOpen = !entry.checkOutTime;
               const dur = isOpen
