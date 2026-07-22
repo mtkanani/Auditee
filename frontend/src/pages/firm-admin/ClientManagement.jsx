@@ -228,7 +228,7 @@ export const ClientManagement = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Client Master Management ⭐⭐⭐⭐⭐"
+        title="Client Master Management"
         subtitle="360-degree client hub: Tax Identifiers (PAN, GST, TAN, CIN), Subscribed CA Services, Billing & Master Documents"
         actions={
           <button

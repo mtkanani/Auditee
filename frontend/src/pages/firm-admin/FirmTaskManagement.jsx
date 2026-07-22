@@ -4,6 +4,7 @@ import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Pagination } from '../../components/common/Pagination';
 import { StatsCard } from '../../components/common/StatsCard';
+import { Modal } from '../../components/common/Modal';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskTemplatesModal } from '../../components/tasks/TaskTemplatesModal';
@@ -227,7 +228,7 @@ export const FirmTaskManagement = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Task & Audit Workstation ⭐⭐⭐⭐⭐"
+        title="Task & Audit Workstation"
         subtitle="Assign tasks to Single, Multiple, or ALL Employees, approve Client Work Requests, track Subtasks & History"
         actions={
           <div className="flex items-center gap-2">

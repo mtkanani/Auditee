@@ -85,7 +85,7 @@ export const MyTasks = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Assigned Tasks & Checklist ⭐⭐⭐⭐⭐"
+        title="My Assigned Tasks & Checklist"
         subtitle="Complete subtasks, collaborate on comments, attach files, and update task status"
         actions={
           <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl">
