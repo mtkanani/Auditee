@@ -692,25 +692,38 @@ model AttendanceRecord {
   firmId           Int
   userId           Int
   date             DateTime
-  checkInTime      DateTime         @default(now())
-  checkOutTime     DateTime?
   workingHours     Float            @default(0.0)
   status           AttendanceStatus @default(PRESENT)
-  checkInLat       Float?
-  checkInLng       Float?
-  checkInLocation  String?
-  checkOutLat      Float?
-  checkOutLng      Float?
-  checkOutLocation String?
   notes            String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   firm             Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
   user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries          AttendanceEntry[]
 
   @@unique([userId, date])
   @@map("attendance_records")
+}
+
+model AttendanceEntry {
+  id               Int              @id @default(autoincrement())
+  recordId         Int
+  checkInTime      DateTime
+  checkOutTime     DateTime?
+  durationHours    Float            @default(0.0)
+  checkInLat       Float?
+  checkInLng       Float?
+  checkInLocation  String?
+  checkOutLat      Float?
+  checkOutLng      Float?
+  checkOutLocation String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  record           AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@map("attendance_entries")
 }
 
 enum AttendanceStatus {

@@ -1,5 +1,5 @@
 const attendanceRepository = require('./attendance.repository');
-const { BadRequestError, NotFoundError } = require('../../utils/errors');
+const { BadRequestError } = require('../../utils/errors');
 
 class AttendanceService {
   async getTodayStatus(userId, firmId) {
@@ -8,72 +8,82 @@ class AttendanceService {
       return {
         isCheckedIn: false,
         isCheckedOut: false,
-        checkInTime: null,
-        checkOutTime: null,
+        hasOpenEntry: false,
+        entries: [],
         workingHours: 0,
         record: null,
       };
     }
 
-    const isCheckedIn = Boolean(record.checkInTime);
-    const isCheckedOut = Boolean(record.checkOutTime);
+    const entries = record.entries || [];
+    const openEntry = entries.find((e) => !e.checkOutTime);
+    const hasOpenEntry = Boolean(openEntry);
 
-    let activeWorkingHours = record.workingHours || 0;
-    if (isCheckedIn && !isCheckedOut) {
-      const diffMs = Date.now() - new Date(record.checkInTime).getTime();
-      activeWorkingHours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
+    // Live working hours = closed entries total + current open session duration
+    let liveHours = record.workingHours || 0;
+    if (openEntry) {
+      const diffMs = Date.now() - new Date(openEntry.checkInTime).getTime();
+      liveHours = record.workingHours + diffMs / (1000 * 60 * 60);
     }
 
     return {
-      isCheckedIn,
-      isCheckedOut,
-      checkInTime: record.checkInTime,
-      checkOutTime: record.checkOutTime,
-      workingHours: activeWorkingHours,
+      isCheckedIn: entries.length > 0,
+      hasOpenEntry,
+      isCheckedOut: entries.length > 0 && !hasOpenEntry,
+      openEntry: openEntry || null,
+      entries,
+      workingHours: parseFloat(liveHours.toFixed(2)),
+      totalWorkingHours: record.workingHours,
       record,
     };
   }
 
   async checkIn(data, userId, firmId) {
-    const existing = await attendanceRepository.findTodayRecord(userId, firmId);
-    if (existing) {
-      throw new BadRequestError('You have already checked in for today');
+    // Get or create today's day record
+    const record = await attendanceRepository.findOrCreateTodayRecord(userId, firmId);
+
+    // Check if there's already an open (unchecked-out) entry
+    const openEntry = await attendanceRepository.findOpenEntry(record.id);
+    if (openEntry) {
+      throw new BadRequestError('You are currently checked in. Please Check Out before checking in again.');
     }
 
-    return await attendanceRepository.createCheckIn({
-      firmId,
-      userId,
+    // Create a new entry
+    const entry = await attendanceRepository.createEntry({
+      recordId: record.id,
       lat: data.lat,
       lng: data.lng,
       location: data.location,
-      notes: data.notes,
     });
+
+    return { record, entry };
   }
 
   async checkOut(data, userId, firmId) {
     const record = await attendanceRepository.findTodayRecord(userId, firmId);
     if (!record) {
-      throw new BadRequestError('You have not checked in for today yet');
+      throw new BadRequestError('You have not checked in for today yet.');
     }
 
-    if (record.checkOutTime) {
-      throw new BadRequestError('You have already checked out for today');
+    const openEntry = await attendanceRepository.findOpenEntry(record.id);
+    if (!openEntry) {
+      throw new BadRequestError('You are not currently checked in. Please Check In first.');
     }
 
     const checkOutTime = new Date();
-    const diffMs = checkOutTime.getTime() - new Date(record.checkInTime).getTime();
-    const workingHours = Number((diffMs / (1000 * 60 * 60)).toFixed(2));
-    const status = workingHours >= 7.0 ? 'PRESENT' : 'HALF_DAY';
+    const diffMs = checkOutTime.getTime() - new Date(openEntry.checkInTime).getTime();
+    const durationHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(4));
 
-    return await attendanceRepository.updateCheckOut(record.id, {
-      checkOutTime,
-      workingHours,
-      status,
+    const entry = await attendanceRepository.closeEntry(openEntry.id, {
       lat: data.lat,
       lng: data.lng,
       location: data.location,
-      notes: data.notes,
+      durationHours,
     });
+
+    // Fetch updated record with all entries
+    const updatedRecord = await attendanceRepository.findTodayRecord(userId, firmId);
+    return { record: updatedRecord, entry, workingHours: updatedRecord.workingHours };
   }
 
   async getMyMonthlyLogs(userId, firmId, month, year) {
