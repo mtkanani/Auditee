@@ -18,6 +18,7 @@ import {
   FiRadio,
   FiBell,
   FiTrendingUp,
+  FiDollarSign,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { formatRoleName, normalizeRole } from '../../utils/helpers';
@@ -37,6 +38,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       case 'FIRM_ADMIN':
         return [
           { path: '/firm-admin/dashboard', name: 'Dashboard', icon: FiGrid },
+          { path: '/firm-admin/billing', name: 'Billing & Invoices', icon: FiDollarSign },
           { path: '/firm-admin/leads', name: 'Lead CRM', icon: FiTrendingUp },
           { path: '/firm-admin/tasks', name: 'Task Workstation', icon: FiCheckSquare },
           { path: '/firm-admin/users', name: 'User Management', icon: FiUsers },

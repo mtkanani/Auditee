@@ -117,6 +117,7 @@ model Client {
   activityLogs             ClientActivityLog[]
   complianceItems          ComplianceItem[]
   convertedLead            Lead?
+  invoices                 Invoice[]
 
   @@map("clients")
 }
@@ -391,6 +392,7 @@ model Firm {
   taskTemplates TaskTemplate[]
   complianceItems ComplianceItem[]
   leads       Lead[]
+  invoices    Invoice[]
 
   deletedAt   DateTime?
 
@@ -598,4 +600,79 @@ enum LeadStage {
   PROPOSAL_SENT
   WON
   LOST
+}
+
+model Invoice {
+  id             Int             @id @default(autoincrement())
+  firmId         Int
+  clientId       Int
+  invoiceNumber  String
+  invoiceType    InvoiceType     @default(TAX_INVOICE)
+  issueDate      DateTime        @default(now())
+  dueDate        DateTime
+  placeOfSupply  String?         @default("24-GUJARAT")
+  isInterState   Boolean         @default(false)
+  subTotal       Float           @default(0.0)
+  cgstAmount     Float           @default(0.0)
+  sgstAmount     Float           @default(0.0)
+  igstAmount     Float           @default(0.0)
+  totalAmount    Float           @default(0.0)
+  paidAmount     Float           @default(0.0)
+  balanceAmount  Float           @default(0.0)
+  status         InvoiceStatus   @default(UNPAID)
+  notes          String?
+  terms          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  firm           Firm            @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  client         Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items          InvoiceItem[]
+  payments       PaymentRecord[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          Int      @id @default(autoincrement())
+  invoiceId   Int
+  description String
+  sacCode     String?  @default("998231")
+  quantity    Int      @default(1)
+  unitPrice   Float    @default(0.0)
+  amount      Float    @default(0.0)
+  gstRate     Float    @default(18.0)
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}
+
+model PaymentRecord {
+  id              Int      @id @default(autoincrement())
+  invoiceId       Int
+  amount          Float
+  paymentDate     DateTime @default(now())
+  paymentMode     String   @default("BANK_TRANSFER")
+  referenceNumber String?
+  notes           String?
+  createdAt       DateTime @default(now())
+
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("payment_records")
+}
+
+enum InvoiceType {
+  TAX_INVOICE
+  PROFORMA
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
 }
