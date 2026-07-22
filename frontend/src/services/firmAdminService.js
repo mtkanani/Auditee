@@ -68,6 +68,32 @@ export const firmAdminService = {
     return res.data;
   },
 
+  // Client Sub-Resource APIs (Services, Documents, History)
+  addClientService: async (clientId, serviceData) => {
+    const res = await axiosInstance.post(`/firm-admin/clients/${clientId}/services`, serviceData);
+    return res.data;
+  },
+
+  removeClientService: async (clientId, serviceId) => {
+    const res = await axiosInstance.delete(`/firm-admin/clients/${clientId}/services/${serviceId}`);
+    return res.data;
+  },
+
+  addClientDocument: async (clientId, docData) => {
+    const res = await axiosInstance.post(`/firm-admin/clients/${clientId}/documents`, docData);
+    return res.data;
+  },
+
+  deleteClientDocument: async (clientId, documentId) => {
+    const res = await axiosInstance.delete(`/firm-admin/clients/${clientId}/documents/${documentId}`);
+    return res.data;
+  },
+
+  getClientHistory: async (clientId) => {
+    const res = await axiosInstance.get(`/firm-admin/clients/${clientId}/history`);
+    return res.data;
+  },
+
   // Dashboard API
   getDashboard: async () => {
     const res = await axiosInstance.get('/firm-admin/dashboard');

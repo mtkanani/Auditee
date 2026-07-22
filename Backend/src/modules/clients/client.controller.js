@@ -80,11 +80,96 @@ class ClientController {
       const firmId = req.user.firmId;
       const clientId = parseInt(req.params.clientId, 10);
       const { status } = req.body;
-      const updatedClient = await clientService.changeClientStatus(clientId, status, firmId);
+      const performedBy = req.user.id;
+      const performedName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Firm Admin';
+      const updatedClient = await clientService.changeClientStatus(clientId, status, firmId, performedBy, performedName);
       return res.status(200).json({
         success: true,
         message: CLIENT_MESSAGES.STATUS_UPDATED,
         data: updatedClient,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async addService(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const clientId = parseInt(req.params.clientId, 10);
+      const performedBy = req.user.id;
+      const performedName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Firm Admin';
+      const service = await clientService.addService(clientId, req.body, firmId, performedBy, performedName);
+      return res.status(201).json({
+        success: true,
+        message: 'Client service added successfully',
+        data: service,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeService(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const clientId = parseInt(req.params.clientId, 10);
+      const serviceId = parseInt(req.params.serviceId, 10);
+      const performedBy = req.user.id;
+      const performedName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Firm Admin';
+      const result = await clientService.removeService(clientId, serviceId, firmId, performedBy, performedName);
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async addDocument(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const clientId = parseInt(req.params.clientId, 10);
+      const performedBy = req.user.id;
+      const performedName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Firm Admin';
+      const document = await clientService.addDocument(clientId, req.body, firmId, performedBy, performedName);
+      return res.status(201).json({
+        success: true,
+        message: 'Client master document added successfully',
+        data: document,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteDocument(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const clientId = parseInt(req.params.clientId, 10);
+      const documentId = parseInt(req.params.documentId, 10);
+      const performedBy = req.user.id;
+      const performedName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Firm Admin';
+      const result = await clientService.deleteDocument(clientId, documentId, firmId, performedBy, performedName);
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getClientHistory(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const clientId = parseInt(req.params.clientId, 10);
+      const history = await clientService.getClientHistory(clientId, firmId);
+      return res.status(200).json({
+        success: true,
+        message: 'Client activity history fetched successfully',
+        data: history,
       });
     } catch (error) {
       next(error);

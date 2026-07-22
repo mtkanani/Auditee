@@ -40,16 +40,47 @@ const createClientValidation = [
     .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/)
     .withMessage('Invalid Indian GST format (e.g. 22AAAAA0000A1Z5)'),
   body('panNumber')
-    .optional({ nullable: true })
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .toUpperCase()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/)
     .withMessage('Invalid Indian PAN format (e.g. ABCDE1234F)'),
+  body('tanNumber')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim()
+    .toUpperCase()
+    .matches(/^[A-Z]{4}[0-9]{5}[A-Z]{1}$/)
+    .withMessage('Invalid Indian TAN format (e.g. ABCD12345E)'),
+  body('cinNumber')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim()
+    .toUpperCase()
+    .isLength({ max: 25 })
+    .withMessage('CIN number cannot exceed 25 characters'),
   body('businessType')
     .optional({ nullable: true })
     .trim()
     .isLength({ max: 100 })
     .withMessage('Business type cannot exceed 100 characters'),
+  body('industryCategory')
+    .optional({ nullable: true })
+    .trim(),
+  body('website')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim(),
+  body('contactPersonName')
+    .optional({ nullable: true })
+    .trim(),
+  body('contactPersonDesignation')
+    .optional({ nullable: true })
+    .trim(),
+  body('contactPersonEmail')
+    .optional({ nullable: true, checkFalsy: true })
+    .isEmail()
+    .withMessage('Invalid contact person email format'),
+  body('contactPersonPhone')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim(),
   body('address')
     .optional({ nullable: true })
     .trim(),
@@ -63,10 +94,24 @@ const createClientValidation = [
     .optional({ nullable: true })
     .trim(),
   body('pincode')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim(),
+  body('billingAddress')
     .optional({ nullable: true })
-    .trim()
-    .isPostalCode('IN')
-    .withMessage('Invalid pincode format'),
+    .trim(),
+  body('paymentTerms')
+    .optional({ nullable: true })
+    .trim(),
+  body('taxRegistrationType')
+    .optional({ nullable: true })
+    .trim(),
+  body('outstandingBalance')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 })
+    .withMessage('Outstanding balance must be a non-negative number'),
+  body('billingNotes')
+    .optional({ nullable: true })
+    .trim(),
   body('status')
     .optional()
     .isIn(['ACTIVE', 'INACTIVE'])
@@ -90,13 +135,16 @@ const getClientsValidation = [
   query('gstSearch')
     .optional({ checkFalsy: true })
     .trim(),
+  query('clientType')
+    .optional({ checkFalsy: true })
+    .trim(),
   query('status')
     .optional({ checkFalsy: true })
     .isIn(['ACTIVE', 'INACTIVE'])
     .withMessage('Status must be ACTIVE or INACTIVE'),
   query('sortBy')
     .optional({ checkFalsy: true })
-    .isIn(['clientName', 'companyName', 'email', 'createdAt'])
+    .isIn(['clientName', 'companyName', 'email', 'createdAt', 'outstandingBalance'])
     .withMessage('Invalid sortBy field'),
   query('sortOrder')
     .optional({ checkFalsy: true })
@@ -125,27 +173,37 @@ const updateClientValidation = [
     .withMessage('Invalid email format')
     .normalizeEmail(),
   body('phone')
-    .optional({ nullable: true })
-    .trim()
-    .isMobilePhone()
-    .withMessage('Invalid phone number format'),
+    .optional({ nullable: true, checkFalsy: true })
+    .trim(),
   body('gstNumber')
-    .optional({ nullable: true })
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .toUpperCase()
     .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/)
     .withMessage('Invalid Indian GST format (e.g. 22AAAAA0000A1Z5)'),
   body('panNumber')
-    .optional({ nullable: true })
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .toUpperCase()
     .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/)
     .withMessage('Invalid Indian PAN format (e.g. ABCDE1234F)'),
-  body('pincode')
-    .optional({ nullable: true })
+  body('tanNumber')
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
-    .isPostalCode('IN')
-    .withMessage('Invalid pincode format'),
+    .toUpperCase()
+    .matches(/^[A-Z]{4}[0-9]{5}[A-Z]{1}$/)
+    .withMessage('Invalid Indian TAN format (e.g. ABCD12345E)'),
+  body('cinNumber')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim()
+    .toUpperCase(),
+  body('pincode')
+    .optional({ nullable: true, checkFalsy: true })
+    .trim(),
+  body('outstandingBalance')
+    .optional({ nullable: true })
+    .isFloat({ min: 0 })
+    .withMessage('Outstanding balance must be a non-negative number'),
 ];
 
 const changeClientStatusValidation = [
@@ -157,10 +215,50 @@ const changeClientStatusValidation = [
     .withMessage('Status must be ACTIVE or INACTIVE'),
 ];
 
+const addServiceValidation = [
+  ...clientIdParamValidation,
+  body('serviceName')
+    .trim()
+    .notEmpty()
+    .withMessage('Service name is required'),
+  body('serviceCategory')
+    .optional({ nullable: true })
+    .trim(),
+  body('billingFrequency')
+    .optional()
+    .isIn(['ONE_TIME', 'MONTHLY', 'QUARTERLY', 'ANNUALLY'])
+    .withMessage('Invalid billing frequency'),
+  body('feeAmount')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Fee amount must be a positive number'),
+];
+
+const addDocumentValidation = [
+  ...clientIdParamValidation,
+  body('documentName')
+    .trim()
+    .notEmpty()
+    .withMessage('Document name is required'),
+  body('documentType')
+    .optional({ nullable: true })
+    .trim(),
+  body('fileUrl')
+    .trim()
+    .notEmpty()
+    .withMessage('File URL is required'),
+  body('fileSize')
+    .optional({ nullable: true })
+    .isInt({ min: 0 })
+    .toInt(),
+];
+
 module.exports = {
   createClientValidation,
   getClientsValidation,
   clientIdParamValidation,
   updateClientValidation,
   changeClientStatusValidation,
+  addServiceValidation,
+  addDocumentValidation,
 };
