@@ -77,7 +77,7 @@ export const UserDashboard = () => {
           />
         </div>
 
-        {/* Attendance Widget Column (1/3 width) */
+        {/* Attendance Widget Column (1/3 width) */}
         <div className="lg:col-span-1">
           <AttendanceWidget />
         </div>
