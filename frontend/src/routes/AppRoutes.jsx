@@ -42,6 +42,7 @@ import { MyTasks } from '../pages/user/MyTasks';
 import { MyClients } from '../pages/user/MyClients';
 import { TimeEntries } from '../pages/user/TimeEntries';
 import { UserProfile } from '../pages/user/UserProfile';
+import CalendarPage from '../pages/user/Calendar';
 
 // Client Pages
 import { ClientDashboard } from '../pages/client/ClientDashboard';
@@ -111,6 +112,7 @@ export const AppRoutes = () => {
           <Route path="/user/time-entries" element={<TimeEntries />} />
           <Route path="/user/document-vault" element={<DocumentVault />} />
           <Route path="/user/profile" element={<UserProfile />} />
+          <Route path="/calendar" element={<CalendarPage />} />
         </Route>
 
         {/* CLIENT ROUTES */}

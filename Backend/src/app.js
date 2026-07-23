@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./routes/authRoutes');
+const eventRoutes = require('./modules/events/event.routes');
 const oldUserRoutes = require('./routes/user.routes');
 const deleteAccountRoutes = require('./routes/deleteAccountRoutes');
 const firmRoutes = require('./routes/firmRoutes');
@@ -66,6 +67,7 @@ app.use('/api', deleteAccountRoutes);
 app.use('/api/admin/firms', firmRoutes);
 
 // Modular Auditee SaaS routes
+app.use('/api/events', eventRoutes);
 app.use('/api/firm-admin/users', firmAdminUserRoutes);
 app.use('/api/firm-admin/clients', firmAdminClientRoutes);
 app.use('/api/firm-admin/announcements', announcementAdminRoutes);
