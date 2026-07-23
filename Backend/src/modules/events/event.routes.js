@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const eventController = require('./event.controller');
-const { validate } = require('../../middlewares/validation.middleware');
+const validate = require('../../middlewares/validate');
 const { getEventsValidation, createEventValidation } = require('./event.validation');
 
 // GET /api/events?start=ISO&end=ISO
