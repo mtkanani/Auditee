@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, KeyRound, LogOut, X, Trash2, Users, Building2 } from 'lucide-react';
+import { User, KeyRound, LogOut, X, Trash2, Users, Building2, Calendar } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -22,7 +22,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       path: '/delete-account',
       icon: Trash2,
     },
-  ];
+    { name: 'Calendar', path: '/calendar', icon: Calendar },
+];
 
   // Dynamically inject Admin-only links
   const role = user?.role?.toLowerCase();
