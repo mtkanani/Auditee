@@ -44,6 +44,7 @@ export const Login = () => {
             <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input
               type="email"
+              autoComplete="username"
               {...register('email', {
                 required: 'Email is required',
                 pattern: { value: /^\S+@\S+$/i, message: 'Invalid email format' },
@@ -70,6 +71,7 @@ export const Login = () => {
             <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <input
               type="password"
+              autoComplete="current-password"
               {...register('password', { required: 'Password is required' })}
               placeholder="••••••••"
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
