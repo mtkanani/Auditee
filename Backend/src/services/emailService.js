@@ -119,12 +119,12 @@ const sendEmail = async ({ to, subject, text, html }) => {
     }
   }
 
-  // 2. Try Gmail REST API if OAuth refresh token is set
-  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
+  // 2. Try Gmail REST API ONLY if SMTP_PASS is not set and OAuth credentials exist
+  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN && !process.env.SMTP_PASS) {
     try {
       return await sendGmailViaRest({ to, subject, html });
     } catch (error) {
-      console.warn('⚠️ Gmail REST API delivery unavailable:', error.message || error);
+      // Quiet failover to mailer transporter without log clutter
     }
   }
 
