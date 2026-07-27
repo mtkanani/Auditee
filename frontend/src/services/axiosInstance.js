@@ -42,8 +42,9 @@ axiosInstance.interceptors.response.use(
       error.message ||
       'An unexpected error occurred';
 
-    // Session Expired / Unauthorized Handler
-    if (status === 401) {
+    // Session Expired / Unauthorized Handler (skips login & auth attempt routes)
+    const isAuthRequest = error.config?.url?.includes('/auth/login') || error.config?.url?.includes('/auth/verify');
+    if (status === 401 && !isAuthRequest) {
       console.warn('Session expired or unauthorized request. Cleaning up auth storage...');
       localStorage.removeItem('accessToken');
       localStorage.removeItem('userEmail');

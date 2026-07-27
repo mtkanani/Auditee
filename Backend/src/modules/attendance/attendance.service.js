@@ -3,6 +3,17 @@ const { BadRequestError } = require('../../utils/errors');
 
 class AttendanceService {
   async getTodayStatus(userId, firmId) {
+    if (!firmId) {
+      return {
+        isCheckedIn: false,
+        isCheckedOut: false,
+        hasOpenEntry: false,
+        entries: [],
+        workingHours: 0,
+        record: null,
+      };
+    }
+
     const record = await attendanceRepository.findTodayRecord(userId, firmId);
     if (!record) {
       return {
@@ -39,6 +50,10 @@ class AttendanceService {
   }
 
   async checkIn(data, userId, firmId) {
+    if (!firmId) {
+      throw new BadRequestError('You must be assigned to an active firm to use attendance features.');
+    }
+
     // Get or create today's day record
     const record = await attendanceRepository.findOrCreateTodayRecord(userId, firmId);
 
@@ -60,6 +75,10 @@ class AttendanceService {
   }
 
   async checkOut(data, userId, firmId) {
+    if (!firmId) {
+      throw new BadRequestError('You must be assigned to an active firm to use attendance features.');
+    }
+
     const record = await attendanceRepository.findTodayRecord(userId, firmId);
     if (!record) {
       throw new BadRequestError('You have not checked in for today yet.');
@@ -87,12 +106,14 @@ class AttendanceService {
   }
 
   async getMyMonthlyLogs(userId, firmId, month, year) {
+    if (!firmId) return [];
     const m = month ? parseInt(month, 10) : new Date().getMonth() + 1;
     const y = year ? parseInt(year, 10) : new Date().getFullYear();
     return await attendanceRepository.findUserMonthlyLogs(userId, firmId, m, y);
   }
 
   async getFirmAttendanceReport(firmId, queryParams) {
+    if (!firmId) return { records: [], total: 0 };
     const m = queryParams.month ? parseInt(queryParams.month, 10) : new Date().getMonth() + 1;
     const y = queryParams.year ? parseInt(queryParams.year, 10) : new Date().getFullYear();
     return await attendanceRepository.findFirmMasterAttendance({
