@@ -198,7 +198,7 @@ Welcome! I am here to help you navigate the client portal, check work request st
         >
           <Sparkles className="w-4 h-4 animate-pulse text-amber-300" />
           <span>Auditee AI Copilot</span>
-          <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">Right Side</span>
+          {/* <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">Right Side</span> */}
         </button>
       )}
 
