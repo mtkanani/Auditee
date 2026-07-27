@@ -487,12 +487,19 @@ const updateUserPassword = async (email, currentPassword, newPassword) => {
 const requestForgotPasswordOtp = async (email) => {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // 1. Check user exists
-  const user = await prisma.user.findUnique({
+  // 1. Check if user or client exists
+  let user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
+  let client = null;
   if (!user) {
-    throw new NotFoundError('User not found');
+    client = await prisma.client.findFirst({
+      where: { email: normalizedEmail, deletedAt: null },
+    });
+  }
+
+  if (!user && !client) {
+    throw new NotFoundError('No account found with this email address.');
   }
 
   // 2. Rate limiting check (max 10 requests per hour)
@@ -580,13 +587,22 @@ const verifyForgotPasswordOtp = async (email, otp) => {
 const resetUserPassword = async (email, newPassword) => {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // 1. Verify user exists
-  const user = await prisma.user.findUnique({
+  // 1. Verify user or client exists
+  let user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
+  let client = null;
   if (!user) {
-    throw new NotFoundError('User not found');
+    client = await prisma.client.findFirst({
+      where: { email: normalizedEmail, deletedAt: null },
+    });
   }
+
+  if (!user && !client) {
+    throw new NotFoundError('No account found with this email address.');
+  }
+
+  const account = user || client;
 
   // 2. Verify OTP verified = true status in forgot_password_otps
   const otpRecord = await prisma.forgotPasswordOtp.findFirst({
@@ -600,27 +616,43 @@ const resetUserPassword = async (email, newPassword) => {
   }
 
   // 3. Verify new password is not same as current password
-  const isSamePassword = await bcrypt.compare(newPassword, user.password);
-  if (isSamePassword) {
-    throw new BadRequestError('New password must be different from old password');
+  if (account.password) {
+    const isSamePassword = await bcrypt.compare(newPassword, account.password);
+    if (isSamePassword) {
+      throw new BadRequestError('New password must be different from old password');
+    }
   }
 
   // 4. Hash new password
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  // 5. Update user password and purge OTPs in transaction
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password: hashedPassword,
-        passwordChangedAt: new Date(),
-      },
-    }),
-    prisma.forgotPasswordOtp.deleteMany({
-      where: { email: normalizedEmail },
-    }),
-  ]);
+  // 5. Update user/client password and purge OTPs in transaction
+  if (user) {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          passwordChangedAt: new Date(),
+        },
+      }),
+      prisma.forgotPasswordOtp.deleteMany({
+        where: { email: normalizedEmail },
+      }),
+    ]);
+  } else if (client) {
+    await prisma.$transaction([
+      prisma.client.update({
+        where: { id: client.id },
+        data: {
+          password: hashedPassword,
+        },
+      }),
+      prisma.forgotPasswordOtp.deleteMany({
+        where: { email: normalizedEmail },
+      }),
+    ]);
+  }
 
   return { message: 'Password reset successfully' };
 };

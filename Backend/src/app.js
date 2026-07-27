@@ -33,27 +33,28 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://localhost:5001',
   'http://localhost:8080',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'https://auditee.vercel.app',
 ];
 
 if (process.env.FRONTEND_URL) {
-  const envOrigins = process.env.FRONTEND_URL.split(',').map(o => o.trim());
+  const envOrigins = process.env.FRONTEND_URL.split(',').map((o) => o.trim());
   allowedOrigins.push(...envOrigins);
 }
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (e.g. mobile apps, curl, postman, same-origin)
-      if (!origin) return callback(null, true);
-      return callback(null, true);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  })
-);
-app.options('*', cors());
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g. mobile apps, curl, postman, same-origin)
+    if (!origin) return callback(null, true);
+    return callback(null, origin);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
