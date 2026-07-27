@@ -4,14 +4,15 @@ let transporterInstance = null;
 
 /**
  * Initializes and retrieves the Nodemailer transporter.
- * Uses Nodemailer's built-in `service: 'gmail'` when SMTP_USER & SMTP_PASS (App Password) are provided.
+ * Uses Nodemailer's built-in `service: 'gmail'` when SMTP_USER & SMTP_PASS (App Password) are provided,
+ * with strict 4-second connection timeouts to prevent cloud host hanging.
  */
 const getTransporter = async () => {
   if (transporterInstance) {
     return transporterInstance;
   }
 
-  // 1. Preferred: Gmail Service with App Password (automatically strips spaces)
+  // 1. Preferred: Gmail Service with App Password (automatically strips spaces & sets 4s timeout)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     const cleanPassword = process.env.SMTP_PASS.replace(/\s+/g, '');
     console.log(`🔌 Configuring Gmail Transport for ${process.env.SMTP_USER}...`);
@@ -25,6 +26,9 @@ const getTransporter = async () => {
           user: process.env.SMTP_USER,
           pass: cleanPassword,
         },
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 5000,
         tls: { rejectUnauthorized: false },
       });
     } else {
@@ -34,6 +38,9 @@ const getTransporter = async () => {
           user: process.env.SMTP_USER,
           pass: cleanPassword,
         },
+        connectionTimeout: 4000,
+        greetingTimeout: 4000,
+        socketTimeout: 5000,
       });
     }
     return transporterInstance;
@@ -51,6 +58,9 @@ const getTransporter = async () => {
         clientSecret: process.env.GMAIL_CLIENT_SECRET,
         refreshToken: process.env.GMAIL_REFRESH_TOKEN,
       },
+      connectionTimeout: 4000,
+      greetingTimeout: 4000,
+      socketTimeout: 5000,
     });
     return transporterInstance;
   }
