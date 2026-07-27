@@ -21,6 +21,7 @@ const invoiceRoutes = require('./modules/invoices/invoice.routes');
 const attendanceRoutes = require('./modules/attendance/attendance.routes');
 const leaveRoutes = require('./modules/leave/leave.routes');
 const documentRoutes = require('./modules/documents/document.routes');
+const aiRoutes = require('./modules/ai/ai.routes');
 
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
@@ -85,6 +86,7 @@ app.use('/api/client/invoices', invoiceRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/user', publicUserRoutes);
 app.use('/api/client', publicClientRoutes);
 
