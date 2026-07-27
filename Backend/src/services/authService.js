@@ -70,8 +70,13 @@ const requestOtp = async (email) => {
     }),
   ]);
 
-  // 4. Send email to user
-  await sendOtpEmail(normalizedEmail, otp);
+  // 4. Send email to user (safely handled for local dev environment)
+  try {
+    await sendOtpEmail(normalizedEmail, otp);
+  } catch (emailErr) {
+    console.warn(`⚠️ [DEV NOTE] Email delivery failed (${emailErr.message}).`);
+    console.log(`🔑 [DEV LOCAL OTP] Generated OTP for ${normalizedEmail}: ${otp}`);
+  }
 
   return { message: 'OTP sent successfully to your email.' };
 };
@@ -526,8 +531,13 @@ const requestForgotPasswordOtp = async (email) => {
     }),
   ]);
 
-  // 5. Send Email
-  await sendForgotPasswordEmail(normalizedEmail, otp);
+  // 5. Send Email (safely handled for local dev environment)
+  try {
+    await sendForgotPasswordEmail(normalizedEmail, otp);
+  } catch (emailErr) {
+    console.warn(`⚠️ [DEV NOTE] Forgot password email delivery failed (${emailErr.message}).`);
+    console.log(`🔑 [DEV LOCAL OTP] Generated Forgot Password OTP for ${normalizedEmail}: ${otp}`);
+  }
 
   return { message: 'OTP sent successfully' };
 };

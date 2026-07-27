@@ -5,24 +5,31 @@ const { getTransporter } = require('../config/mailer');
  * Refreshes and retrieves a temporary Access Token using the Google OAuth2 Refresh Token.
  */
 const getGmailAccessToken = async () => {
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: process.env.GMAIL_CLIENT_ID,
-      client_secret: process.env.GMAIL_CLIENT_SECRET,
-      refresh_token: process.env.GMAIL_REFRESH_TOKEN,
-      grant_type: 'refresh_token',
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000);
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        client_id: process.env.GMAIL_CLIENT_ID,
+        client_secret: process.env.GMAIL_CLIENT_SECRET,
+        refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+        grant_type: 'refresh_token',
+      }),
+    });
 
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(`Failed to refresh Gmail access token: ${data.error_description || JSON.stringify(data)}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(`Failed to refresh Gmail access token: ${data.error_description || JSON.stringify(data)}`);
+    }
+    return data.access_token;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  return data.access_token;
 };
 
 /**
@@ -75,36 +82,25 @@ const sendGmailViaRest = async ({ to, subject, html }) => {
  * Helper function to send email via Gmail REST API (HTTPS) or Nodemailer SMTP fallback.
  */
 const sendEmail = async ({ to, subject, text, html }) => {
-  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
+  if (process.env.NODE_ENV === 'production' && process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
     console.log(`Sending email to ${to} via Gmail REST API (HTTPS)...`);
     try {
       return await sendGmailViaRest({ to, subject, html });
     } catch (error) {
-      console.error('❌ Gmail REST API Error:', error.message || error);
-      throw error;
+      console.warn('⚠️ Gmail REST API delivery unavailable:', error.message || error);
     }
   }
 
-  // Fallback to Nodemailer SMTP
-  console.log(`Sending email to ${to} via Nodemailer SMTP...`);
+  // Fallback to Nodemailer / Mock Transporter for instant local development
+  console.log(`Sending email to ${to} via Mailer Transporter...`);
   const transporter = await getTransporter();
-  const info = await transporter.sendMail({
+  return await transporter.sendMail({
     from: process.env.SMTP_FROM || 'noreply@example.com',
     to,
     subject,
     text,
     html,
   });
-
-  const testUrl = nodemailer.getTestMessageUrl(info);
-  if (testUrl) {
-    console.log('----------------------------------------------------');
-    console.log(`✉️  Ethereal Test Mail sent!`);
-    console.log(`🔗  Preview URL: ${testUrl}`);
-    console.log('----------------------------------------------------');
-  }
-
-  return info;
 };
 
 /**

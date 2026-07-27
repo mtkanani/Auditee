@@ -11,7 +11,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 
 // Auth Pages
 import { Login } from '../pages/auth/Login';
-import { Register } from '../pages/auth/Register';
+import Register from '../pages/Register';
 import { ForgotPassword } from '../pages/auth/ForgotPassword';
 import { ResetPassword } from '../pages/auth/ResetPassword';
 import { VerifyOTP } from '../pages/auth/VerifyOTP';

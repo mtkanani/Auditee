@@ -14,39 +14,22 @@ const getTransporter = async () => {
   const isTestAccountNeeded = !process.env.SMTP_USER || !process.env.SMTP_PASS;
 
   if (isTestAccountNeeded) {
-    console.warn('⚠️ SMTP user or password missing. Generating an Ethereal Mail test account...');
-    try {
-      const testAccount = await nodemailer.createTestAccount();
-      transporterInstance = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
-      console.log(`✉️ Test SMTP configured. Username: ${testAccount.user}`);
-      return transporterInstance;
-    } catch (error) {
-      console.error('❌ Failed to create Ethereal Mail test account:', error.message || error);
-      console.warn('⚠️ Falling back to Mock/Console Mail Transporter (emails will be printed to console)...');
-      transporterInstance = {
-        sendMail: async (mailOptions) => {
-          console.log('\n====================================================');
-          console.log('✉️  [MOCK EMAIL SENT]');
-          console.log(`To:      ${mailOptions.to}`);
-          console.log(`Subject: ${mailOptions.subject}`);
-          console.log(`Text:    ${mailOptions.text}`);
-          console.log('====================================================\n');
-          return {
-            messageId: 'mock-id-' + Date.now(),
-            envelope: { from: mailOptions.from, to: [mailOptions.to] },
-          };
-        }
-      };
-      return transporterInstance;
-    }
+    console.warn('⚠️ SMTP credentials not configured. Using Mock Console Mailer for local dev...');
+    transporterInstance = {
+      sendMail: async (mailOptions) => {
+        console.log('\n====================================================');
+        console.log('✉️  [MOCK EMAIL SENT]');
+        console.log(`To:      ${mailOptions.to}`);
+        console.log(`Subject: ${mailOptions.subject}`);
+        console.log(`Text:    ${mailOptions.text}`);
+        console.log('====================================================\n');
+        return {
+          messageId: 'mock-id-' + Date.now(),
+          envelope: { from: mailOptions.from, to: [mailOptions.to] },
+        };
+      }
+    };
+    return transporterInstance;
   }
 
   // Configure Gmail OAuth2 if client credentials are provided (bypasses SMTP blocks)
