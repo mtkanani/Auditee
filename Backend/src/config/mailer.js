@@ -4,35 +4,38 @@ let transporterInstance = null;
 
 /**
  * Initializes and retrieves the Nodemailer transporter.
- * Prefers standard SMTP_PASS (App Password) if configured,
- * otherwise falls back to Gmail OAuth2 or Mock Console Mailer.
+ * Uses Nodemailer's built-in `service: 'gmail'` when SMTP_USER & SMTP_PASS (App Password) are provided.
  */
 const getTransporter = async () => {
   if (transporterInstance) {
     return transporterInstance;
   }
 
-  // 1. Preferred: Standard SMTP with user & password (e.g. Gmail App Password)
+  // 1. Preferred: Gmail Service with App Password (automatically strips spaces)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-    console.log('🔌 Configuring Standard SMTP Transport (App Password)...');
-    const host = process.env.SMTP_HOST || (process.env.SMTP_USER.endsWith('@gmail.com') ? 'smtp.gmail.com' : 'smtp.ethereal.email');
-    const port = parseInt(process.env.SMTP_PORT || (host === 'smtp.gmail.com' ? '465' : '587'), 10);
-
-    transporterInstance = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+    const cleanPassword = process.env.SMTP_PASS.replace(/\s+/g, '');
+    console.log(`🔌 Configuring Gmail Transport for ${process.env.SMTP_USER}...`);
+    
+    if (process.env.SMTP_HOST && process.env.SMTP_HOST !== 'smtp.gmail.com') {
+      transporterInstance = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: cleanPassword,
+        },
+        tls: { rejectUnauthorized: false },
+      });
+    } else {
+      transporterInstance = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: cleanPassword,
+        },
+      });
+    }
     return transporterInstance;
   }
 

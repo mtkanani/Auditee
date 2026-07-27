@@ -82,7 +82,7 @@ const sendGmailViaRest = async ({ to, subject, html }) => {
  * Helper function to send email via Gmail REST API (HTTPS) or Nodemailer SMTP fallback.
  */
 const sendEmail = async ({ to, subject, text, html }) => {
-  if (process.env.NODE_ENV === 'production' && process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN) {
+  if (process.env.NODE_ENV === 'production' && process.env.GMAIL_CLIENT_ID && process.env.GMAIL_REFRESH_TOKEN && !process.env.SMTP_PASS) {
     console.log(`Sending email to ${to} via Gmail REST API (HTTPS)...`);
     try {
       return await sendGmailViaRest({ to, subject, html });
@@ -91,11 +91,11 @@ const sendEmail = async ({ to, subject, text, html }) => {
     }
   }
 
-  // Fallback to Nodemailer / Mock Transporter for instant local development
+  // Fallback to Nodemailer / Mock Transporter for instant development and production delivery
   console.log(`Sending email to ${to} via Mailer Transporter...`);
   const transporter = await getTransporter();
   return await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'noreply@example.com',
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@example.com',
     to,
     subject,
     text,
