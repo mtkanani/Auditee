@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { Mail, Shield, Lock, ArrowRight, ArrowLeft, KeyRound } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import AuthLayout from '../../layouts/AuthLayout';
@@ -37,18 +37,10 @@ const ForgotPassword = () => {
     try {
       await authApi.forgotPasswordOTP(data.email);
       setEmailAddress(data.email);
-      toast.success('Reset OTP sent successfully! Please check your email.', {
-        position: 'top-right',
-        autoClose: 3500,
-        theme: 'dark',
-      });
+      toast.success('Reset OTP sent successfully! Please check your email.');
       setStep(2);
     } catch (error) {
-      toast.error(error.message || 'Failed to request OTP. Check if the email exists.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Failed to request OTP. Check if the email exists.');
     } finally {
       setSubmitting(false);
     }
@@ -59,18 +51,10 @@ const ForgotPassword = () => {
     setSubmitting(true);
     try {
       await authApi.verifyForgotOTP(emailAddress, data.otp);
-      toast.success('OTP verified successfully! Now set a new password.', {
-        position: 'top-right',
-        autoClose: 3500,
-        theme: 'dark',
-      });
+      toast.success('OTP verified successfully! Now set a new password.');
       setStep(3);
     } catch (error) {
-      toast.error(error.message || 'Invalid or expired OTP. Please try again.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Invalid or expired OTP. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -81,18 +65,10 @@ const ForgotPassword = () => {
     setSubmitting(true);
     try {
       await authApi.resetPassword(emailAddress, data.newPassword, data.confirmPassword);
-      toast.success('Password reset successful! You can now log in.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.success('Password reset successful! You can now log in.');
       navigate('/login');
     } catch (error) {
-      toast.error(error.message || 'Failed to reset password. Please try again.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Failed to reset password. Please try again.');
     } finally {
       setSubmitting(false);
     }
