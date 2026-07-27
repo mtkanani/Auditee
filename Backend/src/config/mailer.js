@@ -49,17 +49,20 @@ const getTransporter = async () => {
   }
 
   // Create transporter with environment SMTP credentials
+  const host = process.env.SMTP_HOST || (process.env.SMTP_USER && process.env.SMTP_USER.endsWith('@gmail.com') ? 'smtp.gmail.com' : 'smtp.ethereal.email');
+  const port = parseInt(process.env.SMTP_PORT || (host === 'smtp.gmail.com' ? '465' : '587'), 10);
+
   transporterInstance = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465,
+    host,
+    port,
+    secure: port === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    connectionTimeout: 5000, // 5 seconds connection timeout
-    greetingTimeout: 5000,   // 5 seconds greeting timeout
-    socketTimeout: 10000,    // 10 seconds socket timeout
+    connectionTimeout: 10000, // 10 seconds connection timeout
+    greetingTimeout: 10000,   // 10 seconds greeting timeout
+    socketTimeout: 15000,    // 15 seconds socket timeout
     tls: {
       rejectUnauthorized: false // Prevents certificate verification issues on cloud environments
     }
