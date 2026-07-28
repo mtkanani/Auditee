@@ -61,7 +61,7 @@ export const MeetingsManagement = () => {
     }
   };
 
-  const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const canSchedule = user?.role !== 'CLIENT';
 
   return (
     <div className="space-y-6 pb-12">
@@ -77,7 +77,7 @@ export const MeetingsManagement = () => {
           </div>
         </div>
 
-        {isAdmin && (
+        {canSchedule && (
           <button
             onClick={() => setIsScheduleOpen(true)}
             className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 cursor-pointer shrink-0"
