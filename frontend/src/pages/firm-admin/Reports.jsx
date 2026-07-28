@@ -35,6 +35,13 @@ import {
   FiFileText,
   FiBriefcase,
   FiUsers,
+  FiChevronRight,
+  FiArrowUpRight,
+  FiX,
+  FiCheck,
+  FiLayers,
+  FiGrid,
+  FiActivity,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { getSummaryOverview, getReport, generateCustomReport, downloadReportCSV } from '../../services/reportService';
@@ -46,6 +53,10 @@ export const Reports = () => {
   const [summary, setSummary] = useState(null);
   const [reportData, setReportData] = useState([]);
   const [customReportData, setCustomReportData] = useState([]);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   // Filters
   const [dateRange, setDateRange] = useState('this_month');
@@ -68,41 +79,41 @@ export const Reports = () => {
     tasks: [
       { key: 'id', label: 'Task ID' },
       { key: 'taskCode', label: 'Task Code' },
-      { key: 'title', label: 'Title' },
+      { key: 'title', label: 'Task Title' },
       { key: 'status', label: 'Status' },
       { key: 'priority', label: 'Priority' },
       { key: 'clientName', label: 'Client Name' },
-      { key: 'assignees', label: 'Assignees' },
+      { key: 'assignees', label: 'Assigned Staff' },
       { key: 'dueDate', label: 'Due Date' },
-      { key: 'createdAt', label: 'Created Date' },
+      { key: 'createdAt', label: 'Creation Date' },
     ],
     clients: [
       { key: 'id', label: 'Client ID' },
       { key: 'clientName', label: 'Client Name' },
       { key: 'companyName', label: 'Company Name' },
-      { key: 'email', label: 'Email' },
-      { key: 'phone', label: 'Phone' },
-      { key: 'clientType', label: 'Type' },
-      { key: 'status', label: 'Status' },
-      { key: 'createdAt', label: 'Registration Date' },
+      { key: 'email', label: 'Email Address' },
+      { key: 'phone', label: 'Phone Number' },
+      { key: 'clientType', label: 'Client Type' },
+      { key: 'status', label: 'Account Status' },
+      { key: 'createdAt', label: 'Onboarded Date' },
     ],
     invoices: [
       { key: 'id', label: 'Invoice ID' },
-      { key: 'invoiceNumber', label: 'Invoice Number' },
+      { key: 'invoiceNumber', label: 'Invoice #' },
       { key: 'clientName', label: 'Client Name' },
       { key: 'issueDate', label: 'Issue Date' },
       { key: 'dueDate', label: 'Due Date' },
-      { key: 'status', label: 'Status' },
-      { key: 'totalAmount', label: 'Total Amount' },
+      { key: 'status', label: 'Payment Status' },
+      { key: 'totalAmount', label: 'Total Amount (₹)' },
     ],
     employees: [
       { key: 'id', label: 'Employee ID' },
-      { key: 'name', label: 'Name' },
-      { key: 'email', label: 'Email' },
+      { key: 'name', label: 'Full Name' },
+      { key: 'email', label: 'Work Email' },
       { key: 'designation', label: 'Designation' },
-      { key: 'role', label: 'Role' },
-      { key: 'status', label: 'Status' },
-      { key: 'createdAt', label: 'Joined Date' },
+      { key: 'role', label: 'System Role' },
+      { key: 'status', label: 'Account Status' },
+      { key: 'createdAt', label: 'Join Date' },
     ],
   };
 
@@ -111,6 +122,7 @@ export const Reports = () => {
   }, []);
 
   useEffect(() => {
+    setCurrentPage(1);
     if (activeTab === 'overview') {
       fetchOverview();
     } else if (activeTab === 'custom') {
@@ -205,7 +217,7 @@ export const Reports = () => {
         };
         await downloadReportCSV(activeTab, params);
       }
-      toast.success('Report CSV exported successfully');
+      toast.success('Report CSV downloaded');
     } catch (err) {
       toast.error('Failed to export CSV');
     }
@@ -215,32 +227,60 @@ export const Reports = () => {
     window.print();
   };
 
+  const resetFilters = () => {
+    setDateRange('this_month');
+    setSelectedEmployee('');
+    setSelectedClient('');
+    setSelectedStatus('');
+    setSearchQuery('');
+    fetchActiveReport();
+  };
+
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: FiPieChart },
-    { id: 'pending-tasks', label: 'Pending Tasks', icon: FiClock },
-    { id: 'completed-tasks', label: 'Completed Tasks', icon: FiCheckCircle },
-    { id: 'employee-performance', label: 'Staff Performance', icon: FiUser },
-    { id: 'client-report', label: 'Client Report', icon: FiBriefcase },
-    { id: 'billing-report', label: 'Billing Report', icon: FiFileText },
-    { id: 'revenue-report', label: 'Revenue Report', icon: FiTrendingUp },
-    { id: 'outstanding-payments', label: 'Outstanding', icon: FiDollarSign },
-    { id: 'compliance-report', label: 'Compliance', icon: FiAlertTriangle },
-    { id: 'custom', label: 'Custom Builder', icon: FiSliders },
+    { id: 'overview', label: 'Executive Overview', icon: FiActivity, color: 'text-indigo-400' },
+    { id: 'pending-tasks', label: 'Pending Tasks', icon: FiClock, color: 'text-amber-400' },
+    { id: 'completed-tasks', label: 'Completed Tasks', icon: FiCheckCircle, color: 'text-emerald-400' },
+    { id: 'employee-performance', label: 'Staff Performance', icon: FiUser, color: 'text-purple-400' },
+    { id: 'client-report', label: 'Client Directory', icon: FiBriefcase, color: 'text-blue-400' },
+    { id: 'billing-report', label: 'Billing Invoices', icon: FiFileText, color: 'text-cyan-400' },
+    { id: 'revenue-report', label: 'Revenue Trends', icon: FiTrendingUp, color: 'text-emerald-400' },
+    { id: 'outstanding-payments', label: 'Outstanding Dues', icon: FiDollarSign, color: 'text-rose-400' },
+    { id: 'compliance-report', label: 'Compliance Audit', icon: FiAlertTriangle, color: 'text-amber-400' },
+    { id: 'custom', label: 'Custom Builder', icon: FiSliders, color: 'text-indigo-400' },
   ];
 
-  const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#3b82f6'];
+  // Pagination logic
+  const totalPages = Math.ceil((activeTab === 'custom' ? customReportData.length : reportData.length) / rowsPerPage) || 1;
+  const paginatedData = (activeTab === 'custom' ? customReportData : reportData).slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <PageHeader
-        title="Firm Performance & Audit Reports Center"
-        subtitle="Real-time business analytics, staff productivity, revenue trends, and compliance metrics"
-        actions={
-          <div className="flex items-center gap-3">
+    <div className="space-y-8 pb-16 min-h-screen text-slate-100">
+      {/* Hero Header Banner with Glassmorphism */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950/70 border border-slate-800/80 p-6 md:p-8 shadow-2xl">
+        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/3 -mb-8 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[11px] font-bold uppercase tracking-widest mb-3">
+              <FiActivity className="w-3.5 h-3.5" />
+              <span>Enterprise Intelligence Engine</span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+              Firm Analytics & Audit Reports
+            </h1>
+            <p className="text-sm text-slate-400 mt-1 max-w-2xl font-medium">
+              Real-time insights across billable time, staff performance, revenue growth, invoice collections, and tax compliance filings.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 self-start md:self-auto">
             <button
               onClick={handlePrint}
-              className="py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-800 transition-colors flex items-center gap-2"
+              className="py-2.5 px-4 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-200 text-xs font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center gap-2 shadow-md hover:shadow-indigo-500/10"
             >
               <FiPrinter className="w-4 h-4 text-indigo-400" />
               <span>Print / PDF</span>
@@ -248,70 +288,49 @@ export const Reports = () => {
 
             <button
               onClick={handleExportCSV}
-              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 transition-all flex items-center gap-2"
+              className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-xl shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2.5"
             >
               <FiDownload className="w-4 h-4" />
-              <span>Export CSV</span>
+              <span>Download CSV</span>
             </button>
           </div>
-        }
-      />
+        </div>
+      </div>
 
-      {/* Overview KPI Cards Banner */}
+      {/* KPI Cards Grid */}
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center gap-2 text-amber-400 mb-1">
-              <FiClock className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Pending Tasks</span>
-            </div>
-            <p className="text-2xl font-black text-white">{summary.totalPendingTasks || 0}</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center gap-2 text-emerald-400 mb-1">
-              <FiCheckCircle className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Completed</span>
-            </div>
-            <p className="text-2xl font-black text-white">{summary.totalCompletedTasks || 0}</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center gap-2 text-indigo-400 mb-1">
-              <FiBriefcase className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Clients</span>
-            </div>
-            <p className="text-2xl font-black text-white">{summary.totalClients || 0}</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center gap-2 text-purple-400 mb-1">
-              <FiUsers className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Staff Members</span>
-            </div>
-            <p className="text-2xl font-black text-white">{summary.totalEmployees || 0}</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center gap-2 text-blue-400 mb-1">
-              <FiTrendingUp className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Total Billed</span>
-            </div>
-            <p className="text-xl font-black text-white">₹{(summary.totalBilled || 0).toLocaleString()}</p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80">
-            <div className="flex items-center gap-2 text-rose-400 mb-1">
-              <FiDollarSign className="w-4 h-4" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Outstanding</span>
-            </div>
-            <p className="text-xl font-black text-rose-400">₹{(summary.outstandingAmount || 0).toLocaleString()}</p>
-          </div>
+          {[
+            { label: 'Pending Tasks', val: summary.totalPendingTasks, icon: FiClock, color: 'from-amber-500/20 to-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-400' },
+            { label: 'Completed', val: summary.totalCompletedTasks, icon: FiCheckCircle, color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+            { label: 'Active Clients', val: summary.totalClients, icon: FiBriefcase, color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
+            { label: 'Firm Staff', val: summary.totalEmployees, icon: FiUsers, color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
+            { label: 'Total Billed', val: `₹${(summary.totalBilled || 0).toLocaleString()}`, icon: FiTrendingUp, color: 'from-cyan-500/20 to-cyan-500/5', border: 'border-cyan-500/30', text: 'text-cyan-400' },
+            { label: 'Outstanding', val: `₹${(summary.outstandingAmount || 0).toLocaleString()}`, icon: FiDollarSign, color: 'from-rose-500/20 to-rose-500/5', border: 'border-rose-500/30', text: 'text-rose-400' },
+          ].map((kpi, idx) => {
+            const Icon = kpi.icon;
+            return (
+              <div
+                key={idx}
+                className={`p-4 rounded-2xl bg-gradient-to-b ${kpi.color} border ${kpi.border} backdrop-blur-md hover:-translate-y-1 transition-all duration-300 shadow-lg group`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 group-hover:text-slate-200 transition-colors">
+                    {kpi.label}
+                  </span>
+                  <div className={`p-2 rounded-xl bg-slate-950/60 ${kpi.text}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                </div>
+                <p className="text-xl md:text-2xl font-black text-white tracking-tight">{kpi.val}</p>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Category Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800/80 overflow-x-auto pb-2 scrollbar-none">
+      {/* Segmented Pill Tabs Navigation */}
+      <div className="p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-xl overflow-x-auto scrollbar-none flex items-center gap-1.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -319,309 +338,430 @@ export const Reports = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 border ${
+              className={`py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
                 isActive
-                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                  : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-800'
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30 scale-[1.02]'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : tab.color}`} />
               <span>{tab.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Filter Bar (Not shown for overview or custom builder) */}
+      {/* Filter Bar */}
       {activeTab !== 'overview' && activeTab !== 'custom' && (
-        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-            <FiFilter className="w-4 h-4 text-indigo-400" />
-            <span>Filters:</span>
-          </div>
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-xl flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Quick Date Pills */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950 border border-slate-800/80 text-xs">
+              {[
+                { id: 'all_time', label: 'All' },
+                { id: 'today', label: 'Today' },
+                { id: 'this_week', label: '7 Days' },
+                { id: 'this_month', label: 'This Month' },
+                { id: 'this_quarter', label: 'Quarter' },
+                { id: 'this_year', label: 'This Year' },
+              ].map((pill) => (
+                <button
+                  key={pill.id}
+                  onClick={() => setDateRange(pill.id)}
+                  className={`py-1 px-2.5 rounded-lg text-xs font-bold transition-all ${
+                    dateRange === pill.id
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
 
-          {/* Date Range Selector */}
-          <div className="flex items-center gap-2">
-            <FiCalendar className="w-3.5 h-3.5 text-slate-500" />
+            {/* Employee Filter */}
             <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500"
+              value={selectedEmployee}
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+              className="py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500"
             >
-              <option value="all_time">All Time</option>
-              <option value="today">Today</option>
-              <option value="this_week">This Week</option>
-              <option value="this_month">This Month</option>
-              <option value="this_quarter">This Quarter</option>
-              <option value="this_year">This Year</option>
+              <option value="">All Staff</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.firstName} {emp.lastName}
+                </option>
+              ))}
             </select>
+
+            {/* Client Filter */}
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              className="py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500"
+            >
+              <option value="">All Clients</option>
+              {clients.map((cli) => (
+                <option key={cli.id} value={cli.id}>
+                  {cli.clientName || cli.companyName}
+                </option>
+              ))}
+            </select>
+
+            {/* Search Input */}
+            <div className="relative min-w-[200px]">
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-3.5 h-3.5" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && fetchActiveReport()}
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                >
+                  <FiX className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Employee Filter */}
-          <select
-            value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(e.target.value)}
-            className="py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500"
-          >
-            <option value="">All Staff / Employees</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.firstName} {emp.lastName}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={resetFilters}
+              className="py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <FiX className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
 
-          {/* Client Filter */}
-          <select
-            value={selectedClient}
-            onChange={(e) => setSelectedClient(e.target.value)}
-            className="py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500"
-          >
-            <option value="">All Clients</option>
-            {clients.map((cli) => (
-              <option key={cli.id} value={cli.id}>
-                {cli.clientName || cli.companyName}
-              </option>
-            ))}
-          </select>
-
-          {/* Search Input */}
-          <div className="flex-1 min-w-[200px] relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-3.5 h-3.5" />
-            <input
-              type="text"
-              placeholder="Search in report..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchActiveReport()}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            />
+            <button
+              onClick={fetchActiveReport}
+              className="py-2 px-4 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 transition-all flex items-center gap-1.5"
+            >
+              <FiRefreshCw className="w-3.5 h-3.5" />
+              <span>Apply Filters</span>
+            </button>
           </div>
-
-          <button
-            onClick={fetchActiveReport}
-            className="py-1.5 px-3 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 flex items-center gap-1.5"
-          >
-            <FiRefreshCw className="w-3.5 h-3.5" />
-            <span>Refresh</span>
-          </button>
         </div>
       )}
 
-      {/* Main Content Area */}
+      {/* Main Content Body */}
       {loading ? (
-        <div className="p-12 text-center text-slate-400 font-medium text-xs flex flex-col items-center gap-3">
-          <FiRefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
-          <span>Generating and fetching analytics report data...</span>
+        <div className="p-16 text-center text-slate-400 font-medium text-xs flex flex-col items-center justify-center gap-4 bg-slate-900/60 rounded-3xl border border-slate-800/80 backdrop-blur-md">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
+            <FiActivity className="w-5 h-5 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-slate-300 font-semibold text-sm">Aggregating live report metrics & dataset...</p>
         </div>
       ) : (
         <>
-          {/* TAB 1: OVERVIEW */}
+          {/* OVERVIEW TAB */}
           {activeTab === 'overview' && summary && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ChartCard title="Overall Task Status Metrics" subtitle="Pending vs Completed Tasks ratio">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { name: 'Pending Tasks', count: summary.totalPendingTasks, fill: '#f59e0b' },
-                      { name: 'Completed Tasks', count: summary.totalCompletedTasks, fill: '#10b981' },
-                      { name: 'Compliance Items', count: summary.totalComplianceItems, fill: '#6366f1' },
-                    ]}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="name" stroke="#64748b" />
-                    <YAxis stroke="#64748b" />
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }} />
-                    <Bar dataKey="count" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartCard>
-
-              <ChartCard title="Financial Billed vs Outstanding" subtitle="Billed revenue vs pending invoice collections">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ChartCard title="Task & Audit Workload Metrics" subtitle="Pending vs Completed vs Compliance ratio">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart
                       data={[
-                        { name: 'Paid Revenue', value: summary.paidBilled },
-                        { name: 'Outstanding Payments', value: summary.outstandingAmount },
+                        { name: 'Pending Tasks', count: summary.totalPendingTasks, fill: '#f59e0b' },
+                        { name: 'Completed Tasks', count: summary.totalCompletedTasks, fill: '#10b981' },
+                        { name: 'Compliance Filings', count: summary.totalComplianceItems, fill: '#6366f1' },
                       ]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                     >
-                      <Cell fill="#10b981" />
-                      <Cell fill="#ef4444" />
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </ChartCard>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                      <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
+                      <YAxis stroke="#64748b" fontSize={11} />
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }} />
+                      <Bar dataKey="count" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+
+                <ChartCard title="Billing vs Outstanding Collections" subtitle="Paid revenue vs pending invoice balance">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Paid Revenue', value: summary.paidBilled },
+                          { name: 'Outstanding Dues', value: summary.outstandingAmount },
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={95}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      >
+                        <Cell fill="#10b981" />
+                        <Cell fill="#ef4444" />
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </ChartCard>
+              </div>
             </div>
           )}
 
-          {/* TAB 2-9: PRESET REPORTS DATA TABLE & CHARTS */}
+          {/* PRESET REPORTS DATA TABLE */}
           {activeTab !== 'overview' && activeTab !== 'custom' && (
-            <div className="space-y-6">
-              {/* Report Table Card */}
-              <div className="rounded-2xl bg-slate-900/80 border border-slate-800/80 overflow-hidden shadow-xl">
-                <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                    {tabs.find((t) => t.id === activeTab)?.label} Data ({reportData.length} entries)
-                  </h4>
+            <div className="rounded-3xl bg-slate-900/80 border border-slate-800/80 overflow-hidden shadow-2xl backdrop-blur-md">
+              <div className="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                    <FiLayers className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                      {tabs.find((t) => t.id === activeTab)?.label}
+                    </h3>
+                    <p className="text-xs text-slate-400">Total {reportData.length} records matching parameters</p>
+                  </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-950/60 border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        {reportData.length > 0 &&
-                          Object.keys(reportData[0]).map((key) => (
-                            <th key={key} className="py-3 px-4">
-                              {key.replace(/([A-Z])/g, ' $1').toUpperCase()}
-                            </th>
-                          ))}
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                  <span>Show</span>
+                  <select
+                    value={rowsPerPage}
+                    onChange={(e) => setRowsPerPage(Number(e.target.value))}
+                    className="py-1 px-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200"
+                  >
+                    <option value={10}>10 rows</option>
+                    <option value={25}>25 rows</option>
+                    <option value={50}>50 rows</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950/80 border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      {reportData.length > 0 &&
+                        Object.keys(reportData[0]).map((key) => (
+                          <th key={key} className="py-3.5 px-4 whitespace-nowrap">
+                            {key.replace(/([A-Z])/g, ' $1').toUpperCase()}
+                          </th>
+                        ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
+                    {paginatedData.length === 0 ? (
+                      <tr>
+                        <td colSpan={12} className="py-16 text-center text-slate-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <FiSearch className="w-8 h-8 text-slate-600" />
+                            <p className="text-slate-400 font-semibold">No records found</p>
+                            <p className="text-slate-600 text-xs">Try adjusting your filters or date range</p>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
-                      {reportData.length === 0 ? (
-                        <tr>
-                          <td colSpan={10} className="py-12 text-center text-slate-500 font-normal">
-                            No entries found matching current filter criteria.
-                          </td>
+                    ) : (
+                      paginatedData.map((row, idx) => (
+                        <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                          {Object.entries(row).map(([k, val], cIdx) => (
+                            <td key={cIdx} className="py-3.5 px-4 whitespace-nowrap">
+                              {typeof val === 'number' && (k.includes('Amount') || k.includes('Billed') || k.includes('Revenue') || k.includes('Balance') || k.includes('total')) ? (
+                                <span className="font-bold text-emerald-400">₹{val.toLocaleString()}</span>
+                              ) : k === 'status' || k === 'priority' ? (
+                                <span
+                                  className={`py-1 px-2.5 rounded-full text-[10px] font-bold tracking-wide inline-flex items-center gap-1 ${
+                                    val === 'COMPLETED' || val === 'ACTIVE' || val === 'PAID'
+                                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                      : val === 'OVERDUE' || val === 'HIGH' || val === 'UNPAID'
+                                      ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                                  }`}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                  {String(val)}
+                                </span>
+                              ) : (
+                                String(val !== null && val !== undefined ? val : 'N/A')
+                              )}
+                            </td>
+                          ))}
                         </tr>
-                      ) : (
-                        reportData.map((row, idx) => (
-                          <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
-                            {Object.entries(row).map(([k, val], cIdx) => (
-                              <td key={cIdx} className="py-3.5 px-4 whitespace-nowrap">
-                                {typeof val === 'number' && (k.includes('Amount') || k.includes('Billed') || k.includes('Revenue') || k.includes('Balance')) ? (
-                                  <span className="font-bold text-emerald-400">₹{val.toLocaleString()}</span>
-                                ) : k === 'status' || k === 'priority' ? (
-                                  <span
-                                    className={`py-1 px-2.5 rounded-full text-[10px] font-bold tracking-wide ${
-                                      val === 'COMPLETED' || val === 'ACTIVE' || val === 'PAID'
-                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                        : val === 'OVERDUE' || val === 'HIGH' || val === 'UNPAID'
-                                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                                    }`}
-                                  >
-                                    {String(val)}
-                                  </span>
-                                ) : (
-                                  String(val !== null && val !== undefined ? val : 'N/A')
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Bar */}
+              <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between text-xs font-semibold text-slate-400">
+                <span>
+                  Showing page {currentPage} of {totalPages} ({reportData.length} total entries)
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="py-1 px-3 rounded-lg bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="py-1 px-3 rounded-lg bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-40"
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 10: CUSTOM REPORT BUILDER */}
+          {/* CUSTOM REPORT BUILDER */}
           {activeTab === 'custom' && (
             <div className="space-y-6">
-              <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800/80 space-y-6">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <FiSliders className="w-5 h-5 text-indigo-400" />
-                  <span>Custom Report Builder</span>
-                </h3>
-
-                {/* Entity Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">1. Select Data Entity</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { id: 'tasks', label: 'Tasks Data' },
-                      { id: 'clients', label: 'Clients Data' },
-                      { id: 'invoices', label: 'Invoices & Billing' },
-                      { id: 'employees', label: 'Staff / Employees' },
-                    ].map((ent) => (
-                      <button
-                        key={ent.id}
-                        onClick={() => {
-                          setCustomEntity(ent.id);
-                          setCustomFields(entityFieldsMap[ent.id].map((f) => f.key));
-                        }}
-                        className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                          customEntity === ent.id
-                            ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/20'
-                            : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700'
-                        }`}
-                      >
-                        {ent.label}
-                      </button>
-                    ))}
+              <div className="p-6 md:p-8 rounded-3xl bg-slate-900/80 border border-slate-800/80 shadow-2xl backdrop-blur-md space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-black text-white flex items-center gap-2">
+                      <FiSliders className="w-5 h-5 text-indigo-400" />
+                      <span>Custom Report Builder</span>
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1">Configure data entities, select custom column attributes, and generate exported datasets.</p>
                   </div>
                 </div>
 
-                {/* Columns Selector */}
+                {/* Step 1: Entity Cards */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">2. Select Custom Columns to Include</label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-950 border border-slate-800/80">
-                    {entityFieldsMap[customEntity]?.map((f) => {
-                      const isChecked = customFields.includes(f.key);
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Step 1: Choose Primary Data Entity</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { id: 'tasks', label: 'Tasks & Workflow', desc: 'Audit tasks, assignees & deadlines', icon: FiClock, color: 'text-amber-400' },
+                      { id: 'clients', label: 'Client Directory', desc: 'Client profiles & status', icon: FiBriefcase, color: 'text-blue-400' },
+                      { id: 'invoices', label: 'Invoices & Billing', desc: 'Financial invoices & balances', icon: FiFileText, color: 'text-cyan-400' },
+                      { id: 'employees', label: 'Staff & Staffing', desc: 'Employee productivity & roles', icon: FiUsers, color: 'text-purple-400' },
+                    ].map((ent) => {
+                      const Icon = ent.icon;
+                      const isSelected = customEntity === ent.id;
                       return (
-                        <label key={f.key} className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-300">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setCustomFields([...customFields, f.key]);
-                              } else {
-                                setCustomFields(customFields.filter((k) => k !== f.key));
-                              }
-                            }}
-                            className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0 focus:ring-offset-0"
-                          />
-                          <span>{f.label}</span>
-                        </label>
+                        <button
+                          key={ent.id}
+                          onClick={() => {
+                            setCustomEntity(ent.id);
+                            setCustomFields(entityFieldsMap[ent.id].map((f) => f.key));
+                          }}
+                          className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden group ${
+                            isSelected
+                              ? 'bg-gradient-to-b from-indigo-600/30 to-indigo-950/60 border-indigo-500 shadow-xl shadow-indigo-600/20'
+                              : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className={`p-2 rounded-xl bg-slate-900 ${ent.color}`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            {isSelected && <FiCheck className="w-4 h-4 text-indigo-400" />}
+                          </div>
+                          <p className="text-xs font-bold text-white">{ent.label}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{ent.desc}</p>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-2">
+                {/* Step 2: Custom Columns Selector Chips */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      Step 2: Select Attributes ({customFields.length} selected)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCustomFields(entityFieldsMap[customEntity].map((f) => f.key))}
+                        className="text-xs text-indigo-400 font-bold hover:underline"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-slate-600">•</span>
+                      <button
+                        onClick={() => setCustomFields([])}
+                        className="text-xs text-slate-400 hover:text-slate-200"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2.5 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                    {entityFieldsMap[customEntity]?.map((f) => {
+                      const isChecked = customFields.includes(f.key);
+                      return (
+                        <button
+                          key={f.key}
+                          onClick={() => {
+                            if (isChecked) {
+                              setCustomFields(customFields.filter((k) => k !== f.key));
+                            } else {
+                              setCustomFields([...customFields, f.key]);
+                            }
+                          }}
+                          className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
+                            isChecked
+                              ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40 shadow-sm'
+                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          {isChecked ? <FiCheck className="w-3.5 h-3.5 text-indigo-400" /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-700" />}
+                          <span>{f.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3">
                   <button
                     onClick={handleRunCustomReport}
-                    disabled={customLoading}
-                    className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold shadow-lg hover:from-indigo-500 hover:to-purple-500 flex items-center gap-2"
+                    disabled={customLoading || customFields.length === 0}
+                    className="py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold shadow-xl shadow-indigo-600/25 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 transition-all flex items-center gap-2"
                   >
                     {customLoading ? (
                       <FiRefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <FiCheckCircle className="w-4 h-4" />
                     )}
-                    <span>Generate Custom Report</span>
+                    <span>Generate Custom Dataset</span>
                   </button>
                 </div>
               </div>
 
               {/* Custom Report Results Table */}
               {customReportData.length > 0 && (
-                <div className="rounded-2xl bg-slate-900/80 border border-slate-800/80 overflow-hidden shadow-xl">
-                  <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
-                    <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                      Custom Generated Report ({customReportData.length} rows)
+                <div className="rounded-3xl bg-slate-900/80 border border-slate-800/80 overflow-hidden shadow-2xl backdrop-blur-md">
+                  <div className="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                      Custom Dataset ({customReportData.length} rows)
                     </h4>
+
+                    <button
+                      onClick={handleExportCSV}
+                      className="py-2 px-3 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 flex items-center gap-2"
+                    >
+                      <FiDownload className="w-4 h-4" />
+                      <span>Export Custom CSV</span>
+                    </button>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-950/60 border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        <tr className="bg-slate-950/80 border-b border-slate-800/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                           {Object.keys(customReportData[0]).map((col) => (
-                            <th key={col} className="py-3 px-4">
+                            <th key={col} className="py-3.5 px-4 whitespace-nowrap">
                               {col}
                             </th>
                           ))}
@@ -629,9 +769,9 @@ export const Reports = () => {
                       </thead>
                       <tbody className="divide-y divide-slate-800/50 text-xs font-medium text-slate-300">
                         {customReportData.map((row, idx) => (
-                          <tr key={idx} className="hover:bg-slate-800/30 transition-colors">
+                          <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
                             {Object.values(row).map((val, cIdx) => (
-                              <td key={cIdx} className="py-3 px-4 whitespace-nowrap">
+                              <td key={cIdx} className="py-3.5 px-4 whitespace-nowrap">
                                 {String(val !== null && val !== undefined ? val : 'N/A')}
                               </td>
                             ))}
