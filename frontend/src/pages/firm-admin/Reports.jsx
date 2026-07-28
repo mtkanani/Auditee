@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { ChartCard } from '../../components/common/ChartCard';
 import {
@@ -36,6 +36,7 @@ import {
   FiBriefcase,
   FiUsers,
   FiChevronRight,
+  FiChevronLeft,
   FiArrowUpRight,
   FiX,
   FiCheck,
@@ -53,6 +54,8 @@ export const Reports = () => {
   const [summary, setSummary] = useState(null);
   const [reportData, setReportData] = useState([]);
   const [customReportData, setCustomReportData] = useState([]);
+
+  const tabsContainerRef = useRef(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -131,6 +134,12 @@ export const Reports = () => {
       fetchActiveReport();
     }
   }, [activeTab, dateRange, selectedEmployee, selectedClient, selectedStatus]);
+
+  const scrollTabs = (scrollOffset) => {
+    if (tabsContainerRef.current) {
+      tabsContainerRef.current.scrollBy({ left: scrollOffset, behavior: 'smooth' });
+    }
+  };
 
   const fetchInitialData = async () => {
     try {
@@ -236,18 +245,35 @@ export const Reports = () => {
     fetchActiveReport();
   };
 
-  const tabs = [
-    { id: 'overview', label: 'Executive Overview', icon: FiActivity, color: 'text-indigo-400' },
-    { id: 'pending-tasks', label: 'Pending Tasks', icon: FiClock, color: 'text-amber-400' },
-    { id: 'completed-tasks', label: 'Completed Tasks', icon: FiCheckCircle, color: 'text-emerald-400' },
-    { id: 'employee-performance', label: 'Staff Performance', icon: FiUser, color: 'text-purple-400' },
-    { id: 'client-report', label: 'Client Directory', icon: FiBriefcase, color: 'text-blue-400' },
-    { id: 'billing-report', label: 'Billing Invoices', icon: FiFileText, color: 'text-cyan-400' },
-    { id: 'revenue-report', label: 'Revenue Trends', icon: FiTrendingUp, color: 'text-emerald-400' },
-    { id: 'outstanding-payments', label: 'Outstanding Dues', icon: FiDollarSign, color: 'text-rose-400' },
-    { id: 'compliance-report', label: 'Compliance Audit', icon: FiAlertTriangle, color: 'text-amber-400' },
-    { id: 'custom', label: 'Custom Builder', icon: FiSliders, color: 'text-indigo-400' },
+  const reportCategories = [
+    {
+      categoryName: 'Executive & Overview',
+      tabs: [
+        { id: 'overview', label: 'Executive Overview', icon: FiActivity, color: 'text-indigo-400' },
+        { id: 'custom', label: 'Custom Builder', icon: FiSliders, color: 'text-indigo-400' },
+      ],
+    },
+    {
+      categoryName: 'Operations & Workload',
+      tabs: [
+        { id: 'pending-tasks', label: 'Pending Tasks', icon: FiClock, color: 'text-amber-400' },
+        { id: 'completed-tasks', label: 'Completed Tasks', icon: FiCheckCircle, color: 'text-emerald-400' },
+        { id: 'employee-performance', label: 'Staff Performance', icon: FiUser, color: 'text-purple-400' },
+        { id: 'compliance-report', label: 'Compliance Audit', icon: FiAlertTriangle, color: 'text-amber-400' },
+      ],
+    },
+    {
+      categoryName: 'Finance & Clients',
+      tabs: [
+        { id: 'client-report', label: 'Client Directory', icon: FiBriefcase, color: 'text-blue-400' },
+        { id: 'billing-report', label: 'Billing Invoices', icon: FiFileText, color: 'text-cyan-400' },
+        { id: 'revenue-report', label: 'Revenue Trends', icon: FiTrendingUp, color: 'text-emerald-400' },
+        { id: 'outstanding-payments', label: 'Outstanding Dues', icon: FiDollarSign, color: 'text-rose-400' },
+      ],
+    },
   ];
+
+  const allTabs = reportCategories.flatMap((c) => c.tabs);
 
   // Pagination logic
   const totalPages = Math.ceil((activeTab === 'custom' ? customReportData.length : reportData.length) / rowsPerPage) || 1;
@@ -329,26 +355,79 @@ export const Reports = () => {
         </div>
       )}
 
-      {/* Segmented Pill Tabs Navigation */}
-      <div className="p-1.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-xl overflow-x-auto scrollbar-none flex items-center gap-1.5">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
+      {/* Modern Redesigned Tab Navigation Bar */}
+      <div className="space-y-3">
+        {/* Mobile Dropdown View */}
+        <div className="block md:hidden">
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Select Report View</label>
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="w-full py-3 px-4 rounded-2xl bg-slate-900 border border-slate-800 text-white font-bold text-sm focus:outline-none focus:border-indigo-500"
+          >
+            {allTabs.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Desktop Sleek Categorized Pill Tab Bar */}
+        <div className="hidden md:flex flex-col gap-3 p-2 rounded-3xl bg-slate-900/90 border border-slate-800/80 shadow-2xl backdrop-blur-md">
+          <div className="relative flex items-center">
+            {/* Left Scroll Button */}
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`py-2.5 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/30 scale-[1.02]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
+              onClick={() => scrollTabs(-240)}
+              className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all z-10 mr-1 shadow-md"
+              title="Scroll left"
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : tab.color}`} />
-              <span>{tab.label}</span>
+              <FiChevronLeft className="w-4 h-4" />
             </button>
-          );
-        })}
+
+            {/* Scrollable Tabs Track */}
+            <div
+              ref={tabsContainerRef}
+              className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-none py-1 px-1 scroll-smooth"
+            >
+              {reportCategories.map((category, cIdx) => (
+                <div key={cIdx} className="flex items-center gap-1.5 shrink-0 pr-3 border-r border-slate-800/80 last:border-r-0">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 px-2">
+                    {category.categoryName}
+                  </span>
+
+                  {category.tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`py-2 px-3.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 border ${
+                          isActive
+                            ? 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 text-white border-indigo-400/50 shadow-lg shadow-indigo-600/30 scale-[1.03]'
+                            : 'bg-slate-950/60 text-slate-400 border-slate-800/80 hover:text-slate-100 hover:bg-slate-800/60 hover:border-slate-700'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : tab.color}`} />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {/* Right Scroll Button */}
+            <button
+              onClick={() => scrollTabs(240)}
+              className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all z-10 ml-1 shadow-md"
+              title="Scroll right"
+            >
+              <FiChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -519,7 +598,7 @@ export const Reports = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                      {tabs.find((t) => t.id === activeTab)?.label}
+                      {allTabs.find((t) => t.id === activeTab)?.label}
                     </h3>
                     <p className="text-xs text-slate-400">Total {reportData.length} records matching parameters</p>
                   </div>
