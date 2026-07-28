@@ -18,6 +18,7 @@ import { VerifyOTP } from '../pages/auth/VerifyOTP';
 
 // Super Admin Pages
 import { SuperAdminDashboard } from '../pages/super-admin/SuperAdminDashboard';
+import { MeetingsManagement } from '../pages/meetings/MeetingsManagement';
 import { FirmManagement } from '../pages/super-admin/FirmManagement';
 
 // Firm Admin Pages
@@ -98,6 +99,7 @@ export const AppRoutes = () => {
           <Route path="/firm-admin/attendance" element={<AttendanceManagement />} />
           <Route path="/firm-admin/leave-management" element={<LeaveManagement />} />
           <Route path="/firm-admin/document-vault" element={<DocumentVault />} />
+          <Route path="/firm-admin/meetings" element={<MeetingsManagement />} />
           <Route path="/firm-admin/reports" element={<Reports />} />
         </Route>
 
@@ -111,6 +113,7 @@ export const AppRoutes = () => {
           <Route path="/user/clients" element={<MyClients />} />
           <Route path="/user/time-entries" element={<TimeEntries />} />
           <Route path="/user/document-vault" element={<DocumentVault />} />
+          <Route path="/user/meetings" element={<MeetingsManagement />} />
           <Route path="/user/profile" element={<UserProfile />} />
           <Route path="/calendar" element={<CalendarPage />} />
         </Route>
@@ -121,6 +124,7 @@ export const AppRoutes = () => {
           <Route path="/client/work-requests" element={<WorkRequests />} />
           <Route path="/client/tasks" element={<ClientTasks />} />
           <Route path="/client/document-vault" element={<DocumentVault />} />
+          <Route path="/client/meetings" element={<MeetingsManagement />} />
           <Route path="/client/profile" element={<ClientProfile />} />
         </Route>
       </Route>

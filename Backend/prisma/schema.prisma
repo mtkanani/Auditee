@@ -63,6 +63,12 @@ model User {
   timeEntries          TimeEntry[]
   sessions             UserSession[]
   firm                 Firm?              @relation("FirmUsers", fields: [firmId], references: [id])
+  createdMeetings      Meeting[]          @relation("CreatedMeetings")
+  meetingParticipantLogs MeetingParticipant[]
+  meetingAttendanceLogs MeetingAttendance[]
+  meetingNoteLogs      MeetingNote[]
+  meetingFileLogs      MeetingFile[]
+  meetingChatLogs      MeetingChat[]
 
   @@map("users")
 }
@@ -114,6 +120,9 @@ model Client {
   convertedLead            Lead?
   tasks                    Task[]
   sessions                 UserSession[]
+  meetingParticipantLogs   MeetingParticipant[]
+  meetingAttendanceLogs    MeetingAttendance[]
+  meetingChatLogs          MeetingChat[]
 
   @@map("clients")
 }
@@ -379,6 +388,7 @@ model Firm {
   leads             Lead[]
   leaveBalances     LeaveBalance[]
   leaveRequests     LeaveRequest[]
+  meetings          Meeting[]
   taskTemplates     TaskTemplate[]
   tasks             Task[]
   users             User[]             @relation("FirmUsers")
@@ -806,3 +816,201 @@ enum EventType {
   LEAVE
   DEADLINE
 }
+
+enum MeetingType {
+  INTERNAL
+  CLIENT
+  AUDIT_REVIEW
+  TASK_DISCUSSION
+  TRAINING
+  SALES
+  INTERVIEW
+  EMERGENCY
+}
+
+enum MeetingMode {
+  IN_APP_VIDEO
+  GOOGLE_MEET
+  ZOOM
+  TEAMS
+  IN_PERSON
+  PHONE_CALL
+}
+
+enum MeetingStatus {
+  DRAFT
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+enum MeetingPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  MAYBE
+}
+
+enum MeetingAttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+model Meeting {
+  id              Int                   @id @default(autoincrement())
+  firmId          Int
+  title           String
+  description     String?               @db.Text
+  agenda          String?               @db.Text
+  meetingType     MeetingType           @default(CLIENT)
+  meetingMode     MeetingMode           @default(IN_APP_VIDEO)
+  status          MeetingStatus         @default(SCHEDULED)
+  priority        MeetingPriority       @default(MEDIUM)
+  department      String?
+  location        String?
+  meetingLink     String?
+  meetingDate     DateTime
+  startTime       DateTime
+  endTime         DateTime
+  timezone        String                @default("Asia/Kolkata")
+  createdById     Int
+  isLocked        Boolean               @default(false)
+  isRecording     Boolean               @default(false)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  firm            Firm                  @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  createdBy       User                  @relation("CreatedMeetings", fields: [createdById], references: [id])
+  participants    MeetingParticipant[]
+  attendanceLogs MeetingAttendance[]
+  notes           MeetingNote[]
+  files           MeetingFile[]
+  chats           MeetingChat[]
+  recordings      MeetingRecording[]
+  actionItems     MeetingActionItem[]
+
+  @@map("meetings")
+}
+
+model MeetingParticipant {
+  id            Int               @id @default(autoincrement())
+  meetingId     Int
+  userId        Int?
+  clientId      Int?
+  email         String?
+  status        InvitationStatus  @default(PENDING)
+  invitedAt     DateTime          @default(now())
+  respondedAt   DateTime?
+
+  meeting       Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user          User?             @relation(fields: [userId], references: [id])
+  client        Client?           @relation(fields: [clientId], references: [id])
+
+  @@map("meeting_participants")
+}
+
+model MeetingAttendance {
+  id              Int                     @id @default(autoincrement())
+  meetingId       Int
+  userId          Int?
+  clientId        Int?
+  joinTime        DateTime                @default(now())
+  leaveTime       DateTime?
+  durationMinutes Int                     @default(0)
+  status          MeetingAttendanceStatus @default(PRESENT)
+
+  meeting         Meeting                 @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user            User?                   @relation(fields: [userId], references: [id])
+  client          Client?                 @relation(fields: [clientId], references: [id])
+
+  @@map("meeting_attendance")
+}
+
+model MeetingNote {
+  id          Int      @id @default(autoincrement())
+  meetingId   Int
+  createdById Int
+  title       String
+  description String   @db.Text
+  decision    String?  @db.Text
+  nextSteps   String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  @@map("meeting_notes")
+}
+
+model MeetingFile {
+  id           Int      @id @default(autoincrement())
+  meetingId    Int
+  uploadedById Int
+  fileName     String
+  fileUrl      String
+  fileSize     Int
+  fileType     String
+  createdAt    DateTime @default(now())
+
+  meeting      Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+
+  @@map("meeting_files")
+}
+
+model MeetingChat {
+  id             Int      @id @default(autoincrement())
+  meetingId      Int
+  senderUserId   Int?
+  senderClientId Int?
+  message        String   @db.Text
+  fileUrl        String?
+  createdAt      DateTime @default(now())
+
+  meeting        Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  senderUser     User?    @relation(fields: [senderUserId], references: [id])
+  senderClient   Client?  @relation(fields: [senderClientId], references: [id])
+
+  @@map("meeting_chat")
+}
+
+model MeetingRecording {
+  id              Int      @id @default(autoincrement())
+  meetingId       Int
+  recordingUrl    String
+  durationSeconds Int
+  fileSize        Int
+  createdAt       DateTime @default(now())
+
+  meeting         Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("meeting_recordings")
+}
+
+model MeetingActionItem {
+  id                 Int       @id @default(autoincrement())
+  meetingId          Int
+  title              String
+  description        String?   @db.Text
+  assignedToUserId   Int?
+  assignedToClientId Int?
+  dueDate            DateTime?
+  taskId             Int?
+  createdAt          DateTime  @default(now())
+
+  meeting            Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("meeting_action_items")
+}
+

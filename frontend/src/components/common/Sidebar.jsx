@@ -21,6 +21,7 @@ import {
   FiDollarSign,
   FiCalendar,
   FiHardDrive,
+  FiVideo,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { formatRoleName, normalizeRole } from '../../utils/helpers';
@@ -51,6 +52,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { path: '/firm-admin/attendance', name: 'Attendance Report', icon: FiClock },
           { path: '/firm-admin/leave-management', name: 'Leave Management', icon: FiCalendar },
           { path: '/firm-admin/document-vault', name: 'Document Vault', icon: FiHardDrive },
+          { path: '/firm-admin/meetings', name: 'Meetings & Calls', icon: FiVideo },
           { path: '/firm-admin/reports', name: 'Reports', icon: FiFileText },
         ];
       case 'CLIENT':
@@ -59,6 +61,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { path: '/client/work-requests', name: 'Work Requests', icon: FiFileText },
           { path: '/client/tasks', name: 'My Tasks', icon: FiCheckSquare },
           { path: '/client/document-vault', name: 'Document Vault', icon: FiHardDrive },
+          { path: '/client/meetings', name: 'Meetings & Calls', icon: FiVideo },
           { path: '/client/profile', name: 'Profile & Settings', icon: FiUser },
         ];
       case 'USER':
@@ -72,6 +75,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
           { path: '/user/clients', name: 'My Clients', icon: FiBriefcase },
           { path: '/user/time-entries', name: 'Time Entries', icon: FiClock },
           { path: '/user/document-vault', name: 'Document Vault', icon: FiHardDrive },
+          { path: '/user/meetings', name: 'Meetings & Calls', icon: FiVideo },
           { path: '/user/profile', name: 'Profile & Settings', icon: FiUser },
         ];
     }
