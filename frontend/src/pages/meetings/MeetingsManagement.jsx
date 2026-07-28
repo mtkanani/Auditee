@@ -148,7 +148,7 @@ export const MeetingsManagement = () => {
         <div className="p-12 text-center text-slate-500 text-xs">Loading meetings...</div>
       ) : meetings.length === 0 ? (
         <div className="p-12 text-center bg-slate-900/40 border border-slate-800/60 rounded-2xl text-slate-400 text-xs">
-          No meetings found. {isAdmin && 'Click "Schedule Meeting" to create one!'}
+          No meetings found. {canSchedule && 'Click "Schedule Meeting" to create one!'}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
