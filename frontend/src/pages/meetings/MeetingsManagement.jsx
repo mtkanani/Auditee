@@ -55,6 +55,16 @@ export const MeetingsManagement = () => {
     }
   };
 
+  const handleCloseMeeting = async (meetingId) => {
+    try {
+      await meetingApi.updateStatus(meetingId, 'COMPLETED');
+      toast.success('Meeting marked as completed!');
+      fetchMeetings();
+    } catch (err) {
+      toast.error('Failed to close meeting.');
+    }
+  };
+
   const handleRespondInvite = async (meetingId, status) => {
     try {
       await meetingApi.respondInvite(meetingId, status);
@@ -223,6 +233,17 @@ export const MeetingsManagement = () => {
                   >
                     <FileText className="w-4 h-4" />
                   </button>
+
+                  {canSchedule && meeting.status !== 'COMPLETED' && (
+                    <button
+                      onClick={() => handleCloseMeeting(meeting.id)}
+                      className="p-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
+                      title="Mark Meeting as Completed / Closed"
+                    >
+                      <CheckCircle className="w-4 h-4 text-emerald-400" />
+                      <span className="hidden sm:inline">Close</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );
