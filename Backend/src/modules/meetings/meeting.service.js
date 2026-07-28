@@ -1,5 +1,5 @@
 const meetingRepository = require('./meeting.repository');
-const prisma = require('../../config/database');
+const prisma = require('../../config/db');
 const { sendEmail } = require('../../services/emailService');
 
 class MeetingService {
