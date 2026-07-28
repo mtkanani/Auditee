@@ -218,13 +218,20 @@ export const MeetingsManagement = () => {
 
                 {/* Card Actions */}
                 <div className="flex items-center gap-2 pt-2">
-                  <button
-                    onClick={() => handleJoinMeeting(meeting)}
-                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Join Meeting</span>
-                  </button>
+                  {meeting.status !== 'COMPLETED' && meeting.status !== 'CANCELLED' ? (
+                    <button
+                      onClick={() => handleJoinMeeting(meeting)}
+                      className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current" />
+                      <span>Join Meeting</span>
+                    </button>
+                  ) : (
+                    <span className="flex-1 py-2.5 rounded-xl bg-slate-950 border border-slate-800/80 text-emerald-400 font-semibold text-xs flex items-center justify-center gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Meeting Closed</span>
+                    </span>
+                  )}
 
                   <button
                     onClick={() => setActiveNotesMeeting(meeting)}

@@ -34,8 +34,11 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
     setLoading(true);
 
     try {
-      const startDateTime = new Date(`${formData.meetingDate}T${formData.startTime}:00`);
-      const endDateTime = new Date(`${formData.meetingDate}T${formData.endTime}:00`);
+      const startTimeStr = formData.startTime || '10:00';
+      const endTimeStr = formData.endTime || '11:00';
+
+      const startDateTime = new Date(`${formData.meetingDate}T${startTimeStr}:00`);
+      const endDateTime = new Date(`${formData.meetingDate}T${endTimeStr}:00`);
 
       const participants = formData.participantEmail
         ? formData.participantEmail.split(',').map((email) => ({ email: email.trim() }))
@@ -176,7 +179,7 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
           {/* Date, Start Time, End Time */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Date</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Date *</label>
               <input
                 type="date"
                 required
@@ -186,20 +189,18 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Start Time</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Start Time (Optional)</label>
               <input
                 type="time"
-                required
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">End Time</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">End Time (Optional)</label>
               <input
                 type="time"
-                required
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
