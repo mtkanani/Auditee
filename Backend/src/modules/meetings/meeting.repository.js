@@ -41,16 +41,11 @@ class MeetingRepository {
       ];
     }
 
-    // Role-based visibility filtering
+    // Role-based visibility filtering: CLIENTs see invited meetings, firm staff see firm meetings
     if (role === 'CLIENT' && clientId) {
       where.participants = {
         some: { clientId: parseInt(clientId, 10) },
       };
-    } else if (role === 'EMPLOYEE' || role === 'USER') {
-      where.OR = [
-        { createdById: parseInt(userId, 10) },
-        { participants: { some: { userId: parseInt(userId, 10) } } },
-      ];
     }
 
     return await prisma.meeting.findMany({

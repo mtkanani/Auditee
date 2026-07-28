@@ -130,6 +130,49 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
             </div>
           </div>
 
+          {/* Dynamic Link Input Box for Google Meet / Zoom / In-Person */}
+          {formData.meetingMode === 'GOOGLE_MEET' && (
+            <div>
+              <label className="block text-xs font-semibold text-indigo-300 mb-1.5">Google Meet URL *</label>
+              <input
+                type="text"
+                required
+                placeholder="https://meet.google.com/abc-defg-hij"
+                value={formData.meetingLink}
+                onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-indigo-500/50 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          )}
+
+          {formData.meetingMode === 'ZOOM' && (
+            <div>
+              <label className="block text-xs font-semibold text-indigo-300 mb-1.5">Zoom Meeting URL *</label>
+              <input
+                type="text"
+                required
+                placeholder="https://zoom.us/j/1234567890"
+                value={formData.meetingLink}
+                onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-indigo-500/50 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          )}
+
+          {formData.meetingMode === 'IN_PERSON' && (
+            <div>
+              <label className="block text-xs font-semibold text-indigo-300 mb-1.5">Office Location / Address *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Conference Room A, 3rd Floor, Auditee House"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-indigo-500/50 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          )}
+
           {/* Date, Start Time, End Time */}
           <div className="grid grid-cols-3 gap-3">
             <div>

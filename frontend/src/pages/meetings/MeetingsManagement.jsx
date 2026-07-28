@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Search, Filter, Video, Clock, MapPin, Users, CheckCircle, XCircle, FileText, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import { normalizeRole } from '../../utils/helpers';
 import { meetingApi } from '../../api/meetingApi';
 import ScheduleMeetingModal from '../../components/meetings/ScheduleMeetingModal';
 import InAppVideoRoom from '../../components/meetings/InAppVideoRoom';
@@ -44,7 +45,10 @@ export const MeetingsManagement = () => {
       if (meeting.meetingMode === 'IN_APP_VIDEO') {
         setActiveVideoMeeting(meeting);
       } else if (meeting.meetingLink) {
-        window.open(meeting.meetingLink, '_blank');
+        const fullUrl = meeting.meetingLink.startsWith('http') ? meeting.meetingLink : `https://${meeting.meetingLink}`;
+        window.open(fullUrl, '_blank');
+      } else {
+        toast.success(`Meeting location: ${meeting.location || 'In-Person'}`);
       }
     } catch (err) {
       toast.error('Could not join meeting.');
@@ -61,7 +65,8 @@ export const MeetingsManagement = () => {
     }
   };
 
-  const canSchedule = user?.role !== 'CLIENT';
+  const role = normalizeRole(user?.role);
+  const canSchedule = role === 'FIRM_ADMIN' || role === 'SUPER_ADMIN' || user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   return (
     <div className="space-y-6 pb-12">
