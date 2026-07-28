@@ -23,6 +23,7 @@ const leaveRoutes = require('./modules/leave/leave.routes');
 const documentRoutes = require('./modules/documents/document.routes');
 const aiRoutes = require('./modules/ai/ai.routes');
 const meetingRoutes = require('./modules/meetings/meeting.routes');
+const reportRoutes = require('./modules/reports/report.routes');
 
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
@@ -89,6 +90,7 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api/user', publicUserRoutes);
 app.use('/api/client', publicClientRoutes);
 
