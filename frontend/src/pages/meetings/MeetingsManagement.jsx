@@ -168,7 +168,9 @@ export const MeetingsManagement = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {meetings.map((meeting) => {
-            const isLive = meeting.status === 'IN_PROGRESS' || new Date(meeting.startTime) <= new Date() && new Date(meeting.endTime) >= new Date();
+            const statusUpper = (meeting.status || '').toUpperCase();
+            const isClosed = statusUpper === 'COMPLETED' || statusUpper === 'CANCELLED';
+            const isLive = !isClosed && (statusUpper === 'IN_PROGRESS' || (new Date(meeting.startTime) <= new Date() && new Date(meeting.endTime) >= new Date()));
 
             return (
               <div
@@ -181,7 +183,11 @@ export const MeetingsManagement = () => {
                     <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
                       {meeting.meetingType.replace('_', ' ')}
                     </span>
-                    {isLive ? (
+                    {isClosed ? (
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        COMPLETED
+                      </span>
+                    ) : isLive ? (
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                         LIVE NOW
@@ -218,7 +224,7 @@ export const MeetingsManagement = () => {
 
                 {/* Card Actions */}
                 <div className="flex items-center gap-2 pt-2">
-                  {meeting.status !== 'COMPLETED' && meeting.status !== 'CANCELLED' ? (
+                  {!isClosed ? (
                     <button
                       onClick={() => handleJoinMeeting(meeting)}
                       className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -241,7 +247,7 @@ export const MeetingsManagement = () => {
                     <FileText className="w-4 h-4" />
                   </button>
 
-                  {canSchedule && meeting.status !== 'COMPLETED' && (
+                  {canSchedule && !isClosed && (
                     <button
                       onClick={() => handleCloseMeeting(meeting.id)}
                       className="p-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
