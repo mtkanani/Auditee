@@ -53,4 +53,9 @@ export const invoiceService = {
     const res = await axiosInstance.put('/firm-admin/invoices/bank-details', data);
     return res.data;
   },
+
+  updateFirmBankDetails: async (data) => {
+    const res = await axiosInstance.put('/firm-admin/invoices/bank-details', data);
+    return res.data;
+  },
 };
