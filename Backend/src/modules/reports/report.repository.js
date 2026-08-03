@@ -47,97 +47,115 @@ class ReportRepository {
    * High-level summary metrics overview
    */
   async getSummaryOverview(firmId) {
-    const whereFirm = firmId ? { firmId: Number(firmId) } : {};
+    const parsedFirmId = (firmId && !isNaN(Number(firmId))) ? Number(firmId) : undefined;
+    const whereFirm = parsedFirmId ? { firmId: parsedFirmId } : {};
 
-    const [
-      totalPendingTasks,
-      totalCompletedTasks,
-      totalClients,
-      totalEmployees,
-      totalInvoices,
-      unpaidInvoices,
-      totalComplianceItems,
-      overdueComplianceItems,
-    ] = await Promise.all([
-      prisma.task.count({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-          status: { in: ['PENDING', 'IN_PROGRESS', 'OVERDUE', 'REOPENED'] },
-        },
-      }),
-      prisma.task.count({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-          status: 'COMPLETED',
-        },
-      }),
-      prisma.client.count({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-        },
-      }),
-      prisma.user.count({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-          role: { in: ['USER', 'EMPLOYEE', 'FIRM_ADMIN'] },
-        },
-      }),
-      prisma.invoice.findMany({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-        },
-        select: {
-          totalAmount: true,
-          status: true,
-        },
-      }),
-      prisma.invoice.aggregate({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-          status: { in: ['UNPAID', 'OVERDUE', 'PARTIALLY_PAID'] },
-        },
-        _sum: {
-          totalAmount: true,
-        },
-      }),
-      prisma.complianceItem.count({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-        },
-      }),
-      prisma.complianceItem.count({
-        where: {
-          ...whereFirm,
-          deletedAt: null,
-          status: 'OVERDUE',
-        },
-      }),
-    ]);
+    try {
+      const [
+        totalPendingTasks,
+        totalCompletedTasks,
+        totalClients,
+        totalEmployees,
+        totalInvoices,
+        unpaidInvoices,
+        totalComplianceItems,
+        overdueComplianceItems,
+      ] = await Promise.all([
+        prisma.task.count({
+          where: {
+            ...whereFirm,
+            deletedAt: null,
+            status: { notIn: ['COMPLETED', 'CANCELLED'] },
+          },
+        }).catch(() => 0),
+        prisma.task.count({
+          where: {
+            ...whereFirm,
+            deletedAt: null,
+            status: 'COMPLETED',
+          },
+        }).catch(() => 0),
+        prisma.client.count({
+          where: {
+            ...whereFirm,
+            deletedAt: null,
+          },
+        }).catch(() => 0),
+        prisma.user.count({
+          where: {
+            ...whereFirm,
+            deletedAt: null,
+            role: { in: ['USER', 'EMPLOYEE', 'FIRM_ADMIN'] },
+          },
+        }).catch(() => 0),
+        prisma.invoice.findMany({
+          where: {
+            ...whereFirm,
+            deletedAt: null,
+          },
+          select: {
+            totalAmount: true,
+            status: true,
+          },
+        }).catch(() => []),
+        prisma.invoice.aggregate({
+          where: {
+            ...whereFirm,
+            deletedAt: null,
+            status: { in: ['UNPAID', 'OVERDUE', 'PARTIALLY_PAID'] },
+          },
+          _sum: {
+            totalAmount: true,
+          },
+        }).catch(() => ({ _sum: { totalAmount: 0 } })),
+        prisma.complianceItem.count({
+          where: {
+            ...whereFirm,
+          },
+        }).catch(() => 0),
+        prisma.complianceItem.count({
+          where: {
+            ...whereFirm,
+            status: 'OVERDUE',
+          },
+        }).catch(() => 0),
+      ]);
 
-    const totalBilled = totalInvoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0);
-    const paidBilled = totalInvoices
-      .filter((inv) => inv.status === 'PAID')
-      .reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0);
-    const outstandingAmount = Number(unpaidInvoices._sum.totalAmount) || 0;
+      const totalBilled = Array.isArray(totalInvoices)
+        ? totalInvoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0)
+        : 0;
+      const paidBilled = Array.isArray(totalInvoices)
+        ? totalInvoices
+            .filter((inv) => inv.status === 'PAID')
+            .reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0)
+        : 0;
+      const outstandingAmount = Number(unpaidInvoices?._sum?.totalAmount) || 0;
 
-    return {
-      totalPendingTasks,
-      totalCompletedTasks,
-      totalClients,
-      totalEmployees,
-      totalBilled,
-      paidBilled,
-      outstandingAmount,
-      totalComplianceItems,
-      overdueComplianceItems,
-    };
+      return {
+        totalPendingTasks: totalPendingTasks || 0,
+        totalCompletedTasks: totalCompletedTasks || 0,
+        totalClients: totalClients || 0,
+        totalEmployees: totalEmployees || 0,
+        totalBilled: totalBilled || 0,
+        paidBilled: paidBilled || 0,
+        outstandingAmount: outstandingAmount || 0,
+        totalComplianceItems: totalComplianceItems || 0,
+        overdueComplianceItems: overdueComplianceItems || 0,
+      };
+    } catch (error) {
+      console.error('Error in getSummaryOverview:', error);
+      return {
+        totalPendingTasks: 0,
+        totalCompletedTasks: 0,
+        totalClients: 0,
+        totalEmployees: 0,
+        totalBilled: 0,
+        paidBilled: 0,
+        outstandingAmount: 0,
+        totalComplianceItems: 0,
+        overdueComplianceItems: 0,
+      };
+    }
   }
 
   /**
@@ -147,7 +165,7 @@ class ReportRepository {
     const { dateRange, customStart, customEnd, employeeId, clientId, priority, search } = queryParams;
     const where = {
       deletedAt: null,
-      status: { in: ['PENDING', 'IN_PROGRESS', 'OVERDUE', 'REOPENED'] },
+      status: { notIn: ['COMPLETED', 'CANCELLED'] },
     };
 
     if (firmId) where.firmId = Number(firmId);
@@ -664,12 +682,12 @@ class ReportRepository {
    */
   async getComplianceReport(firmId, queryParams = {}) {
     const { dateRange, customStart, customEnd, status, category, riskLevel, search } = queryParams;
-    const where = { deletedAt: null };
+    const where = {};
 
     if (firmId) where.firmId = Number(firmId);
     if (status) where.status = status;
     if (category) where.category = category;
-    if (riskLevel) where.riskLevel = riskLevel;
+    if (riskLevel) where.priority = riskLevel;
 
     const dateFilter = this._getDateRangeFilter(dateRange, customStart, customEnd);
     if (dateFilter) where.dueDate = dateFilter;
@@ -688,16 +706,16 @@ class ReportRepository {
 
     const now = new Date();
     return items.map((ci) => {
-      const isOverdue = ci.status !== 'COMPLETED' && new Date(ci.dueDate) < now;
+      const isOverdue = ci.status !== 'FILED' && new Date(ci.dueDate) < now;
       return {
         complianceId: ci.id,
         title: ci.title,
         category: ci.category,
         dueDate: ci.dueDate,
-        riskLevel: ci.riskLevel || 'MEDIUM',
+        riskLevel: ci.priority || 'MEDIUM',
         status: isOverdue ? 'OVERDUE' : ci.status,
-        description: ci.description || '',
-        penaltyNotes: ci.penaltyNotes || '',
+        description: ci.period || '',
+        penaltyNotes: ci.penaltyDetails || '',
       };
     });
   }
