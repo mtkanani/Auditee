@@ -1,6 +1,7 @@
 const invoiceRepository = require('./invoice.repository');
 const emailService = require('../../services/emailService');
 const { NotFoundError, BadRequestError } = require('../../utils/errors');
+const prisma = require('../../config/db');
 
 class InvoiceService {
   async createInvoice(data, firmId) {
@@ -169,24 +170,43 @@ class InvoiceService {
 
   async getFirmBankDetails(firmId) {
     const fId = parseInt(firmId, 10) || 1;
-    const defaultBank = {
-      bankName: 'ICICI Bank',
-      accountNumber: '987654321012',
-      ifscCode: 'ICIC0001234',
-      accountHolderName: 'Codelix CA Firm',
-      branchName: 'PNTC Vejalpur, Ahmedabad Main',
-      upiId: 'codelix.ca@okicici',
-      notes: 'Please quote invoice number on all NEFT/RTGS/UPI transfers.',
-    };
+    let firm = null;
+    try {
+      firm = await prisma.firm.findUnique({
+        where: { id: fId },
+        select: {
+          bankName: true,
+          accountNumber: true,
+          ifscCode: true,
+          accountHolderName: true,
+          branchName: true,
+          upiId: true,
+          bankNotes: true,
+        },
+      });
+    } catch (err) {
+      console.warn('⚠️ Error reading firm bank details from DB:', err.message);
+    }
 
-    return firmBankDetailsStore[fId] || defaultBank;
+    const store = loadBankDetailsFromFile();
+    const fallbackStore = store[fId] || {};
+
+    return {
+      bankName: firm?.bankName || fallbackStore.bankName || 'Kotak Bank',
+      accountNumber: firm?.accountNumber || fallbackStore.accountNumber || '6850277999',
+      ifscCode: firm?.ifscCode || fallbackStore.ifscCode || 'KKBK00002587',
+      accountHolderName: firm?.accountHolderName || fallbackStore.accountHolderName || 'Codelix CA Firm',
+      branchName: firm?.branchName || fallbackStore.branchName || 'Ellis bridge, Ahmedabad Main',
+      upiId: firm?.upiId || fallbackStore.upiId || '9825621601@ptyes',
+      notes: firm?.bankNotes !== null && firm?.bankNotes !== undefined ? firm.bankNotes : (fallbackStore.notes || 'Please quote invoice number on all NEFT/RTGS/UPI transfers.'),
+    };
   }
 
   async updateFirmBankDetails(firmId, data) {
     const fId = parseInt(firmId, 10) || 1;
     const existing = await this.getFirmBankDetails(fId);
-    const updated = {
-      ...existing,
+
+    const updatedData = {
       bankName: data.bankName || existing.bankName,
       accountNumber: data.accountNumber || existing.accountNumber,
       ifscCode: data.ifscCode || existing.ifscCode,
@@ -196,11 +216,57 @@ class InvoiceService {
       notes: data.notes !== undefined ? data.notes : existing.notes,
     };
 
-    firmBankDetailsStore[fId] = updated;
-    return updated;
+    try {
+      await prisma.firm.update({
+        where: { id: fId },
+        data: {
+          bankName: updatedData.bankName,
+          accountNumber: updatedData.accountNumber,
+          ifscCode: updatedData.ifscCode,
+          accountHolderName: updatedData.accountHolderName,
+          branchName: updatedData.branchName,
+          upiId: updatedData.upiId,
+          bankNotes: updatedData.notes,
+        },
+      });
+    } catch (err) {
+      console.warn('⚠️ Error updating firm bank details in DB:', err.message);
+    }
+
+    const store = loadBankDetailsFromFile();
+    store[fId] = updatedData;
+    saveBankDetailsToFile(store);
+
+    return updatedData;
   }
 }
 
-const firmBankDetailsStore = {};
+const fs = require('fs');
+const path = require('path');
+const BANK_DETAILS_FILE = path.join(__dirname, '../../../data/firm_bank_details.json');
+
+const loadBankDetailsFromFile = () => {
+  try {
+    if (fs.existsSync(BANK_DETAILS_FILE)) {
+      const fileData = fs.readFileSync(BANK_DETAILS_FILE, 'utf-8');
+      return JSON.parse(fileData);
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not read bank details file:', err.message);
+  }
+  return {};
+};
+
+const saveBankDetailsToFile = (store) => {
+  try {
+    const dir = path.dirname(BANK_DETAILS_FILE);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(BANK_DETAILS_FILE, JSON.stringify(store, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('⚠️ Could not save bank details file:', err.message);
+  }
+};
 
 module.exports = new InvoiceService();

@@ -378,6 +378,16 @@ model Firm {
   deletedAt         DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+
+  // Bank Details for Online Payments
+  bankName          String?
+  accountNumber     String?
+  ifscCode          String?
+  accountHolderName String?
+  branchName        String?
+  upiId             String?
+  bankNotes         String?
+
   announcements     Announcement[]
   attendanceRecords AttendanceRecord[]
   clients           Client[]
