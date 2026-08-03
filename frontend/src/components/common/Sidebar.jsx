@@ -58,6 +58,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
       case 'CLIENT':
         return [
           { path: '/client/dashboard', name: 'Dashboard', icon: FiGrid },
+          { path: '/client/billing', name: 'Billing & Payments', icon: FiDollarSign },
           { path: '/client/work-requests', name: 'Work Requests', icon: FiFileText },
           { path: '/client/tasks', name: 'My Tasks', icon: FiCheckSquare },
           { path: '/client/document-vault', name: 'Document Vault', icon: FiHardDrive },

@@ -47,6 +47,7 @@ import CalendarPage from '../pages/user/Calendar';
 
 // Client Pages
 import { ClientDashboard } from '../pages/client/ClientDashboard';
+import { ClientBilling } from '../pages/client/ClientBilling';
 import { WorkRequests } from '../pages/client/WorkRequests';
 import { ClientTasks } from '../pages/client/ClientTasks';
 import { ClientProfile } from '../pages/client/ClientProfile';
@@ -121,6 +122,7 @@ export const AppRoutes = () => {
         {/* CLIENT ROUTES */}
         <Route element={<ProtectedRoute allowedRoles={['CLIENT']} />}>
           <Route path="/client/dashboard" element={<ClientDashboard />} />
+          <Route path="/client/billing" element={<ClientBilling />} />
           <Route path="/client/work-requests" element={<WorkRequests />} />
           <Route path="/client/tasks" element={<ClientTasks />} />
           <Route path="/client/document-vault" element={<DocumentVault />} />

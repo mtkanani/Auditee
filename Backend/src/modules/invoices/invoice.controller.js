@@ -18,7 +18,11 @@ class InvoiceController {
   async getAllInvoices(req, res, next) {
     try {
       const firmId = req.user.firmId;
-      const invoices = await invoiceService.getAllInvoices(req.query, firmId);
+      const queryParams = { ...req.query };
+      if (req.user.role === 'CLIENT') {
+        queryParams.clientId = req.user.clientId || req.user.id;
+      }
+      const invoices = await invoiceService.getAllInvoices(queryParams, firmId);
       return res.status(200).json({
         success: true,
         message: 'Invoices fetched successfully',
@@ -83,6 +87,33 @@ class InvoiceController {
         success: true,
         message: result.message,
         data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getBankDetails(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const bankDetails = await invoiceService.getFirmBankDetails(firmId);
+      return res.status(200).json({
+        success: true,
+        data: bankDetails,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateBankDetails(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const updated = await invoiceService.updateFirmBankDetails(firmId, req.body);
+      return res.status(200).json({
+        success: true,
+        message: 'Firm bank & payment details updated successfully!',
+        data: updated,
       });
     } catch (error) {
       next(error);

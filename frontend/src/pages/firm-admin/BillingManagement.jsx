@@ -17,6 +17,7 @@ import {
   FiClock,
   FiEye,
 } from 'react-icons/fi';
+import { FirmBankDetailsModal } from '../../components/invoices/FirmBankDetailsModal';
 import { invoiceService } from '../../services/invoiceService';
 import toast from 'react-hot-toast';
 
@@ -33,6 +34,7 @@ export const BillingManagement = () => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
   const fetchInvoices = async () => {
     setIsLoading(true);
@@ -144,13 +146,23 @@ export const BillingManagement = () => {
         title="Billing & Invoice Workstation"
         subtitle="Generate Indian GST Invoices (CGST/SGST/IGST, SAC Codes), Proforma Invoices, track Outstanding Receivables, and Print/Email PDF Invoices"
         actions={
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
-          >
-            <FiPlus className="w-4 h-4" />
-            <span>Create Invoice</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsBankModalOpen(true)}
+              className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 transition-all cursor-pointer"
+            >
+              <FiDollarSign className="w-4 h-4 text-emerald-400" />
+              <span>Bank & Payment Settings</span>
+            </button>
+
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2 cursor-pointer"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>Create Invoice</span>
+            </button>
+          </div>
         }
       />
 
@@ -195,6 +207,12 @@ export const BillingManagement = () => {
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <DataTable columns={columns} data={invoices} isLoading={isLoading} />
       </div>
+
+      {/* Firm Banking & Payment Settings Modal */}
+      <FirmBankDetailsModal
+        isOpen={isBankModalOpen}
+        onClose={() => setIsBankModalOpen(false)}
+      />
 
       {/* Create Invoice Modal */}
       <CreateInvoiceModal

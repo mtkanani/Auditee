@@ -9,13 +9,17 @@ const router = express.Router();
 
 router.use(authenticateSession);
 
+router.get('/bank-details', invoiceController.getBankDetails);
+router.put('/bank-details', authorizeRoles('FIRM_ADMIN'), invoiceController.updateBankDetails);
+
 router.get('/', invoiceController.getAllInvoices);
 router.get('/:id', invoiceController.getInvoiceById);
+
+router.post('/:id/payments', authorizeRoles('FIRM_ADMIN', 'CLIENT'), addPaymentValidation, validate, invoiceController.recordPayment);
 
 router.use(authorizeRoles('FIRM_ADMIN'));
 
 router.post('/', createInvoiceValidation, validate, invoiceController.createInvoice);
-router.post('/:id/payments', addPaymentValidation, validate, invoiceController.recordPayment);
 router.post('/:id/convert-proforma', invoiceController.convertProforma);
 router.post('/:id/send-email', invoiceController.sendInvoiceEmail);
 

@@ -30,4 +30,14 @@ export const invoiceService = {
     const res = await axiosInstance.post(`/firm-admin/invoices/${id}/send-email`);
     return res.data;
   },
+
+  getBankDetails: async () => {
+    const res = await axiosInstance.get('/firm-admin/invoices/bank-details');
+    return res.data;
+  },
+
+  updateBankDetails: async (data) => {
+    const res = await axiosInstance.put('/firm-admin/invoices/bank-details', data);
+    return res.data;
+  },
 };

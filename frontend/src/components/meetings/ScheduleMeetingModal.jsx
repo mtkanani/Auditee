@@ -220,17 +220,36 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
             />
           </div>
 
-          {/* Participant Emails */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Invite Participant Emails (Comma Separated)</label>
+          {/* Invite Option Choice */}
+          <div className="p-3.5 rounded-xl bg-indigo-950/50 border border-indigo-500/40 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Users className="w-4 h-4 text-indigo-400 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-slate-100">Invite All Users & Clients of Firm</p>
+                <p className="text-[10px] text-slate-400">Sends meeting invitation to all firm employees and clients automatically</p>
+              </div>
+            </div>
             <input
-              type="text"
-              placeholder="client@company.com, employee@auditee.com"
-              value={formData.participantEmail}
-              onChange={(e) => setFormData({ ...formData, participantEmail: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
+              type="checkbox"
+              checked={formData.inviteAll}
+              onChange={(e) => setFormData({ ...formData, inviteAll: e.target.checked })}
+              className="w-4 h-4 rounded bg-slate-950 border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600"
             />
           </div>
+
+          {/* Participant Emails */}
+          {!formData.inviteAll && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Invite Participant Emails (Comma Separated)</label>
+              <input
+                type="text"
+                placeholder="client@company.com, employee@auditee.com"
+                value={formData.participantEmail}
+                onChange={(e) => setFormData({ ...formData, participantEmail: e.target.value })}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          )}
 
           {/* Modal Footer Controls */}
           <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">

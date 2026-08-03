@@ -27,7 +27,7 @@ class MeetingRepository {
     });
   }
 
-  async findMeetingsByFirm({ firmId, userId, clientId, role, search, status, type }) {
+  async findMeetingsByFirm({ firmId, userId, clientId, role, userEmail, search, status, type }) {
     const where = {
       firmId: parseInt(firmId, 10),
     };
@@ -41,15 +41,22 @@ class MeetingRepository {
       ];
     }
 
-    // Role-based visibility filtering: CLIENTs & Users see meetings they are invited to or created
+    // Role-based visibility filtering: CLIENTs see meetings where they are a participant (by clientId, userId, or email)
     if (role === 'CLIENT') {
       const cId = clientId ? parseInt(clientId, 10) : null;
-      if (cId) {
+      const uId = userId ? parseInt(userId, 10) : null;
+      const cleanEmail = userEmail ? userEmail.trim().toLowerCase() : null;
+
+      const participantConditions = [
+        cId ? { clientId: cId } : null,
+        uId ? { userId: uId } : null,
+        cleanEmail ? { email: { equals: cleanEmail, mode: 'insensitive' } } : null,
+      ].filter(Boolean);
+
+      if (participantConditions.length > 0) {
         where.participants = {
           some: {
-            OR: [
-              { clientId: cId },
-            ],
+            OR: participantConditions,
           },
         };
       }

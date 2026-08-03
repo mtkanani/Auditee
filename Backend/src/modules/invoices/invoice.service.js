@@ -166,6 +166,41 @@ class InvoiceService {
       clientEmail,
     };
   }
+
+  async getFirmBankDetails(firmId) {
+    const fId = parseInt(firmId, 10) || 1;
+    const defaultBank = {
+      bankName: 'ICICI Bank',
+      accountNumber: '987654321012',
+      ifscCode: 'ICIC0001234',
+      accountHolderName: 'Codelix CA Firm',
+      branchName: 'PNTC Vejalpur, Ahmedabad Main',
+      upiId: 'codelix.ca@okicici',
+      notes: 'Please quote invoice number on all NEFT/RTGS/UPI transfers.',
+    };
+
+    return firmBankDetailsStore[fId] || defaultBank;
+  }
+
+  async updateFirmBankDetails(firmId, data) {
+    const fId = parseInt(firmId, 10) || 1;
+    const existing = await this.getFirmBankDetails(fId);
+    const updated = {
+      ...existing,
+      bankName: data.bankName || existing.bankName,
+      accountNumber: data.accountNumber || existing.accountNumber,
+      ifscCode: data.ifscCode || existing.ifscCode,
+      accountHolderName: data.accountHolderName || existing.accountHolderName,
+      branchName: data.branchName || existing.branchName,
+      upiId: data.upiId || existing.upiId,
+      notes: data.notes !== undefined ? data.notes : existing.notes,
+    };
+
+    firmBankDetailsStore[fId] = updated;
+    return updated;
+  }
 }
+
+const firmBankDetailsStore = {};
 
 module.exports = new InvoiceService();

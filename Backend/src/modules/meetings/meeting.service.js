@@ -30,29 +30,56 @@ class MeetingService {
       ? `/meeting-room/${meetingRoomId}`
       : data.meetingLink || 'https://meet.google.com';
 
-    // Resolve participant emails to actual User or Client IDs in database
+    // Check if Admin requested to invite all users & clients under the firm
     const resolvedParticipants = [];
-    for (const p of participants) {
-      const email = p.email ? p.email.trim().toLowerCase() : '';
-      let targetUserId = p.userId ? parseInt(p.userId, 10) : null;
-      let targetClientId = p.clientId ? parseInt(p.clientId, 10) : null;
+    if (data.inviteAll || data.inviteAllFirm) {
+      const allUsers = await prisma.user.findMany({
+        where: { firmId: parseInt(firmId, 10) },
+        select: { id: true, email: true },
+      });
+      const allClients = await prisma.client.findMany({
+        where: { firmId: parseInt(firmId, 10), deletedAt: null },
+        select: { id: true, email: true },
+      });
 
-      if (email) {
-        if (!targetUserId) {
-          const u = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-          if (u) targetUserId = u.id;
+      for (const u of allUsers) {
+        resolvedParticipants.push({ userId: u.id, email: u.email });
+      }
+      for (const c of allClients) {
+        resolvedParticipants.push({ clientId: c.id, email: c.email });
+      }
+    } else {
+      // Resolve participant emails to actual User or Client IDs in database
+      for (const p of participants) {
+        const email = p.email ? p.email.trim().toLowerCase() : '';
+        let targetUserId = p.userId ? parseInt(p.userId, 10) : null;
+        let targetClientId = p.clientId ? parseInt(p.clientId, 10) : null;
+
+        if (email) {
+          if (!targetUserId) {
+            const u = await prisma.user.findFirst({
+              where: { email: { equals: email, mode: 'insensitive' } },
+              select: { id: true },
+            });
+            if (u) targetUserId = u.id;
+          }
+          if (!targetClientId && !targetUserId) {
+            const c = await prisma.client.findFirst({
+              where: { email: { equals: email, mode: 'insensitive' } },
+              select: { id: true },
+            });
+            if (c) targetClientId = c.id;
+          }
         }
-        if (!targetClientId && !targetUserId) {
-          const c = await prisma.client.findUnique({ where: { email }, select: { id: true } });
-          if (c) targetClientId = c.id;
+
+        if (targetUserId || targetClientId || email) {
+          resolvedParticipants.push({
+            userId: targetUserId,
+            clientId: targetClientId,
+            email: email || undefined,
+          });
         }
       }
-
-      resolvedParticipants.push({
-        userId: targetUserId,
-        clientId: targetClientId,
-        email: email || undefined,
-      });
     }
 
     const meeting = await meetingRepository.createMeeting({
@@ -92,11 +119,11 @@ class MeetingService {
 
     if (targetEmail) {
       if (!targetUserId) {
-        const u = await prisma.user.findUnique({ where: { email: targetEmail }, select: { id: true } });
+        const u = await prisma.user.findFirst({ where: { email: { equals: targetEmail, mode: 'insensitive' } }, select: { id: true } });
         if (u) targetUserId = u.id;
       }
       if (!targetClientId && !targetUserId) {
-        const c = await prisma.client.findUnique({ where: { email: targetEmail }, select: { id: true } });
+        const c = await prisma.client.findFirst({ where: { email: { equals: targetEmail, mode: 'insensitive' } }, select: { id: true } });
         if (c) targetClientId = c.id;
       }
     }
@@ -156,6 +183,7 @@ class MeetingService {
       userId: user.id,
       clientId: user.clientId || (user.role === 'CLIENT' ? user.id : null),
       role: user.role,
+      userEmail: user.email,
       search: query.search,
       status: query.status,
       type: query.type,
