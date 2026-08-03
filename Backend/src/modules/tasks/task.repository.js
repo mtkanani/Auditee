@@ -32,7 +32,9 @@ class TaskRepository {
 
   async findAllFirmTasks({ firmId, page = 1, limit = 50, status, priority, clientId, userId, search, role }) {
     const fId = parseInt(firmId, 10) || 1;
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 50;
+    const skip = (pageNum - 1) * limitNum;
 
     const where = {
       firmId: fId,
@@ -47,34 +49,53 @@ class TaskRepository {
       where.priority = priority;
     }
 
+    // Role-based scoping
     if (role === 'USER' || role === 'EMPLOYEE') {
       if (userId) {
-        where.OR = [
-          { userId: parseInt(userId, 10) },
-          { createdBy: parseInt(userId, 10) },
-          { assignees: { some: { userId: parseInt(userId, 10) } } },
+        where.AND = [
+          {
+            OR: [
+              { userId: parseInt(userId, 10) },
+              { createdBy: parseInt(userId, 10) },
+              { assignees: { some: { userId: parseInt(userId, 10) } } },
+            ],
+          },
         ];
       }
     } else if (role === 'CLIENT') {
       const cId = clientId ? parseInt(clientId, 10) : null;
-      if (cId || userId) {
-        where.OR = [
-          cId ? { clientId: cId } : null,
-          userId ? { createdBy: parseInt(userId, 10) } : null,
-        ].filter(Boolean);
+      const uId = userId ? parseInt(userId, 10) : null;
+      const clientConditions = [
+        cId ? { clientId: cId } : null,
+        uId ? { createdBy: uId } : null,
+      ].filter(Boolean);
+
+      if (clientConditions.length > 0) {
+        where.AND = [
+          {
+            OR: clientConditions,
+          },
+        ];
       }
     } else if (clientId) {
       where.clientId = parseInt(clientId, 10);
     }
 
-    if (search) {
-      where.title = { contains: search, mode: 'insensitive' };
-    }
-      where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { client: { clientName: { contains: search, mode: 'insensitive' } } },
-      ];
+    if (search && search.trim().length > 0) {
+      const cleanSearch = search.trim();
+      const searchCondition = {
+        OR: [
+          { title: { contains: cleanSearch, mode: 'insensitive' } },
+          { description: { contains: cleanSearch, mode: 'insensitive' } },
+          { client: { clientName: { contains: cleanSearch, mode: 'insensitive' } } },
+        ],
+      };
+
+      if (where.AND) {
+        where.AND.push(searchCondition);
+      } else {
+        where.AND = [searchCondition];
+      }
     }
 
     const [totalRecords, data] = await Promise.all([
@@ -82,7 +103,7 @@ class TaskRepository {
       prisma.task.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNum,
         orderBy: { createdAt: 'desc' },
         include: {
           client: { select: { id: true, clientName: true, companyName: true, gstNumber: true } },
@@ -101,13 +122,13 @@ class TaskRepository {
       }),
     ]);
 
-    const totalPages = Math.ceil(totalRecords / limit) || 1;
+    const totalPages = Math.ceil(totalRecords / limitNum) || 1;
 
     return {
       data,
       pagination: {
-        currentPage: page,
-        limit,
+        currentPage: pageNum,
+        limit: limitNum,
         totalRecords,
         totalPages,
       },
