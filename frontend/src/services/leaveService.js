@@ -16,6 +16,11 @@ export const leaveService = {
     return res.data;
   },
 
+  getAllFirmRequests: async () => {
+    const res = await axiosInstance.get('/leave/all-requests');
+    return res.data;
+  },
+
   reviewLeave: async (id, status, adminRemarks = '') => {
     const res = await axiosInstance.patch(`/leave/${id}/review`, { status, adminRemarks });
     return res.data;

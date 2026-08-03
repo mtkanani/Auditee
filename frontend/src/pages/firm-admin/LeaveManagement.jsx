@@ -24,13 +24,18 @@ import toast from 'react-hot-toast';
 export const LeaveManagement = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
+
+  const userRole = (user?.role || '').toUpperCase();
+  const isAdmin = userRole === 'FIRM_ADMIN' || userRole === 'ADMIN';
 
   const [myLeaveData, setMyLeaveData] = useState({ balance: null, requests: [] });
   const [pendingRequests, setPendingRequests] = useState([]);
+  const [allFirmRequests, setAllFirmRequests] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'calendar'
+
+  // Tab State: 'pending' | 'all_firm' | 'my_leaves' | 'calendar'
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'pending' : 'my_leaves');
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -43,18 +48,20 @@ export const LeaveManagement = () => {
     setIsLoading(true);
     try {
       if (isAdmin) {
-        const [myRes, pendRes, calRes] = await Promise.all([
-          leaveService.getMyLeaveData(),
-          leaveService.getPendingRequests(),
-          leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }),
+        const [myRes, pendRes, allRes, calRes] = await Promise.all([
+          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [] } })),
+          leaveService.getPendingRequests().catch(() => ({ data: { pendingRequests: [] } })),
+          leaveService.getAllFirmRequests().catch(() => ({ data: [] })),
+          leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }).catch(() => ({ data: [] })),
         ]);
         setMyLeaveData(myRes.data || { balance: null, requests: [] });
-        setPendingRequests(pendRes.data?.pendingRequests || []);
+        setPendingRequests(pendRes.data?.pendingRequests || pendRes.pendingRequests || []);
+        setAllFirmRequests(allRes.data || []);
         setCalendarEvents(calRes.data || []);
       } else {
         const [myRes, calRes] = await Promise.all([
-          leaveService.getMyLeaveData(),
-          leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }),
+          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [] } })),
+          leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }).catch(() => ({ data: [] })),
         ]);
         setMyLeaveData(myRes.data || { balance: null, requests: [] });
         setCalendarEvents(calRes.data || []);
@@ -84,7 +91,7 @@ export const LeaveManagement = () => {
   const balance = myLeaveData.balance;
 
   const columns = [
-    ...(isAdmin
+    ...(isAdmin && activeTab !== 'my_leaves'
       ? [
           {
             header: 'Applicant Employee',
@@ -121,6 +128,33 @@ export const LeaveManagement = () => {
     },
     { header: 'Reason', key: 'reason', render: (r) => <span className="text-xs text-slate-300 line-clamp-1">{r.reason}</span> },
     { header: 'Status', key: 'status', render: (r) => <StatusBadge status={r.status} /> },
+    ...(isAdmin && (activeTab === 'pending' || activeTab === 'all_firm')
+      ? [
+          {
+            header: 'Review Actions',
+            key: 'actions',
+            render: (r) =>
+              r.status === 'PENDING' ? (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleAdminReview(r.id, 'APPROVED')}
+                    className="py-1 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition-all"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleAdminReview(r.id, 'REJECTED')}
+                    className="py-1 px-3 rounded-lg bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/20 font-bold text-xs"
+                  >
+                    Reject
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400 italic">{r.adminRemarks || 'Reviewed'}</span>
+              ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -169,15 +203,39 @@ export const LeaveManagement = () => {
 
       {/* View Toggle Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setActiveTab('pending')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'pending' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <FiAlertTriangle />
+                <span>Pending Inbox ({pendingRequests.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('all_firm')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'all_firm' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <FiList />
+                <span>All Employee Leaves ({allFirmRequests.length})</span>
+              </button>
+            </>
+          )}
+
           <button
-            onClick={() => setActiveTab('requests')}
+            onClick={() => setActiveTab('my_leaves')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              activeTab === 'requests' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
+              activeTab === 'my_leaves' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiList />
-            <span>{isAdmin ? `Admin Inbox (${pendingRequests.length}) & Logs` : 'My Leave History'}</span>
+            <FiUser />
+            <span>My Personal Leaves</span>
           </button>
 
           <button
@@ -218,29 +276,28 @@ export const LeaveManagement = () => {
         </div>
       </div>
 
-      {/* TAB 1: INBOX & LOGS */}
-      {activeTab === 'requests' && (
+      {/* TAB 1: PENDING INBOX (ADMIN ONLY) */}
+      {isAdmin && activeTab === 'pending' && (
         <div className="space-y-6">
-          {/* Admin Pending Requests Approval Inbox Banner */}
-          {isAdmin && pendingRequests.length > 0 && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/60 via-purple-950/40 to-slate-900 border border-amber-500/30 space-y-3 shadow-xl">
+          {pendingRequests.length > 0 && (
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/60 via-purple-950/40 to-slate-900 border border-amber-500/30 space-y-3 shadow-xl">
               <h3 className="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <FiAlertTriangle /> Pending Leave Applications Inbox ({pendingRequests.length})
+                <FiAlertTriangle /> Pending Employee Applications ({pendingRequests.length})
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {pendingRequests.map((p) => (
-                  <div key={p.id} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div key={p.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <p className="font-extrabold text-slate-100 text-xs">
-                        {p.user?.firstName} {p.user?.lastName} ({p.user?.designation || 'Staff'})
+                        {p.user?.firstName} {p.user?.lastName} ({p.user?.designation || 'Staff Auditor'})
                       </p>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
                         {p.leaveType.replace('_', ' ')}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-amber-300 font-semibold">
+                    <p className="text-xs text-amber-300 font-bold">
                       📅 {new Date(p.startDate).toLocaleDateString()} to {new Date(p.endDate).toLocaleDateString()} ({p.totalDays} Days)
                     </p>
                     <p className="text-xs text-slate-300"><strong>Reason:</strong> {p.reason}</p>
@@ -248,20 +305,20 @@ export const LeaveManagement = () => {
                     <div className="flex items-center gap-2 pt-1">
                       <input
                         type="text"
-                        placeholder="Admin remarks..."
+                        placeholder="Admin remarks (optional)..."
                         value={adminRemarks[p.id] || ''}
                         onChange={(e) => setAdminRemarks({ ...adminRemarks, [p.id]: e.target.value })}
-                        className="w-full px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-100"
+                        className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-100"
                       />
                       <button
                         onClick={() => handleAdminReview(p.id, 'APPROVED')}
-                        className="py-1 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs whitespace-nowrap shadow"
+                        className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs whitespace-nowrap shadow cursor-pointer"
                       >
                         Approve
                       </button>
                       <button
                         onClick={() => handleAdminReview(p.id, 'REJECTED')}
-                        className="py-1 px-3 rounded-lg bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/20 font-bold text-xs whitespace-nowrap"
+                        className="py-1.5 px-3 rounded-lg bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/20 font-bold text-xs cursor-pointer"
                       >
                         Reject
                       </button>
@@ -272,14 +329,27 @@ export const LeaveManagement = () => {
             </div>
           )}
 
-          {/* Master Table View */}
           <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <DataTable columns={columns} data={isAdmin ? pendingRequests : myLeaveData.requests} isLoading={isLoading} />
+            <DataTable columns={columns} data={pendingRequests} isLoading={isLoading} />
           </div>
         </div>
       )}
 
-      {/* TAB 2: LEAVE CALENDAR GRID */}
+      {/* TAB 2: ALL FIRM LEAVES (ADMIN ONLY) */}
+      {isAdmin && activeTab === 'all_firm' && (
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <DataTable columns={columns} data={allFirmRequests} isLoading={isLoading} />
+        </div>
+      )}
+
+      {/* TAB 3: MY PERSONAL LEAVES */}
+      {activeTab === 'my_leaves' && (
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <DataTable columns={columns} data={myLeaveData.requests || []} isLoading={isLoading} />
+        </div>
+      )}
+
+      {/* TAB 4: LEAVE CALENDAR GRID */}
       {activeTab === 'calendar' && (
         <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 shadow-xl">
           <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">

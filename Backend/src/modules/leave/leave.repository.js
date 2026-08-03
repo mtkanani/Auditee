@@ -54,8 +54,20 @@ class LeaveRepository {
   }
 
   async findPendingLeaveRequests(firmId) {
+    const fId = parseInt(firmId, 10) || 1;
     return await prisma.leaveRequest.findMany({
-      where: { firmId, status: 'PENDING' },
+      where: { firmId: fId, status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true, designation: true } },
+      },
+    });
+  }
+
+  async findAllFirmLeaveRequests(firmId) {
+    const fId = parseInt(firmId, 10) || 1;
+    return await prisma.leaveRequest.findMany({
+      where: { firmId: fId },
       orderBy: { createdAt: 'desc' },
       include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true, designation: true } },

@@ -93,6 +93,10 @@ class LeaveService {
     };
   }
 
+  async getAllFirmLeaveRequests(firmId) {
+    return await leaveRepository.findAllFirmLeaveRequests(firmId);
+  }
+
   async getLeaveCalendar(firmId, month, year) {
     const m = month ? parseInt(month, 10) : new Date().getMonth() + 1;
     const y = year ? parseInt(year, 10) : new Date().getFullYear();

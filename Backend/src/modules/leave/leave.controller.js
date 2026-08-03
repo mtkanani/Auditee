@@ -49,8 +49,21 @@ class LeaveController {
 
   async getPendingRequests(req, res, next) {
     try {
-      const firmId = req.user.firmId;
+      const firmId = req.user.firmId || 1;
       const data = await leaveService.getPendingLeaveRequests(firmId);
+      return res.status(200).json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllFirmLeaveRequests(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const data = await leaveService.getAllFirmLeaveRequests(firmId);
       return res.status(200).json({
         success: true,
         data,
@@ -62,7 +75,7 @@ class LeaveController {
 
   async getLeaveCalendar(req, res, next) {
     try {
-      const firmId = req.user.firmId;
+      const firmId = req.user.firmId || 1;
       const { month, year } = req.query;
       const calendar = await leaveService.getLeaveCalendar(firmId, month, year);
       return res.status(200).json({

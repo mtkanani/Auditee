@@ -16,6 +16,7 @@ router.get('/calendar', leaveController.getLeaveCalendar);
 
 // Firm Admin Approval & Pending Inbox Endpoints
 router.get('/pending-requests', authorizeRoles('FIRM_ADMIN'), leaveController.getPendingRequests);
+router.get('/all-requests', authorizeRoles('FIRM_ADMIN'), leaveController.getAllFirmLeaveRequests);
 router.patch('/:id/review', authorizeRoles('FIRM_ADMIN'), reviewLeaveValidation, validate, leaveController.reviewLeave);
 
 module.exports = router;
