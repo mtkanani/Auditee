@@ -13,6 +13,7 @@ router.patch('/:id/status', meetingController.updateStatus);
 router.post('/:id/respond', meetingController.respondInvite);
 router.post('/:id/join', meetingController.joinMeeting);
 router.post('/:id/notes', meetingController.addNote);
+router.post('/:id/invite', meetingController.inviteParticipant);
 router.post('/:id/convert-mom', meetingController.convertMoM);
 
 module.exports = router;

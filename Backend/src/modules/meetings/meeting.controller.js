@@ -111,6 +111,17 @@ class MeetingController {
     } catch (error) {
       next(error);
     }
+  async inviteParticipant(req, res, next) {
+    try {
+      const participant = await meetingService.inviteParticipantToLiveMeeting(req.user, req.params.id, req.body);
+      return res.status(201).json({
+        success: true,
+        message: 'Participant invited to meeting successfully!',
+        data: participant,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 }
 

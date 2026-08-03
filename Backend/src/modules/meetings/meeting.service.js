@@ -30,6 +30,31 @@ class MeetingService {
       ? `/meeting-room/${meetingRoomId}`
       : data.meetingLink || 'https://meet.google.com';
 
+    // Resolve participant emails to actual User or Client IDs in database
+    const resolvedParticipants = [];
+    for (const p of participants) {
+      const email = p.email ? p.email.trim().toLowerCase() : '';
+      let targetUserId = p.userId ? parseInt(p.userId, 10) : null;
+      let targetClientId = p.clientId ? parseInt(p.clientId, 10) : null;
+
+      if (email) {
+        if (!targetUserId) {
+          const u = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+          if (u) targetUserId = u.id;
+        }
+        if (!targetClientId && !targetUserId) {
+          const c = await prisma.client.findUnique({ where: { email }, select: { id: true } });
+          if (c) targetClientId = c.id;
+        }
+      }
+
+      resolvedParticipants.push({
+        userId: targetUserId,
+        clientId: targetClientId,
+        email: email || undefined,
+      });
+    }
+
     const meeting = await meetingRepository.createMeeting({
       firmId: parseInt(firmId, 10),
       title,
@@ -45,7 +70,7 @@ class MeetingService {
       startTime: parsedStart,
       endTime: parsedEnd,
       createdById: parseInt(user.id, 10),
-      participants,
+      participants: resolvedParticipants,
     });
 
     // Asynchronously dispatch invitation emails in background
@@ -54,6 +79,48 @@ class MeetingService {
     });
 
     return meeting;
+  }
+
+  async inviteParticipantToLiveMeeting(user, meetingId, participantData) {
+    const meeting = await meetingRepository.findMeetingById(meetingId);
+    if (!meeting) throw new Error('Meeting not found.');
+
+    const { email, userId, clientId } = participantData;
+    let targetUserId = userId ? parseInt(userId, 10) : null;
+    let targetClientId = clientId ? parseInt(clientId, 10) : null;
+    let targetEmail = email ? email.trim().toLowerCase() : '';
+
+    if (targetEmail) {
+      if (!targetUserId) {
+        const u = await prisma.user.findUnique({ where: { email: targetEmail }, select: { id: true } });
+        if (u) targetUserId = u.id;
+      }
+      if (!targetClientId && !targetUserId) {
+        const c = await prisma.client.findUnique({ where: { email: targetEmail }, select: { id: true } });
+        if (c) targetClientId = c.id;
+      }
+    }
+
+    const participant = await prisma.meetingParticipant.create({
+      data: {
+        meetingId: parseInt(meetingId, 10),
+        userId: targetUserId,
+        clientId: targetClientId,
+        email: targetEmail || undefined,
+        status: 'PENDING',
+      },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        client: { select: { id: true, clientName: true, email: true } },
+      },
+    });
+
+    this.sendInvitationEmails({
+      ...meeting,
+      participants: [participant],
+    }).catch(() => {});
+
+    return participant;
   }
 
   async sendInvitationEmails(meeting) {

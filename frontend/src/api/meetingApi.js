@@ -48,6 +48,11 @@ export const meetingApi = {
     const response = await axiosInstance.post(`/meetings/${id}/convert-mom`, { notesText });
     return response.data;
   },
+  // Invite participant to live meeting
+  inviteParticipant: async (id, participantData) => {
+    const response = await axiosInstance.post(`/meetings/${id}/invite`, participantData);
+    return response.data;
+  },
 };
 
 export default meetingApi;
