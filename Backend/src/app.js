@@ -78,6 +78,7 @@ app.use('/api/firm-admin/users', firmAdminUserRoutes);
 app.use('/api/firm-admin/clients', firmAdminClientRoutes);
 app.use('/api/firm-admin/announcements', announcementAdminRoutes);
 app.use('/api/user/announcements', announcementUserRoutes);
+app.use('/api/client/announcements', announcementUserRoutes);
 app.use('/api/firm-admin/tasks', taskRoutes);
 app.use('/api/user/tasks', taskRoutes);
 app.use('/api/client/tasks', taskRoutes);

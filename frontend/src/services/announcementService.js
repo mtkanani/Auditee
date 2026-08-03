@@ -22,12 +22,26 @@ export const announcementService = {
   },
 
   getUserNotices: async () => {
-    const res = await axiosInstance.get('/user/announcements');
+    let url = '/user/announcements';
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr && JSON.parse(userStr)?.role?.toUpperCase() === 'CLIENT') {
+        url = '/client/announcements';
+      }
+    } catch (e) {}
+    const res = await axiosInstance.get(url);
     return res.data;
   },
 
   acknowledgeNotice: async (id) => {
-    const res = await axiosInstance.post(`/user/announcements/${id}/acknowledge`);
+    let url = `/user/announcements/${id}/acknowledge`;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr && JSON.parse(userStr)?.role?.toUpperCase() === 'CLIENT') {
+        url = `/client/announcements/${id}/acknowledge`;
+      }
+    } catch (e) {}
+    const res = await axiosInstance.post(url);
     return res.data;
   },
 };

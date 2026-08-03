@@ -19,11 +19,18 @@ class TaskController {
 
   async getAllTasks(req, res, next) {
     try {
-      const firmId = req.user.firmId;
-      const result = await taskService.getAllFirmTasks(req.query, firmId);
+      const firmId = req.user.firmId || 1;
+      const userRole = (req.user.role || '').toUpperCase();
+      const userId = req.user.id;
+      const clientId = req.user.clientId || (userRole === 'CLIENT' ? req.user.id : null);
+
+      const result = await taskService.getAllFirmTasks(
+        { ...req.query, userId, role: userRole, clientId },
+        firmId
+      );
       return res.status(200).json({
         success: true,
-        message: 'Firm tasks fetched successfully',
+        message: 'Tasks fetched successfully',
         ...result,
       });
     } catch (error) {

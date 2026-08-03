@@ -5,6 +5,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
 import { Avatar } from '../../components/common/Avatar';
 import { clientService } from '../../services/clientService';
+import { NoticeBanner } from '../../components/announcements/NoticeBanner';
 import { FiFileText, FiClock, FiCheckCircle, FiUser, FiPlus, FiArrowRight } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -50,6 +51,9 @@ export const ClientDashboard = () => {
           </button>
         }
       />
+
+      {/* Broadcast Notice Banner */}
+      <NoticeBanner />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

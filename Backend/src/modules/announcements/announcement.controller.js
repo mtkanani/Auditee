@@ -61,7 +61,7 @@ class AnnouncementController {
 
   async getUserActiveNotices(req, res, next) {
     try {
-      const firmId = req.user.firmId;
+      const firmId = req.user.firmId || 1;
       const userId = req.user.id;
       const data = await announcementService.getUserActiveNotices(firmId, userId);
       return res.status(200).json({
@@ -76,7 +76,7 @@ class AnnouncementController {
 
   async acknowledgeNotice(req, res, next) {
     try {
-      const firmId = req.user.firmId;
+      const firmId = req.user.firmId || 1;
       const userId = req.user.id;
       const id = parseInt(req.params.id, 10);
       const data = await announcementService.acknowledgeNotice(id, firmId, userId);

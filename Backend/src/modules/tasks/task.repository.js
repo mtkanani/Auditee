@@ -30,11 +30,12 @@ class TaskRepository {
     return task;
   }
 
-  async findAllFirmTasks({ firmId, page = 1, limit = 10, status, priority, clientId, userId, search }) {
-    const skip = (page - 1) * limit;
+  async findAllFirmTasks({ firmId, page = 1, limit = 50, status, priority, clientId, userId, search, role }) {
+    const fId = parseInt(firmId, 10) || 1;
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     const where = {
-      firmId,
+      firmId: fId,
       deletedAt: null,
     };
 
@@ -46,18 +47,29 @@ class TaskRepository {
       where.priority = priority;
     }
 
-    if (clientId) {
+    if (role === 'USER' || role === 'EMPLOYEE') {
+      if (userId) {
+        where.OR = [
+          { userId: parseInt(userId, 10) },
+          { createdBy: parseInt(userId, 10) },
+          { assignees: { some: { userId: parseInt(userId, 10) } } },
+        ];
+      }
+    } else if (role === 'CLIENT') {
+      const cId = clientId ? parseInt(clientId, 10) : null;
+      if (cId || userId) {
+        where.OR = [
+          cId ? { clientId: cId } : null,
+          userId ? { createdBy: parseInt(userId, 10) } : null,
+        ].filter(Boolean);
+      }
+    } else if (clientId) {
       where.clientId = parseInt(clientId, 10);
     }
 
-    if (userId) {
-      where.OR = [
-        { userId: parseInt(userId, 10) },
-        { assignees: { some: { userId: parseInt(userId, 10) } } },
-      ];
-    }
-
     if (search) {
+      where.title = { contains: search, mode: 'insensitive' };
+    }
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
