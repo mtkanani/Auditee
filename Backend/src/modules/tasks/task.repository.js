@@ -51,13 +51,17 @@ class TaskRepository {
 
     // Role-based scoping
     if (role === 'USER' || role === 'EMPLOYEE') {
-      if (userId) {
+      const uId = userId ? parseInt(userId, 10) : null;
+      if (uId) {
         where.AND = [
           {
             OR: [
-              { userId: parseInt(userId, 10) },
-              { createdBy: parseInt(userId, 10) },
-              { assignees: { some: { userId: parseInt(userId, 10) } } },
+              { userId: uId },
+              { assignees: { some: { userId: uId } } },
+              { createdBy: uId },
+              { userId: null },
+              { createdByType: 'CLIENT' },
+              { createdByType: 'FIRM_ADMIN' },
             ],
           },
         ];
