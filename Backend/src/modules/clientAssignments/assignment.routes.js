@@ -16,23 +16,22 @@ const authorizeRoles = require('../../middlewares/roleMiddleware');
 const router = express.Router();
 
 router.use(authenticateSession);
-router.use(authorizeRoles('FIRM_ADMIN'));
 
 // Base URL: /api/firm-admin/dashboard
-router.get('/dashboard', userController.getDashboard);
+router.get('/dashboard', authorizeRoles('FIRM_ADMIN'), userController.getDashboard);
 
 // Base URL: /api/firm-admin/client-assignments
-router.post('/client-assignments', createAssignmentValidation, validate, assignmentController.assignClient);
-router.get('/client-assignments', assignmentController.getAllAssignments);
-router.delete('/client-assignments/:assignmentId', assignmentIdParamValidation, validate, assignmentController.removeAssignment);
-router.patch('/client-assignments/:assignmentId', updateAssignmentValidation, validate, assignmentController.changeAssignment);
+router.post('/client-assignments', authorizeRoles('FIRM_ADMIN'), createAssignmentValidation, validate, assignmentController.assignClient);
+router.get('/client-assignments', authorizeRoles('FIRM_ADMIN'), assignmentController.getAllAssignments);
+router.delete('/client-assignments/:assignmentId', authorizeRoles('FIRM_ADMIN'), assignmentIdParamValidation, validate, assignmentController.removeAssignment);
+router.patch('/client-assignments/:assignmentId', authorizeRoles('FIRM_ADMIN'), updateAssignmentValidation, validate, assignmentController.changeAssignment);
 
 // Direct Tasks routes (/api/firm-admin/tasks)
-router.post('/tasks', createTaskValidation, validate, assignmentController.createTask);
-router.get('/tasks', assignmentController.getFirmTasks);
+router.post('/tasks', authorizeRoles('FIRM_ADMIN'), createTaskValidation, validate, assignmentController.createTask);
+router.get('/tasks', authorizeRoles('FIRM_ADMIN'), assignmentController.getFirmTasks);
 
 // Sub routes
-router.get('/users/:userId/clients', userIdParamValidation, validate, assignmentController.getUserClients);
-router.get('/clients/:clientId/users', clientIdParamValidation, validate, assignmentController.getClientUsers);
+router.get('/users/:userId/clients', authorizeRoles('FIRM_ADMIN'), userIdParamValidation, validate, assignmentController.getUserClients);
+router.get('/clients/:clientId/users', authorizeRoles('FIRM_ADMIN'), clientIdParamValidation, validate, assignmentController.getClientUsers);
 
 module.exports = router;

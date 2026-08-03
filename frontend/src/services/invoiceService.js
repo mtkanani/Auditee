@@ -1,13 +1,26 @@
 import axiosInstance from './axiosInstance';
 
+const getBaseUrl = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      if (user?.role?.toUpperCase() === 'CLIENT') {
+        return '/client/invoices';
+      }
+    }
+  } catch (e) {}
+  return '/firm-admin/invoices';
+};
+
 export const invoiceService = {
   getAllInvoices: async (params = {}) => {
-    const res = await axiosInstance.get('/firm-admin/invoices', { params });
+    const res = await axiosInstance.get(getBaseUrl(), { params });
     return res.data;
   },
 
   getInvoiceById: async (id) => {
-    const res = await axiosInstance.get(`/firm-admin/invoices/${id}`);
+    const res = await axiosInstance.get(`${getBaseUrl()}/${id}`);
     return res.data;
   },
 
@@ -17,7 +30,7 @@ export const invoiceService = {
   },
 
   recordPayment: async (id, data) => {
-    const res = await axiosInstance.post(`/firm-admin/invoices/${id}/payments`, data);
+    const res = await axiosInstance.post(`${getBaseUrl()}/${id}/payments`, data);
     return res.data;
   },
 
@@ -32,7 +45,7 @@ export const invoiceService = {
   },
 
   getBankDetails: async () => {
-    const res = await axiosInstance.get('/firm-admin/invoices/bank-details');
+    const res = await axiosInstance.get(`${getBaseUrl()}/bank-details`);
     return res.data;
   },
 

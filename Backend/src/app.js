@@ -72,19 +72,19 @@ app.use('/api/admin/firms', firmRoutes);
 
 // Modular Auditee SaaS routes
 app.use('/api/events', eventRoutes);
+app.use('/api/firm-admin/invoices', invoiceRoutes);
+app.use('/api/client/invoices', invoiceRoutes);
 app.use('/api/firm-admin/users', firmAdminUserRoutes);
 app.use('/api/firm-admin/clients', firmAdminClientRoutes);
 app.use('/api/firm-admin/announcements', announcementAdminRoutes);
 app.use('/api/user/announcements', announcementUserRoutes);
-app.use('/api/firm-admin', assignmentRoutes);
 app.use('/api/firm-admin/tasks', taskRoutes);
 app.use('/api/user/tasks', taskRoutes);
 app.use('/api/client/tasks', taskRoutes);
 app.use('/api/firm-admin/compliance', complianceRoutes);
 app.use('/api/user/compliance', complianceRoutes);
 app.use('/api/firm-admin/leads', leadRoutes);
-app.use('/api/firm-admin/invoices', invoiceRoutes);
-app.use('/api/client/invoices', invoiceRoutes);
+app.use('/api/firm-admin', assignmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/documents', documentRoutes);
