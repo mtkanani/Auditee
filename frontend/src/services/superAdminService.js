@@ -31,8 +31,13 @@ export const superAdminService = {
     return res.data;
   },
 
+  updateFirmAdmin: async (id, adminData) => {
+    const res = await axiosInstance.put(`/admin/firms/${id}/admin`, adminData);
+    return res.data;
+  },
+
   resetFirmAdminPassword: async (id, newPassword) => {
-    const res = await axiosInstance.post(`/admin/firms/${id}/reset-admin-password`, { newPassword });
+    const res = await axiosInstance.post(`/admin/firms/${id}/admin/reset-password`, { newPassword });
     return res.data;
   },
 };

@@ -10,6 +10,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiKey, FiCheckCircle } from 'react-icons/fi'
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { superAdminService } from '../../services/superAdminService';
+import FirmForm from '../../components/FirmManagement/FirmForm';
 
 export const FirmManagement = () => {
   const [firms, setFirms] = useState([]);
@@ -54,15 +55,14 @@ export const FirmManagement = () => {
     fetchFirms();
   }, [page, search, statusFilter]);
 
-  const handleCreateFirm = async (data) => {
+  const handleCreateFirm = async (firmData, adminData) => {
     try {
-      await superAdminService.createFirm(data);
+      await superAdminService.createFirm({ firm: firmData, firmAdmin: adminData });
       toast.success('CA Firm created successfully!');
       setIsCreateModalOpen(false);
-      resetCreate();
       fetchFirms();
     } catch (error) {
-      toast.error(error.message || 'Failed to create firm.');
+      toast.error(error.response?.data?.message || error.message || 'Failed to create firm.');
     }
   };
 
@@ -235,74 +235,12 @@ export const FirmManagement = () => {
       </div>
 
       {/* Create Firm Modal */}
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New CA Firm">
-        <form onSubmit={handleSubmitCreate(handleCreateFirm)} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Firm Name</label>
-            <input
-              type="text"
-              {...regCreate('firmName', { required: true })}
-              placeholder="Apex CA & Associates"
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Firm Email</label>
-              <input
-                type="email"
-                {...regCreate('email', { required: true })}
-                placeholder="contact@apexca.com"
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Phone</label>
-              <input
-                type="text"
-                {...regCreate('phone', { required: true })}
-                placeholder="9876543210"
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">City</label>
-              <input
-                type="text"
-                {...regCreate('city', { required: true })}
-                placeholder="Ahmedabad"
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">State</label>
-              <input
-                type="text"
-                {...regCreate('state', { required: true })}
-                placeholder="Gujarat"
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Firm Admin Default Password</label>
-            <input
-              type="password"
-              {...regCreate('adminPassword', { required: true, minLength: 8 })}
-              placeholder="Password@123"
-              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-4"
-          >
-            Create Firm
-          </button>
-        </form>
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Create New CA Firm" maxWidth="max-w-3xl">
+        <FirmForm
+          onSubmit={handleCreateFirm}
+          onCancel={() => setIsCreateModalOpen(false)}
+          isEdit={false}
+        />
       </Modal>
 
       {/* Edit Firm Modal */}
