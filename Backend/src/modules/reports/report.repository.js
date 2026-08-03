@@ -100,7 +100,7 @@ class ReportRepository {
         where: {
           ...whereFirm,
           deletedAt: null,
-          status: { in: ['UNPAID', 'OVERDUE', 'PARTIAL'] },
+          status: { in: ['UNPAID', 'OVERDUE', 'PARTIALLY_PAID'] },
         },
         _sum: {
           totalAmount: true,
@@ -427,7 +427,7 @@ class ReportRepository {
 
         const totalBilled = invoices.reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0);
         const outstanding = invoices
-          .filter((inv) => ['UNPAID', 'OVERDUE', 'PARTIAL'].includes(inv.status))
+          .filter((inv) => ['UNPAID', 'OVERDUE', 'PARTIALLY_PAID'].includes(inv.status))
           .reduce((acc, inv) => acc + (Number(inv.totalAmount) || 0), 0);
 
         return {
@@ -607,7 +607,7 @@ class ReportRepository {
     const { clientId, search } = queryParams;
     const where = {
       deletedAt: null,
-      status: { in: ['UNPAID', 'OVERDUE', 'PARTIAL'] },
+      status: { in: ['UNPAID', 'OVERDUE', 'PARTIALLY_PAID'] },
     };
 
     if (firmId) where.firmId = Number(firmId);

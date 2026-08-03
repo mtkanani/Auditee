@@ -162,7 +162,7 @@ export const Reports = () => {
         setSummary(res.data);
       }
     } catch (err) {
-      toast.error('Failed to load summary analytics');
+      toast.error(err.response?.data?.message || err.message || 'Failed to load summary analytics');
     } finally {
       setLoading(false);
     }
