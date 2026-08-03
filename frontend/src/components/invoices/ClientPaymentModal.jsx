@@ -279,16 +279,6 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
                   
                   <p className="text-xs font-bold text-slate-200">Scan QR Code with Google Pay, PhonePe, Paytm or BHIM</p>
                   <p className="text-[11px] text-slate-400">Payee: <strong className="text-indigo-300">{firmName}</strong> ({upiId})</p>
-
-                  <a
-                    href={upiDeepLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 w-full max-w-sm transition-all hover:scale-[1.02]"
-                  >
-                    <span>📲 Direct Mobile Pay (GPay / PhonePe / Paytm)</span>
-                  </a>
-                  <p className="text-[10px] text-slate-400 mt-1">Tap above on your mobile phone to open payment app directly</p>
                 </div>
 
                 <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 max-w-sm mx-auto">
