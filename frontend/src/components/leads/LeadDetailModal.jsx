@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../common/Modal';
 import {
   FiPhone,
@@ -15,6 +15,7 @@ import {
   FiMic,
   FiMicOff,
   FiSquare,
+  FiTrash2,
 } from 'react-icons/fi';
 import { leadService } from '../../services/leadService';
 import toast from 'react-hot-toast';
@@ -29,11 +30,18 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
   const [callDuration, setCallDuration] = useState('15');
   const [callFollowUp, setCallFollowUp] = useState('');
 
-  // Voice Note Recording state (WhatsApp Style)
+  // Voice Note Recording & Playback state (WhatsApp Style)
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [recognitionInstance, setRecognitionInstance] = useState(null);
   const [isVoiceNote, setIsVoiceNote] = useState(false);
+
+  // Audio Recording Refs & States
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const mediaStreamRef = useRef(null);
+  const [audioBase64, setAudioBase64] = useState(null);
+  const [audioBlobUrl, setAudioBlobUrl] = useState(null);
 
   const [meetingTitle, setMeetingTitle] = useState('');
   const [meetingNotes, setMeetingNotes] = useState('');
@@ -57,65 +65,95 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
     return () => clearInterval(timer);
   }, [isRecording]);
 
-  const startVoiceRecording = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error('Voice recording is not supported in this browser. Please use Chrome, Edge, or Safari.');
-      return;
-    }
-
+  const startVoiceRecording = async () => {
     try {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
 
-      let finalTranscript = callSummary ? callSummary + ' ' : '';
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
 
-      recognition.onstart = () => {
-        setIsRecording(true);
-        setIsVoiceNote(true);
-        toast.success('🎙️ Recording started! Speak your call notes...', { icon: '🎙️' });
-      };
-
-      recognition.onresult = (event) => {
-        let currentInterim = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcriptChunk = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcriptChunk + ' ';
-          } else {
-            currentInterim += transcriptChunk;
-          }
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
         }
-        setCallSummary((finalTranscript + currentInterim).trim());
       };
 
-      recognition.onerror = (err) => {
-        console.error('Speech Recognition error:', err);
-        setIsRecording(false);
-        toast.error('Microphone permission denied or recording stopped.');
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const previewUrl = URL.createObjectURL(blob);
+        setAudioBlobUrl(previewUrl);
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAudioBase64(reader.result);
+        };
+        reader.readAsDataURL(blob);
+
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        }
       };
 
-      recognition.onend = () => {
-        setIsRecording(false);
-      };
+      mediaRecorder.start();
+      setIsRecording(true);
+      setIsVoiceNote(true);
 
-      recognition.start();
-      setRecognitionInstance(recognition);
+      // Start SpeechRecognition simultaneously for text transcription if available
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+
+          let finalTranscript = callSummary ? callSummary + ' ' : '';
+          recognition.onresult = (event) => {
+            let currentInterim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcriptChunk = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcriptChunk + ' ';
+              } else {
+                currentInterim += transcriptChunk;
+              }
+            }
+            setCallSummary((finalTranscript + currentInterim).trim());
+          };
+          recognition.start();
+          setRecognitionInstance(recognition);
+        } catch (e) {
+          console.warn('Speech Recognition fallback:', e);
+        }
+      }
+
+      toast.success('🎙️ Recording voice note audio...', { icon: '🎙️' });
     } catch (err) {
-      toast.error('Could not access microphone');
+      console.error('Microphone error:', err);
+      toast.error('Microphone permission denied or audio device not found.');
       setIsRecording(false);
     }
   };
 
   const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
     if (recognitionInstance) {
-      recognitionInstance.stop();
+      try {
+        recognitionInstance.stop();
+      } catch (e) {}
       setRecognitionInstance(null);
     }
     setIsRecording(false);
-    toast.success('Voice note transcribed successfully!');
+    toast.success('Voice note audio clip recorded!');
+  };
+
+  const clearRecordedAudio = () => {
+    setAudioBase64(null);
+    setAudioBlobUrl(null);
   };
 
   const formatTimer = (seconds) => {
@@ -156,16 +194,27 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
 
   const handleAddCallSubmit = async (e) => {
     e.preventDefault();
-    if (!callSummary.trim()) return;
+    if (!callSummary.trim() && !audioBase64) {
+      toast.error('Please enter call notes or record a voice note');
+      return;
+    }
+
+    let finalSummary = callSummary.trim() || 'Voice Note Recording';
+    if (audioBase64) {
+      finalSummary = `🎙️ [Voice Note] ${finalSummary}||AUDIO:${audioBase64}`;
+    }
+
     try {
       await leadService.addCallLog(leadId, {
-        callSummary: callSummary.trim(),
+        callSummary: finalSummary,
         durationMinutes: parseInt(callDuration, 10),
         followUpDate: callFollowUp || null,
       });
-      toast.success('Call log recorded!');
+      toast.success('Call log & Voice note audio saved!');
       setCallSummary('');
       setCallFollowUp('');
+      setAudioBase64(null);
+      setAudioBlobUrl(null);
       fetchLeadDetails();
     } catch (err) {
       toast.error(err.message || 'Failed to log call');
@@ -405,6 +454,26 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                   </div>
                 </div>
 
+                {/* Audio Recording Preview Player */}
+                {audioBlobUrl && (
+                  <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-500/40 text-xs space-y-1.5 animate-fadeIn">
+                    <div className="flex items-center justify-between text-[11px] font-extrabold text-rose-300">
+                      <span className="flex items-center gap-1.5">
+                        🎙️ Voice Note Audio Preview (Ready to Save)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={clearRecordedAudio}
+                        className="text-[10px] font-bold text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors"
+                      >
+                        <FiTrash2 className="w-3.5 h-3.5" />
+                        <span>Discard Audio</span>
+                      </button>
+                    </div>
+                    <audio controls src={audioBlobUrl} className="w-full h-8 rounded-lg accent-rose-500" />
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400">Next Follow-Up Date:</span>
@@ -424,28 +493,57 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                 </div>
               </form>
 
-              <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                {lead.callLogs?.map((log) => (
-                  <div key={log.id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Logged by {log.loggedName} • {log.durationMinutes ? `${log.durationMinutes} mins` : 'Call'}</span>
-                      <span>{new Date(log.createdAt).toLocaleString()}</span>
+              {/* Call Logs Feed with WhatsApp Audio Playback */}
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {lead.callLogs?.map((log) => {
+                  const hasAudio = log.callSummary?.includes('||AUDIO:');
+                  const [summaryText, audioDataUrl] = hasAudio
+                    ? log.callSummary.split('||AUDIO:')
+                    : [log.callSummary, null];
+
+                  const cleanSummary = summaryText.replace('🎙️ [Voice Note]', '').trim();
+
+                  return (
+                    <div key={log.id} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>Logged by {log.loggedName} • {log.durationMinutes ? `${log.durationMinutes} mins` : 'Call'}</span>
+                        <span>{new Date(log.createdAt).toLocaleString()}</span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-semibold text-slate-200 flex items-center gap-2">
+                          {hasAudio || log.callSummary?.includes('🎙️') ? (
+                            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
+                              🎙️ Voice Note
+                            </span>
+                          ) : null}
+                          <span>{cleanSummary || 'Recorded Audio Clip'}</span>
+                        </p>
+
+                        {/* Interactive Audio Player */}
+                        {audioDataUrl && (
+                          <div className="p-2 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                            <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 px-1">
+                              <span>Voice Note Audio Recording</span>
+                              <span className="text-emerald-400 font-mono text-[9px] uppercase">Playable Clip</span>
+                            </div>
+                            <audio
+                              controls
+                              src={audioDataUrl}
+                              className="w-full h-8 rounded-lg outline-none accent-indigo-500"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {log.followUpDate && (
+                        <p className="text-[10px] text-amber-400 font-bold">
+                          📅 Next Follow-Up Scheduled: {new Date(log.followUpDate).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs font-semibold text-slate-200 flex items-start gap-1.5">
-                      {log.callSummary?.includes('🎙️') || log.callSummary?.toLowerCase().includes('voice note') ? (
-                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
-                          🎙️ Voice Note
-                        </span>
-                      ) : null}
-                      <span>{log.callSummary}</span>
-                    </p>
-                    {log.followUpDate && (
-                      <p className="text-[10px] text-amber-400 font-bold">
-                        📅 Next Follow-Up Scheduled: {new Date(log.followUpDate).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
