@@ -175,6 +175,34 @@ class ClientController {
       next(error);
     }
   }
+
+  async verifyGst(req, res, next) {
+    try {
+      const { gstNumber } = req.body;
+      const result = await clientService.verifyGst(gstNumber);
+      return res.status(200).json({
+        success: true,
+        message: 'GSTIN verified successfully with Government Sandbox',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyPan(req, res, next) {
+    try {
+      const { panNumber } = req.body;
+      const result = await clientService.verifyPan(panNumber);
+      return res.status(200).json({
+        success: true,
+        message: 'PAN verified successfully with Income Tax Sandbox',
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ClientController();

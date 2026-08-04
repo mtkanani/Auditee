@@ -8,6 +8,7 @@ import { StatsCard } from '../../components/common/StatsCard';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 import { ClientDetailModal } from '../../components/clients/ClientDetailModal';
+import { AddMasterClientModal } from '../../components/clients/AddMasterClientModal';
 import { FiPlus, FiEdit2, FiTrash2, FiEye, FiBriefcase, FiDollarSign, FiLayers, FiShield, FiX } from 'react-icons/fi';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -327,188 +328,12 @@ export const ClientManagement = () => {
         onRefresh={fetchClients}
       />
 
-      {/* Create Client Modal */}
-      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Add Master Client Account">
-        <form onSubmit={handleSubmitCreate(handleCreateClient)} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-          {/* Section 1: Basic & Entity Info */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">1. Entity & Profile Details</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Client Name *</label>
-                <input
-                  type="text"
-                  {...regCreate('clientName', { required: true })}
-                  placeholder="e.g. ABC Pvt Ltd / Rajesh Sharma"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Client Constitution Type *</label>
-                <select
-                  {...regCreate('clientType', { required: true })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                >
-                  <option value="INDIVIDUAL">INDIVIDUAL</option>
-                  <option value="PRIVATE_LIMITED">PRIVATE LIMITED</option>
-                  <option value="PARTNERSHIP">PARTNERSHIP FIRM</option>
-                  <option value="LLP">LLP</option>
-                  <option value="PROPRIETORSHIP">PROPRIETORSHIP</option>
-                  <option value="TRUST">TRUST / NGO</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Company Legal Name</label>
-                <input
-                  type="text"
-                  {...regCreate('companyName')}
-                  placeholder="ABC Private Limited"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Business Type / Industry</label>
-                <input
-                  type="text"
-                  {...regCreate('businessType')}
-                  placeholder="Manufacturing / IT Consulting"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Account Email *</label>
-                <input
-                  type="email"
-                  {...regCreate('email', { required: true })}
-                  placeholder="info@abc.com"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Portal Password</label>
-                <input
-                  type="password"
-                  {...regCreate('password')}
-                  placeholder="Password@123"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Indian Tax Identifiers */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold text-purple-400 uppercase tracking-wider">2. Tax Registration Identifiers</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">GST Number (GSTIN)</label>
-                <input
-                  type="text"
-                  {...regCreate('gstNumber')}
-                  placeholder="24AAAAA0000A1Z5"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 uppercase"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">PAN Number</label>
-                <input
-                  type="text"
-                  {...regCreate('panNumber')}
-                  placeholder="ABCDE1234F"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 uppercase"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">TAN Number (TDS)</label>
-                <input
-                  type="text"
-                  {...regCreate('tanNumber')}
-                  placeholder="ABCD12345E"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 uppercase"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">CIN Number (ROC)</label>
-                <input
-                  type="text"
-                  {...regCreate('cinNumber')}
-                  placeholder="L00000MH2020PLC000000"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 uppercase"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: Primary Contact Person */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">3. Primary Contact Person</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Contact Name</label>
-                <input
-                  type="text"
-                  {...regCreate('contactPersonName')}
-                  placeholder="Mr. Suresh Patel"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Designation</label>
-                <input
-                  type="text"
-                  {...regCreate('contactPersonDesignation')}
-                  placeholder="Managing Director / CFO"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Phone / Mobile</label>
-                <input
-                  type="text"
-                  {...regCreate('contactPersonPhone')}
-                  placeholder="9988776655"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Email</label>
-                <input
-                  type="email"
-                  {...regCreate('contactPersonEmail')}
-                  placeholder="suresh@abc.com"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-                />
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg"
-          >
-            Create Client Master Account
-          </button>
-        </form>
-      </Modal>
+      {/* Create Master Client Gated Verification Modal */}
+      <AddMasterClientModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={fetchClients}
+      />
 
       {/* Edit Client Modal */}
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Master Client Profile">

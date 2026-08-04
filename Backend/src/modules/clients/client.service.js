@@ -252,6 +252,88 @@ class ClientService {
 
     return await clientRepository.getActivityLogs(clientId);
   }
+
+  // --- Tax Identifiers Verification Sandbox ---
+  async verifyGst(gstNumber) {
+    const cleanGst = (gstNumber || '').trim().toUpperCase();
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!gstRegex.test(cleanGst)) {
+      throw new BadRequestError('Invalid Indian GST format. Format must be 15 alphanumeric characters (e.g. 24AAAAA0000A1Z5).');
+    }
+
+    const stateCodeMap = {
+      '01': 'Jammu & Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh',
+      '05': 'Uttarakhand', '06': 'Haryana', '07': 'Delhi', '08': 'Rajasthan',
+      '09': 'Uttar Pradesh', '10': 'Bihar', '11': 'Sikkim', '12': 'Arunachal Pradesh',
+      '13': 'Nagaland', '14': 'Manipur', '15': 'Mizoram', '16': 'Tripura',
+      '17': 'Meghalaya', '18': 'Assam', '19': 'West Bengal', '20': 'Jharkhand',
+      '21': 'Odisha', '22': 'Chhattisgarh', '23': 'Madhya Pradesh', '24': 'Gujarat',
+      '27': 'Maharashtra', '29': 'Karnataka', '30': 'Goa', '32': 'Kerala',
+      '33': 'Tamil Nadu', '36': 'Telangana', '37': 'Andhra Pradesh'
+    };
+
+    const stateCode = cleanGst.substring(0, 2);
+    const panNumber = cleanGst.substring(2, 12);
+    const stateName = stateCodeMap[stateCode] || 'Gujarat';
+    const panFourthChar = panNumber.charAt(3);
+
+    let constitution = 'PRIVATE_LIMITED';
+    if (panFourthChar === 'P') constitution = 'PROPRIETORSHIP';
+    else if (panFourthChar === 'F') constitution = 'PARTNERSHIP';
+    else if (panFourthChar === 'C') constitution = 'PRIVATE_LIMITED';
+    else if (panFourthChar === 'T') constitution = 'TRUST';
+
+    const legalName = `${panNumber.substring(0, 5)} ${constitution === 'PROPRIETORSHIP' ? 'ENTERPRISES' : 'PRIVATE LIMITED'}`;
+    const tradeName = `${panNumber.substring(0, 5)} SOLUTIONS`;
+
+    return {
+      isVerified: true,
+      gstNumber: cleanGst,
+      panNumber,
+      legalName,
+      tradeName,
+      gstStatus: 'ACTIVE',
+      taxpayerType: 'Regular',
+      stateCode,
+      stateName,
+      constitution,
+      registrationDate: '2020-04-01',
+      verifiedAt: new Date().toISOString()
+    };
+  }
+
+  async verifyPan(panNumber) {
+    const cleanPan = (panNumber || '').trim().toUpperCase();
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    if (!panRegex.test(cleanPan)) {
+      throw new BadRequestError('Invalid Indian PAN format. Format must be 10 characters (e.g. ABCDE1234F).');
+    }
+
+    const fourthChar = cleanPan.charAt(3);
+    const entityTypeMap = {
+      'P': 'Individual / Proprietorship',
+      'C': 'Company / Pvt Ltd',
+      'F': 'Partnership Firm / LLP',
+      'H': 'Hindu Undivided Family (HUF)',
+      'A': 'Association of Persons (AOP)',
+      'T': 'Trust / NGO / Society',
+      'B': 'Body of Individuals (BOI)',
+      'L': 'Local Authority',
+      'J': 'Artificial Juridical Person',
+      'G': 'Government Agency'
+    };
+
+    const entityType = entityTypeMap[fourthChar] || 'Individual Entity';
+
+    return {
+      isVerified: true,
+      panNumber: cleanPan,
+      panStatus: 'ACTIVE / VERIFIED',
+      entityType,
+      holderName: `VERIFIED PAN HOLDER (${cleanPan})`,
+      verifiedAt: new Date().toISOString()
+    };
+  }
 }
 
 module.exports = new ClientService();

@@ -8,6 +8,8 @@ const {
   changeClientStatusValidation,
   addServiceValidation,
   addDocumentValidation,
+  verifyGstValidation,
+  verifyPanValidation,
 } = require('./client.validation');
 const validate = require('../../middlewares/validate');
 const { authenticateSession } = require('../../middlewares/auth.middleware');
@@ -17,6 +19,9 @@ const router = express.Router();
 
 router.use(authenticateSession);
 router.use(authorizeRoles('FIRM_ADMIN'));
+
+router.post('/verify-gst', verifyGstValidation, validate, clientController.verifyGst);
+router.post('/verify-pan', verifyPanValidation, validate, clientController.verifyPan);
 
 router.post('/', createClientValidation, validate, clientController.createClient);
 router.get('/', getClientsValidation, validate, clientController.getAllClients);

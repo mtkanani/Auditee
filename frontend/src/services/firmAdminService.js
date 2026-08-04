@@ -38,6 +38,16 @@ export const firmAdminService = {
   },
 
   // Clients Management APIs
+  verifyGst: async (gstNumber) => {
+    const res = await axiosInstance.post('/firm-admin/clients/verify-gst', { gstNumber });
+    return res.data;
+  },
+
+  verifyPan: async (panNumber) => {
+    const res = await axiosInstance.post('/firm-admin/clients/verify-pan', { panNumber });
+    return res.data;
+  },
+
   createClient: async (clientData) => {
     const res = await axiosInstance.post('/firm-admin/clients', clientData);
     return res.data;

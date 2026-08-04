@@ -253,6 +253,26 @@ const addDocumentValidation = [
     .toInt(),
 ];
 
+const verifyGstValidation = [
+  body('gstNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('GST number is required')
+    .toUpperCase()
+    .matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/)
+    .withMessage('Invalid Indian GST format (e.g. 24AAAAA0000A1Z5)'),
+];
+
+const verifyPanValidation = [
+  body('panNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('PAN number is required')
+    .toUpperCase()
+    .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/)
+    .withMessage('Invalid Indian PAN format (e.g. ABCDE1234F)'),
+];
+
 module.exports = {
   createClientValidation,
   getClientsValidation,
@@ -261,4 +281,7 @@ module.exports = {
   changeClientStatusValidation,
   addServiceValidation,
   addDocumentValidation,
+  verifyGstValidation,
+  verifyPanValidation,
 };
+
