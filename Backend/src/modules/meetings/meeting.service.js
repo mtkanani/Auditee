@@ -24,6 +24,17 @@ class MeetingService {
     const parsedStart = new Date(startTime || Date.now());
     const parsedEnd = new Date(endTime || Date.now() + 3600000);
 
+    let createdById = parseInt(user.id, 10);
+    if (user.role === 'CLIENT' || user.userType === 'CLIENT') {
+      const firmAdmin = await prisma.user.findFirst({
+        where: { firmId: parseInt(firmId, 10) },
+        select: { id: true },
+      });
+      if (firmAdmin) {
+        createdById = firmAdmin.id;
+      }
+    }
+
     // Auto-generate video meeting room link if IN_APP_VIDEO
     const meetingRoomId = `auditee-room-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const generatedLink = meetingMode === 'IN_APP_VIDEO'
@@ -80,11 +91,23 @@ class MeetingService {
           });
         }
       }
+
+      // If scheduled by a Client, ensure the client is in the participant list
+      if (user.role === 'CLIENT') {
+        const cId = parseInt(user.id, 10);
+        const alreadyInList = resolvedParticipants.some((p) => p.clientId === cId);
+        if (!alreadyInList) {
+          resolvedParticipants.push({
+            clientId: cId,
+            email: user.email ? user.email.trim().toLowerCase() : undefined,
+          });
+        }
+      }
     }
 
     const meeting = await meetingRepository.createMeeting({
       firmId: parseInt(firmId, 10),
-      title,
+      title: (user.role === 'CLIENT' ? '📌 [Client Requested] ' : '') + title,
       description,
       agenda,
       meetingType,
@@ -96,7 +119,7 @@ class MeetingService {
       meetingDate: parsedMeetingDate,
       startTime: parsedStart,
       endTime: parsedEnd,
-      createdById: parseInt(user.id, 10),
+      createdById,
       participants: resolvedParticipants,
     });
 

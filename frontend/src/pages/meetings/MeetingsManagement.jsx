@@ -76,7 +76,7 @@ export const MeetingsManagement = () => {
   };
 
   const role = normalizeRole(user?.role);
-  const canSchedule = role === 'FIRM_ADMIN' || role === 'SUPER_ADMIN' || user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const canSchedule = true; // Allow any firm user, employee, and client to schedule meetings
 
   return (
     <div className="space-y-6 pb-12">
