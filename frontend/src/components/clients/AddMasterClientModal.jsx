@@ -34,6 +34,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   // Reset modal state on open/close
   useEffect(() => {
@@ -43,6 +44,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
       setPanNumberInput('');
       setVerificationResult(null);
       setIsVerifying(false);
+      setFieldErrors({});
       setFormData({
         clientName: '',
         clientType: 'INDIVIDUAL',
@@ -68,17 +70,24 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleVerifyGst = async () => {
     const cleanGst = gstNumberInput.trim().toUpperCase();
+    setFieldErrors((prev) => ({ ...prev, gstNumberInput: null }));
+
     if (!cleanGst) {
+      setFieldErrors((prev) => ({ ...prev, gstNumberInput: 'Please enter a GSTIN number to verify' }));
       toast.error('Please enter a GSTIN number to verify');
       return;
     }
 
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     if (!gstRegex.test(cleanGst)) {
+      setFieldErrors((prev) => ({ ...prev, gstNumberInput: 'Invalid GSTIN format. Example: 24AAAAA0000A1Z5' }));
       toast.error('Invalid GSTIN format. Example: 24AAAAA0000A1Z5');
       return;
     }
@@ -99,9 +108,9 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
           clientType: res.data.constitution || prev.clientType,
           state: res.data.stateName || prev.state,
         }));
-        toast.success('⚡ GSTIN verified! Profile details auto-populated and sections unlocked.');
+        toast.success('⚡ GSTIN Verified! Account details unlocked & auto-filled.');
       } else {
-        toast.error(res.message || 'GSTIN Verification failed');
+        toast.error(res.message || 'GST Verification failed');
       }
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'GST Verification failed');
@@ -112,13 +121,17 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleVerifyPan = async () => {
     const cleanPan = panNumberInput.trim().toUpperCase();
+    setFieldErrors((prev) => ({ ...prev, panNumberInput: null }));
+
     if (!cleanPan) {
+      setFieldErrors((prev) => ({ ...prev, panNumberInput: 'Please enter a PAN number to verify' }));
       toast.error('Please enter a PAN number to verify');
       return;
     }
 
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     if (!panRegex.test(cleanPan)) {
+      setFieldErrors((prev) => ({ ...prev, panNumberInput: 'Invalid PAN format. Example: ABCDE1234F' }));
       toast.error('Invalid PAN format. Example: ABCDE1234F');
       return;
     }
@@ -144,18 +157,42 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleCreateAccount = async (e) => {
     e.preventDefault();
+    setFieldErrors({});
+
     if (!verificationResult || !verificationResult.data?.isVerified) {
-      toast.error('Please verify GST or PAN details first');
+      toast.error('Please verify GST or PAN details first in Section 1');
       return;
     }
 
+    const errors = {};
+
+    // 1. Client Display Name Validation
     if (!formData.clientName.trim()) {
-      toast.error('Client name is required');
-      return;
+      errors.clientName = 'Client display / business name is required';
     }
 
-    if (!formData.email.trim()) {
-      toast.error('Account email is required');
+    // 2. Account Email (Gmail) Validation
+    const emailStr = formData.email.trim();
+    if (!emailStr) {
+      errors.email = 'Account Email (Gmail / Login Email) is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+      errors.email = 'Invalid Gmail / Email format (e.g. client@gmail.com)';
+    }
+
+    // 3. Password Validation
+    if (formData.password && formData.password.length < 6) {
+      errors.password = 'Initial password must be at least 6 characters long';
+    }
+
+    // 4. Contact Phone Validation
+    const phoneStr = (formData.contactPersonPhone || formData.phone || '').trim();
+    if (phoneStr && !/^[0-9+\-\s]{8,15}$/.test(phoneStr)) {
+      errors.contactPersonPhone = 'Mobile number must be a valid 10-digit phone number';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error('Please fix the highlighted form errors below');
       return;
     }
 
@@ -163,6 +200,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const payload = {
         ...formData,
+        phone: formData.phone || formData.contactPersonPhone,
         gstNumber: verificationResult.type === 'GST' ? verificationResult.data.gstNumber : null,
         panNumber: verificationResult.type === 'GST' ? verificationResult.data.panNumber : panNumberInput.trim().toUpperCase(),
         taxRegistrationType: isGstExempt ? 'EXEMPT' : 'REGULAR',
@@ -171,11 +209,40 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
       };
 
       await firmAdminService.createClient(payload);
-      toast.success('Master Client Account created successfully!');
+      toast.success('⚡ Master Client Account created successfully!');
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to create Master Client Account');
+      console.error('Create Client Error:', err);
+      const serverMsg = err.response?.data?.message || err.message || '';
+      const serverErrors = err.response?.data?.errors || {};
+      const newFieldErrors = {};
+
+      const lowerMsg = serverMsg.toLowerCase();
+
+      if (lowerMsg.includes('email') || serverErrors.email) {
+        newFieldErrors.email = lowerMsg.includes('already exists') || lowerMsg.includes('registered')
+          ? 'This Email / Gmail address is already registered in Auditee. Please use a different email.'
+          : (serverErrors.email || serverMsg);
+      }
+      if (lowerMsg.includes('phone') || lowerMsg.includes('mobile') || serverErrors.phone) {
+        newFieldErrors.contactPersonPhone = 'This mobile number is already registered or invalid.';
+      }
+      if (lowerMsg.includes('gst') || serverErrors.gstNumber) {
+        newFieldErrors.gstNumberInput = 'This GSTIN is already registered in your firm.';
+      }
+      if (lowerMsg.includes('pan') || serverErrors.panNumber) {
+        newFieldErrors.panNumberInput = 'This PAN number is already registered in your firm.';
+      }
+      if (lowerMsg.includes('password') || serverErrors.password) {
+        newFieldErrors.password = 'Password must be at least 6 characters long.';
+      }
+
+      if (Object.keys(newFieldErrors).length > 0) {
+        setFieldErrors(newFieldErrors);
+      }
+
+      toast.error(serverMsg || 'Failed to create Master Client Account');
     } finally {
       setIsSubmitting(false);
     }
@@ -269,10 +336,15 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={(e) => {
                       setGstNumberInput(e.target.value.toUpperCase());
                       if (isVerified) setVerificationResult(null);
+                      if (fieldErrors.gstNumberInput) setFieldErrors((prev) => ({ ...prev, gstNumberInput: null }));
                     }}
                     placeholder="e.g. 24AAAAA0000A1Z5"
                     maxLength={15}
-                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-100 uppercase tracking-wider focus:outline-none focus:border-indigo-500"
+                    className={`flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-mono text-slate-100 uppercase tracking-wider focus:outline-none transition-all ${
+                      fieldErrors.gstNumberInput
+                        ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
+                        : 'border-slate-800 focus:border-indigo-500'
+                    }`}
                   />
                   <button
                     type="button"
@@ -293,6 +365,12 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                     )}
                   </button>
                 </div>
+                {fieldErrors.gstNumberInput && (
+                  <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                    <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span>{fieldErrors.gstNumberInput}</span>
+                  </p>
+                )}
               </div>
 
               {/* GST Verification Status Result */}
@@ -449,8 +527,18 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                     disabled={!isVerified}
                     placeholder="e.g. Apex Tech Pvt Ltd"
                     required
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 disabled:opacity-50"
+                    className={`w-full px-3 py-2 rounded-xl bg-slate-900 border text-xs text-slate-100 disabled:opacity-50 transition-all ${
+                      fieldErrors.clientName
+                        ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
+                        : 'border-slate-800 focus:border-indigo-500'
+                    }`}
                   />
+                  {fieldErrors.clientName && (
+                    <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
+                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>{fieldErrors.clientName}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -509,10 +597,20 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                     value={formData.email}
                     onChange={handleInputChange}
                     disabled={!isVerified}
-                    placeholder="client@company.com"
+                    placeholder="client@gmail.com"
                     required
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 disabled:opacity-50"
+                    className={`w-full px-3 py-2 rounded-xl bg-slate-900 border text-xs text-slate-100 disabled:opacity-50 transition-all ${
+                      fieldErrors.email
+                        ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
+                        : 'border-slate-800 focus:border-indigo-500'
+                    }`}
                   />
+                  {fieldErrors.email && (
+                    <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
+                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>{fieldErrors.email}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -524,8 +622,18 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleInputChange}
                     disabled={!isVerified}
                     placeholder="Password@123"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 disabled:opacity-50"
+                    className={`w-full px-3 py-2 rounded-xl bg-slate-900 border text-xs text-slate-100 disabled:opacity-50 transition-all ${
+                      fieldErrors.password
+                        ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
+                        : 'border-slate-800 focus:border-indigo-500'
+                    }`}
                   />
+                  {fieldErrors.password && (
+                    <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
+                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>{fieldErrors.password}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -579,8 +687,18 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                     onChange={handleInputChange}
                     disabled={!isVerified}
                     placeholder="9988776655"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 disabled:opacity-50"
+                    className={`w-full px-3 py-2 rounded-xl bg-slate-900 border text-xs text-slate-100 disabled:opacity-50 transition-all ${
+                      fieldErrors.contactPersonPhone || fieldErrors.phone
+                        ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
+                        : 'border-slate-800 focus:border-indigo-500'
+                    }`}
                   />
+                  {(fieldErrors.contactPersonPhone || fieldErrors.phone) && (
+                    <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
+                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>{fieldErrors.contactPersonPhone || fieldErrors.phone}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
