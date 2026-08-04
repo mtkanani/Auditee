@@ -91,15 +91,15 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
           type: 'GST',
           data: res.data,
         });
-        // Auto-fill extracted values
+        // Auto-fill extracted values into profile form fields
         setFormData((prev) => ({
           ...prev,
-          clientName: prev.clientName || res.data.legalName || res.data.tradeName,
-          companyName: res.data.legalName || prev.companyName,
+          clientName: res.data.legalName || res.data.tradeName || prev.clientName,
+          companyName: res.data.legalName || res.data.tradeName || prev.companyName,
           clientType: res.data.constitution || prev.clientType,
           state: res.data.stateName || prev.state,
         }));
-        toast.success('⚡ GSTIN verified successfully! Account details sections unlocked.');
+        toast.success('⚡ GSTIN verified! Profile details auto-populated and sections unlocked.');
       } else {
         toast.error(res.message || 'GSTIN Verification failed');
       }
@@ -297,33 +297,41 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
 
               {/* GST Verification Status Result */}
               {verificationResult?.type === 'GST' && (
-                <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-xs space-y-2 animate-fadeIn">
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
+                <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-2.5 animate-fadeIn">
+                  <div className="flex items-center justify-between pb-2 border-b border-emerald-900/50">
+                    <span className="font-extrabold text-emerald-400 flex items-center gap-1.5 text-xs">
                       <FiCheckCircle className="w-4 h-4" />
-                      GSTIN Verified Active
+                      GSTIN VERIFIED & ACTIVE ({verificationResult.data.gstNumber})
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      State Code: {verificationResult.data.stateCode} ({verificationResult.data.stateName})
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {verificationResult.data.gstStatus || 'ACTIVE'}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-slate-300 pt-1 border-t border-emerald-900/50">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-300">
                     <div>
-                      <p className="text-[10px] text-slate-400">Legal Business Name</p>
-                      <p className="font-bold text-slate-100">{verificationResult.data.legalName}</p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Legal Business Name</p>
+                      <p className="font-extrabold text-slate-100 text-xs mt-0.5">{verificationResult.data.legalName}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400">Trade Name</p>
-                      <p className="font-semibold">{verificationResult.data.tradeName}</p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Trade / Brand Name</p>
+                      <p className="font-bold text-slate-200 text-xs mt-0.5">{verificationResult.data.tradeName}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400">Auto-Extracted PAN</p>
-                      <p className="font-mono font-bold text-purple-300">{verificationResult.data.panNumber}</p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Auto-Extracted PAN</p>
+                      <p className="font-mono font-extrabold text-purple-300 text-xs mt-0.5">{verificationResult.data.panNumber}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-400">Taxpayer Category</p>
-                      <p className="font-semibold text-emerald-300">{verificationResult.data.taxpayerType}</p>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">State & Jurisdiction</p>
+                      <p className="font-bold text-slate-200 text-xs mt-0.5">Code {verificationResult.data.stateCode} ({verificationResult.data.stateName})</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Constitution Entity</p>
+                      <p className="font-bold text-indigo-300 text-xs mt-0.5">{verificationResult.data.constitution || 'PRIVATE LIMITED'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Taxpayer Type</p>
+                      <p className="font-bold text-emerald-400 text-xs mt-0.5">{verificationResult.data.taxpayerType || 'Regular'}</p>
                     </div>
                   </div>
                 </div>
