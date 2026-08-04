@@ -12,6 +12,9 @@ import {
   FiClock,
   FiSend,
   FiZap,
+  FiMic,
+  FiMicOff,
+  FiSquare,
 } from 'react-icons/fi';
 import { leadService } from '../../services/leadService';
 import toast from 'react-hot-toast';
@@ -26,6 +29,12 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
   const [callDuration, setCallDuration] = useState('15');
   const [callFollowUp, setCallFollowUp] = useState('');
 
+  // Voice Note Recording state (WhatsApp Style)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recognitionInstance, setRecognitionInstance] = useState(null);
+  const [isVoiceNote, setIsVoiceNote] = useState(false);
+
   const [meetingTitle, setMeetingTitle] = useState('');
   const [meetingNotes, setMeetingNotes] = useState('');
   const [meetingAttendees, setMeetingAttendees] = useState('');
@@ -34,6 +43,86 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
   const [proposedFee, setProposedFee] = useState('');
   const [billingFrequency, setBillingFrequency] = useState('MONTHLY');
   const [proposalScope, setProposalScope] = useState('');
+
+  // Voice recording timer effect
+  useEffect(() => {
+    let timer;
+    if (isRecording) {
+      timer = setInterval(() => {
+        setRecordingSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setRecordingSeconds(0);
+    }
+    return () => clearInterval(timer);
+  }, [isRecording]);
+
+  const startVoiceRecording = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error('Voice recording is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      let finalTranscript = callSummary ? callSummary + ' ' : '';
+
+      recognition.onstart = () => {
+        setIsRecording(true);
+        setIsVoiceNote(true);
+        toast.success('🎙️ Recording started! Speak your call notes...', { icon: '🎙️' });
+      };
+
+      recognition.onresult = (event) => {
+        let currentInterim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcriptChunk = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptChunk + ' ';
+          } else {
+            currentInterim += transcriptChunk;
+          }
+        }
+        setCallSummary((finalTranscript + currentInterim).trim());
+      };
+
+      recognition.onerror = (err) => {
+        console.error('Speech Recognition error:', err);
+        setIsRecording(false);
+        toast.error('Microphone permission denied or recording stopped.');
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognition.start();
+      setRecognitionInstance(recognition);
+    } catch (err) {
+      toast.error('Could not access microphone');
+      setIsRecording(false);
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (recognitionInstance) {
+      recognitionInstance.stop();
+      setRecognitionInstance(null);
+    }
+    setIsRecording(false);
+    toast.success('Voice note transcribed successfully!');
+  };
+
+  const formatTimer = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const fetchLeadDetails = async () => {
     if (!leadId) return;
@@ -261,30 +350,61 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
           {activeTab === 'calls' && (
             <div className="space-y-4">
               <form onSubmit={handleAddCallSubmit} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                <h4 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-                  <FiPhone className="text-indigo-400" /> Log Phone Conversation
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                    <FiPhone className="text-indigo-400" /> Log Phone Conversation
+                  </h4>
+
+                  {/* Active Recording Indicator Banner */}
+                  {isRecording && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 text-xs font-extrabold animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                      <span>Recording Voice Note... ({formatTimer(recordingSeconds)})</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 relative flex items-center">
                     <input
                       type="text"
                       required
-                      placeholder="Call summary / conversation notes..."
+                      placeholder={isRecording ? "Listening & transcribing voice note..." : "Call summary / conversation notes..."}
                       value={callSummary}
                       onChange={(e) => setCallSummary(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
+                      className={`w-full pl-3 pr-12 py-2.5 rounded-xl bg-slate-900 border text-xs text-slate-100 transition-all ${
+                        isRecording
+                          ? 'border-rose-500/80 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
+                          : 'border-slate-800 focus:border-indigo-500'
+                      }`}
                     />
+
+                    {/* WhatsApp Style Mic Recorder Button */}
+                    <button
+                      type="button"
+                      onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                      title={isRecording ? "Stop Recording Voice Note" : "Record Voice Note (WhatsApp Style)"}
+                      className={`absolute right-2 p-2 rounded-lg transition-all flex items-center justify-center ${
+                        isRecording
+                          ? 'bg-rose-600 text-white animate-bounce shadow-lg shadow-rose-500/50'
+                          : 'bg-indigo-600/20 hover:bg-indigo-600 text-indigo-400 hover:text-white'
+                      }`}
+                    >
+                      {isRecording ? <FiSquare className="w-4 h-4" /> : <FiMic className="w-4 h-4" />}
+                    </button>
                   </div>
+
                   <div>
                     <input
                       type="number"
                       placeholder="Duration (mins)"
                       value={callDuration}
                       onChange={(e) => setCallDuration(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
                     />
                   </div>
                 </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400">Next Follow-Up Date:</span>
@@ -297,9 +417,9 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                   </div>
                   <button
                     type="submit"
-                    className="py-1.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg"
+                    className="py-2 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 flex items-center gap-1.5"
                   >
-                    Save Call Log
+                    <span>Save Call Log</span>
                   </button>
                 </div>
               </form>
@@ -311,7 +431,14 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                       <span>Logged by {log.loggedName} • {log.durationMinutes ? `${log.durationMinutes} mins` : 'Call'}</span>
                       <span>{new Date(log.createdAt).toLocaleString()}</span>
                     </div>
-                    <p className="text-xs font-semibold text-slate-200">{log.callSummary}</p>
+                    <p className="text-xs font-semibold text-slate-200 flex items-start gap-1.5">
+                      {log.callSummary?.includes('🎙️') || log.callSummary?.toLowerCase().includes('voice note') ? (
+                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 shrink-0">
+                          🎙️ Voice Note
+                        </span>
+                      ) : null}
+                      <span>{log.callSummary}</span>
+                    </p>
                     {log.followUpDate && (
                       <p className="text-[10px] text-amber-400 font-bold">
                         📅 Next Follow-Up Scheduled: {new Date(log.followUpDate).toLocaleDateString()}
