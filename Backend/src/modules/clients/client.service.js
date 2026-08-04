@@ -261,9 +261,11 @@ class ClientService {
       const baseUrl = process.env.GST_API_URL || 'https://api.sandbox.co.in';
 
       if (!apiKey || !apiSecret) {
+        console.warn('[GST VERIFY] Missing GST_API_KEY or GST_API_SECRET in environment.');
         return null;
       }
 
+      console.log(`[GST VERIFY] Requesting token from ${baseUrl}/authenticate...`);
       const authRes = await fetch(`${baseUrl}/authenticate`, {
         method: 'POST',
         headers: {
@@ -274,14 +276,19 @@ class ClientService {
         },
       });
 
-      if (!authRes.ok) {
+      const authData = await authRes.json();
+      if (!authRes.ok || authData.code !== 200) {
+        console.error('[GST VERIFY] Sandbox Auth Failed:', authRes.status, authData);
         return null;
       }
 
-      const authData = await authRes.json();
-      return authData.access_token || authData.data?.access_token || null;
+      const token = authData.access_token || authData.data?.access_token || null;
+      if (token) {
+        console.log('[GST VERIFY] Sandbox Authentication SUCCESS. Token acquired.');
+      }
+      return token;
     } catch (err) {
-      console.warn('Sandbox GST Authentication Error:', err.message);
+      console.error('[GST VERIFY] Sandbox GST Authentication Exception:', err.message);
       return null;
     }
   }
@@ -293,6 +300,8 @@ class ClientService {
     if (!gstRegex.test(cleanGst)) {
       throw new BadRequestError('Invalid Indian GST format. Format must be 15 alphanumeric characters (e.g. 24AAAAA0000A1Z5).');
     }
+
+    console.log(`[GST VERIFY] Starting verification for GSTIN: ${cleanGst}`);
 
     const stateCodeMap = {
       '01': 'Jammu & Kashmir', '02': 'Himachal Pradesh', '03': 'Punjab', '04': 'Chandigarh',
@@ -330,12 +339,14 @@ class ClientService {
         const apiKey = process.env.GST_API_KEY;
 
         const endpointsToTry = [
+          process.env.GST_SEARCH_ENDPOINT ? process.env.GST_SEARCH_ENDPOINT.replace('{gstin}', cleanGst) : null,
           `${baseUrl}/gsp/public/gstin/${cleanGst}`,
           `${baseUrl}/gst/public/gstin/${cleanGst}`,
           `${baseUrl}/gsp/public/gstin/search/${cleanGst}`,
-        ];
+        ].filter(Boolean);
 
         for (const endpoint of endpointsToTry) {
+          console.log(`[GST VERIFY] Trying API endpoint: ${endpoint}`);
           const gstRes = await fetch(endpoint, {
             method: 'GET',
             headers: {
@@ -345,8 +356,10 @@ class ClientService {
             },
           });
 
-          if (gstRes.ok) {
-            const result = await gstRes.json();
+          const result = await gstRes.json();
+          console.log(`[GST VERIFY] Response from ${endpoint}: Status ${gstRes.status}`, result);
+
+          if (gstRes.ok && (result.code === 200 || result.data)) {
             const data = result.data || result;
             if (data && (data.lgnm || data.legal_name || data.tradeNam)) {
               legalName = data.lgnm || data.legal_name || legalName;
@@ -354,12 +367,13 @@ class ClientService {
               gstStatus = (data.sts || data.status || 'ACTIVE').toUpperCase();
               taxpayerType = data.dty || data.taxpayer_type || 'Regular';
               isLiveApiVerified = true;
+              console.log('[GST VERIFY] Live Sandbox Data Parsed Successfully:', { legalName, tradeName, gstStatus });
               break;
             }
           }
         }
       } catch (apiErr) {
-        console.warn('Sandbox API Fetch Warning:', apiErr.message);
+        console.error('[GST VERIFY] Sandbox API Fetch Exception:', apiErr.message);
       }
     }
 
