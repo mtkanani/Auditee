@@ -253,7 +253,40 @@ class ClientService {
     return await clientRepository.getActivityLogs(clientId);
   }
 
-  // --- Tax Identifiers Verification Sandbox ---
+  // --- Sandbox.co.in API Authentication Helper ---
+  async _getSandboxGstToken() {
+    try {
+      const apiKey = process.env.GST_API_KEY;
+      const apiSecret = process.env.GST_API_SECRET;
+      const baseUrl = process.env.GST_API_URL || 'https://api.sandbox.co.in';
+
+      if (!apiKey || !apiSecret) {
+        return null;
+      }
+
+      const authRes = await fetch(`${baseUrl}/authenticate`, {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'x-api-secret': apiSecret,
+          'x-api-version': '1.0',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!authRes.ok) {
+        return null;
+      }
+
+      const authData = await authRes.json();
+      return authData.access_token || authData.data?.access_token || null;
+    } catch (err) {
+      console.warn('Sandbox GST Authentication Error:', err.message);
+      return null;
+    }
+  }
+
+  // --- Tax Identifiers Verification ---
   async verifyGst(gstNumber) {
     const cleanGst = (gstNumber || '').trim().toUpperCase();
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
@@ -283,17 +316,62 @@ class ClientService {
     else if (panFourthChar === 'C') constitution = 'PRIVATE_LIMITED';
     else if (panFourthChar === 'T') constitution = 'TRUST';
 
-    const legalName = `${panNumber.substring(0, 5)} ${constitution === 'PROPRIETORSHIP' ? 'ENTERPRISES' : 'PRIVATE LIMITED'}`;
-    const tradeName = `${panNumber.substring(0, 5)} SOLUTIONS`;
+    let legalName = `${panNumber.substring(0, 5)} ${constitution === 'PROPRIETORSHIP' ? 'ENTERPRISES' : 'PRIVATE LIMITED'}`;
+    let tradeName = `${panNumber.substring(0, 5)} SOLUTIONS`;
+    let gstStatus = 'ACTIVE';
+    let taxpayerType = 'Regular';
+    let isLiveApiVerified = false;
+
+    // Call live Sandbox.co.in API if credentials are present
+    const token = await this._getSandboxGstToken();
+    if (token) {
+      try {
+        const baseUrl = process.env.GST_API_URL || 'https://api.sandbox.co.in';
+        const apiKey = process.env.GST_API_KEY;
+
+        const endpointsToTry = [
+          `${baseUrl}/gsp/public/gstin/${cleanGst}`,
+          `${baseUrl}/gst/public/gstin/${cleanGst}`,
+          `${baseUrl}/gsp/public/gstin/search/${cleanGst}`,
+        ];
+
+        for (const endpoint of endpointsToTry) {
+          const gstRes = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Authorization': token,
+              'x-api-key': apiKey,
+              'x-api-version': '1.0',
+            },
+          });
+
+          if (gstRes.ok) {
+            const result = await gstRes.json();
+            const data = result.data || result;
+            if (data && (data.lgnm || data.legal_name || data.tradeNam)) {
+              legalName = data.lgnm || data.legal_name || legalName;
+              tradeName = data.tradeNam || data.trade_name || legalName;
+              gstStatus = (data.sts || data.status || 'ACTIVE').toUpperCase();
+              taxpayerType = data.dty || data.taxpayer_type || 'Regular';
+              isLiveApiVerified = true;
+              break;
+            }
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Sandbox API Fetch Warning:', apiErr.message);
+      }
+    }
 
     return {
       isVerified: true,
+      isLiveApiVerified,
       gstNumber: cleanGst,
       panNumber,
       legalName,
       tradeName,
-      gstStatus: 'ACTIVE',
-      taxpayerType: 'Regular',
+      gstStatus,
+      taxpayerType,
       stateCode,
       stateName,
       constitution,
