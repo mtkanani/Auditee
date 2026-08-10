@@ -80,6 +80,8 @@ app.use('/api/firm-admin/announcements', announcementAdminRoutes);
 app.use('/api/user/announcements', announcementUserRoutes);
 app.use('/api/client/announcements', announcementUserRoutes);
 app.use('/api/firm-admin/tasks', taskRoutes);
+app.use('/api/user/tasks', taskRoutes);
+app.use('/api/client/tasks', taskRoutes);
 app.use('/api/firm-admin/compliance', complianceRoutes);
 app.use('/api/user/compliance', complianceRoutes);
 app.use('/api/firm-admin/leads', leadRoutes);
