@@ -53,13 +53,62 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
     }
   };
 
+  // Auto-calculation handlers (Per Month <-> Per Year)
+  const handleCasualQuotaChange = (val) => {
+    setCasualLeaveQuota(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setPerMonthCasual(parseFloat((num / 12).toFixed(2)));
+    }
+  };
+
+  const handlePerMonthCasualChange = (val) => {
+    setPerMonthCasual(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setCasualLeaveQuota(parseFloat((num * 12).toFixed(1)));
+    }
+  };
+
+  const handleSickQuotaChange = (val) => {
+    setSickLeaveQuota(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setPerMonthSick(parseFloat((num / 12).toFixed(2)));
+    }
+  };
+
+  const handlePerMonthSickChange = (val) => {
+    setPerMonthSick(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setSickLeaveQuota(parseFloat((num * 12).toFixed(1)));
+    }
+  };
+
+  const handleEarnedQuotaChange = (val) => {
+    setEarnedLeaveQuota(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setPerMonthEarned(parseFloat((num / 12).toFixed(2)));
+    }
+  };
+
+  const handlePerMonthEarnedChange = (val) => {
+    setPerMonthEarned(val);
+    const num = parseFloat(val);
+    if (!isNaN(num)) {
+      setEarnedLeaveQuota(parseFloat((num * 12).toFixed(1)));
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Configure Firm Leave Policy & Quotas ⚙️">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1">
           <p className="font-bold text-indigo-400">Firm-Wide Custom Leave Quotas</p>
           <p className="text-slate-400">
-            Set annual and monthly leave allowances for your firm. Increase or decrease limits as needed for your organization.
+            Set annual and monthly leave allowances for your firm. Changing monthly rates automatically updates yearly totals (12x).
           </p>
         </div>
 
@@ -112,7 +161,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 step="0.5"
                 min="0"
                 value={casualLeaveQuota}
-                onChange={(e) => setCasualLeaveQuota(e.target.value)}
+                onChange={(e) => handleCasualQuotaChange(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 mt-1"
               />
             </div>
@@ -123,7 +172,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 step="0.1"
                 min="0"
                 value={perMonthCasual}
-                onChange={(e) => setPerMonthCasual(e.target.value)}
+                onChange={(e) => handlePerMonthCasualChange(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 mt-1"
               />
             </div>
@@ -139,7 +188,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 step="0.5"
                 min="0"
                 value={sickLeaveQuota}
-                onChange={(e) => setSickLeaveQuota(e.target.value)}
+                onChange={(e) => handleSickQuotaChange(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-purple-500 mt-1"
               />
             </div>
@@ -150,7 +199,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 step="0.1"
                 min="0"
                 value={perMonthSick}
-                onChange={(e) => setPerMonthSick(e.target.value)}
+                onChange={(e) => handlePerMonthSickChange(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-purple-500 mt-1"
               />
             </div>
@@ -166,7 +215,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 step="0.5"
                 min="0"
                 value={earnedLeaveQuota}
-                onChange={(e) => setEarnedLeaveQuota(e.target.value)}
+                onChange={(e) => handleEarnedQuotaChange(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 mt-1"
               />
             </div>
@@ -177,7 +226,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 step="0.1"
                 min="0"
                 value={perMonthEarned}
-                onChange={(e) => setPerMonthEarned(e.target.value)}
+                onChange={(e) => handlePerMonthEarnedChange(e.target.value)}
                 className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 mt-1"
               />
             </div>
