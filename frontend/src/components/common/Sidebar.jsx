@@ -22,12 +22,16 @@ import {
   FiCalendar,
   FiHardDrive,
   FiVideo,
+  FiSun,
+  FiMoon,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { formatRoleName, normalizeRole } from '../../utils/helpers';
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const role = normalizeRole(user?.role);
 
   // Define Navigation per Role
@@ -162,8 +166,21 @@ export const Sidebar = ({ isOpen, onClose }) => {
           </nav>
         </div>
 
-        {/* Footer / Logout */}
-        <div className="p-4 border-t border-slate-800">
+        {/* Footer / Theme & Logout */}
+        <div className="p-4 border-t border-slate-800 space-y-2">
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/80 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              {isDark ? <FiSun className="w-5 h-5 text-amber-400" /> : <FiMoon className="w-5 h-5 text-indigo-400" />}
+              <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+            </div>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
+              {isDark ? '☀️ Light' : '🌙 Dark'}
+            </span>
+          </button>
+
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
