@@ -24,6 +24,7 @@ export const WorkRequests = () => {
     try {
       const payload = {
         ...data,
+        dueDate: data.dueDate ? data.dueDate : undefined,
         attachment: selectedFile ? selectedFile.name : undefined,
       };
       await clientService.createTask(payload);

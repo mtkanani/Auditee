@@ -40,14 +40,14 @@ const createWorkRequestValidation = [
     .isLength({ min: 3, max: 200 })
     .withMessage('Title must be between 3 and 200 characters'),
   body('description')
-    .optional({ nullable: true })
+    .optional({ nullable: true, checkFalsy: true })
     .trim(),
   body('priority')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .isIn(['LOW', 'MEDIUM', 'HIGH', 'URGENT'])
     .withMessage('Priority must be LOW, MEDIUM, HIGH, or URGENT'),
   body('dueDate')
-    .optional({ nullable: true })
+    .optional({ nullable: true, checkFalsy: true })
     .isISO8601()
     .withMessage('dueDate must be a valid ISO date string'),
 ];
