@@ -123,6 +123,41 @@ class AttendanceRepository {
       },
     });
   }
+
+  async getFirmGeofenceSettings(firmId) {
+    const fId = parseInt(firmId, 10);
+    return await prisma.firm.findUnique({
+      where: { id: fId },
+      select: {
+        geofenceEnabled: true,
+        officeLat: true,
+        officeLng: true,
+        officeAddress: true,
+        geofenceRadiusMeters: true,
+      },
+    });
+  }
+
+  async updateFirmGeofenceSettings(firmId, data) {
+    const fId = parseInt(firmId, 10);
+    return await prisma.firm.update({
+      where: { id: fId },
+      data: {
+        geofenceEnabled: Boolean(data.geofenceEnabled),
+        officeLat: data.officeLat !== null && data.officeLat !== undefined ? parseFloat(data.officeLat) : null,
+        officeLng: data.officeLng !== null && data.officeLng !== undefined ? parseFloat(data.officeLng) : null,
+        officeAddress: data.officeAddress ? data.officeAddress.trim() : null,
+        geofenceRadiusMeters: data.geofenceRadiusMeters ? parseInt(data.geofenceRadiusMeters, 10) : 100,
+      },
+      select: {
+        geofenceEnabled: true,
+        officeLat: true,
+        officeLng: true,
+        officeAddress: true,
+        geofenceRadiusMeters: true,
+      },
+    });
+  }
 }
 
 module.exports = new AttendanceRepository();

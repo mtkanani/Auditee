@@ -72,6 +72,33 @@ class AttendanceController {
       next(error);
     }
   }
+
+  async getGeofenceSettings(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const settings = await attendanceService.getGeofenceSettings(firmId);
+      return res.status(200).json({
+        success: true,
+        data: settings,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateGeofenceSettings(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const updated = await attendanceService.updateGeofenceSettings(firmId, req.body);
+      return res.status(200).json({
+        success: true,
+        message: 'Firm office geofence settings updated successfully!',
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AttendanceController();

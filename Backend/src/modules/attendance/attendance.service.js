@@ -1,7 +1,37 @@
 const attendanceRepository = require('./attendance.repository');
 const { BadRequestError } = require('../../utils/errors');
+const { calculateDistanceMeters } = require('../../utils/geofence.util');
 
 class AttendanceService {
+  async validateGeofence(firmId, userLat, userLng) {
+    const firm = await attendanceRepository.getFirmGeofenceSettings(firmId);
+    if (!firm || !firm.geofenceEnabled) {
+      return; // Geofencing is disabled, allow check-in/out from anywhere
+    }
+
+    if (firm.officeLat === null || firm.officeLng === null) {
+      throw new BadRequestError(
+        'Firm admin has enabled geofencing but office GPS coordinates are not configured yet. Please contact your Firm Admin.'
+      );
+    }
+
+    if (userLat === undefined || userLat === null || userLng === undefined || userLng === null) {
+      throw new BadRequestError('GPS location coordinates are required for geofenced check-in/check-out.');
+    }
+
+    const uLat = parseFloat(userLat);
+    const uLng = parseFloat(userLng);
+    const distanceMeters = calculateDistanceMeters(uLat, uLng, firm.officeLat, firm.officeLng);
+    const maxRadius = firm.geofenceRadiusMeters || 100;
+
+    if (distanceMeters > maxRadius) {
+      const currentDistFormatted = distanceMeters >= 1000 ? `${(distanceMeters / 1000).toFixed(2)}km` : `${Math.round(distanceMeters)}m`;
+      throw new BadRequestError(
+        `Location Restriction: You are outside the allowed office check-in area. Current Distance: ${currentDistFormatted} (Allowed Office Radius: ${maxRadius}m).`
+      );
+    }
+  }
+
   async getTodayStatus(userId, firmId) {
     if (!firmId) {
       return {
@@ -14,7 +44,11 @@ class AttendanceService {
       };
     }
 
-    const record = await attendanceRepository.findTodayRecord(userId, firmId);
+    const [record, geofence] = await Promise.all([
+      attendanceRepository.findTodayRecord(userId, firmId),
+      attendanceRepository.getFirmGeofenceSettings(firmId),
+    ]);
+
     if (!record) {
       return {
         isCheckedIn: false,
@@ -23,6 +57,7 @@ class AttendanceService {
         entries: [],
         workingHours: 0,
         record: null,
+        geofence,
       };
     }
 
@@ -46,6 +81,7 @@ class AttendanceService {
       workingHours: parseFloat(liveHours.toFixed(2)),
       totalWorkingHours: record.workingHours,
       record,
+      geofence,
     };
   }
 
@@ -53,6 +89,9 @@ class AttendanceService {
     if (!firmId) {
       throw new BadRequestError('You must be assigned to an active firm to use attendance features.');
     }
+
+    // Validate Geofence restriction
+    await this.validateGeofence(firmId, data.lat, data.lng);
 
     // Get or create today's day record
     const record = await attendanceRepository.findOrCreateTodayRecord(userId, firmId);
@@ -78,6 +117,9 @@ class AttendanceService {
     if (!firmId) {
       throw new BadRequestError('You must be assigned to an active firm to use attendance features.');
     }
+
+    // Validate Geofence restriction
+    await this.validateGeofence(firmId, data.lat, data.lng);
 
     const record = await attendanceRepository.findTodayRecord(userId, firmId);
     if (!record) {
@@ -123,6 +165,25 @@ class AttendanceService {
       search: queryParams.search,
       userId: queryParams.userId,
     });
+  }
+
+  async getGeofenceSettings(firmId) {
+    if (!firmId) throw new BadRequestError('Firm ID is required');
+    const settings = await attendanceRepository.getFirmGeofenceSettings(firmId);
+    return (
+      settings || {
+        geofenceEnabled: false,
+        officeLat: null,
+        officeLng: null,
+        officeAddress: null,
+        geofenceRadiusMeters: 100,
+      }
+    );
+  }
+
+  async updateGeofenceSettings(firmId, data) {
+    if (!firmId) throw new BadRequestError('Firm ID is required');
+    return await attendanceRepository.updateFirmGeofenceSettings(firmId, data);
   }
 }
 

@@ -15,7 +15,9 @@ router.post('/check-in', checkInValidation, validate, attendanceController.check
 router.post('/check-out', checkOutValidation, validate, attendanceController.checkOut);
 router.get('/my-logs', attendanceController.getMyLogs);
 
-// Firm Admin Only Report
+// Firm Admin Only Report & Settings
 router.get('/firm-report', authorizeRoles('FIRM_ADMIN'), attendanceController.getFirmReport);
+router.get('/geofence-settings', authorizeRoles('FIRM_ADMIN', 'EMPLOYEE', 'SENIOR_AUDITOR', 'JUNIOR_AUDITOR'), attendanceController.getGeofenceSettings);
+router.put('/geofence-settings', authorizeRoles('FIRM_ADMIN'), attendanceController.updateGeofenceSettings);
 
 module.exports = router;

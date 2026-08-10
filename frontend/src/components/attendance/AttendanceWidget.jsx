@@ -288,9 +288,13 @@ export const AttendanceWidget = () => {
       )}
 
       {/* GPS footer */}
-      <div className="flex items-center justify-center gap-1 text-[9px] text-slate-700">
-        <FiWifi className="w-2.5 h-2.5" />
-        <span>GPS-verified attendance · Multiple punches supported</span>
+      <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400">
+        <FiWifi className="w-2.5 h-2.5 text-indigo-400" />
+        <span>
+          {status?.geofence?.geofenceEnabled
+            ? `📍 Office GPS Geofence Active (${status.geofence.geofenceRadiusMeters}m radius)`
+            : 'GPS-verified attendance · Multiple punches supported'}
+        </span>
       </div>
     </div>
   );

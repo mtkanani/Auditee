@@ -16,6 +16,7 @@ import {
 import { attendanceService } from '../../services/attendanceService';
 import { firmAdminService } from '../../services/firmAdminService';
 import { useAuth } from '../../context/AuthContext';
+import { ConfigureGeofenceModal } from '../../components/attendance/ConfigureGeofenceModal';
 import toast from 'react-hot-toast';
 
 export const AttendanceManagement = () => {
@@ -25,6 +26,7 @@ export const AttendanceManagement = () => {
   const [logs, setLogs] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -33,16 +35,26 @@ export const AttendanceManagement = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
+  useEffect(() => {
+    if (isAdmin) {
+      firmAdminService
+        .getUsers({ limit: 100 })
+        .then((res) => setUsers(res.data || res.users || []))
+        .catch(() => {});
+    }
+  }, [isAdmin]);
+
   const fetchAttendance = async () => {
     setIsLoading(true);
     try {
       if (isAdmin) {
-        const [repRes, userRes] = await Promise.all([
-          attendanceService.getFirmReport({ month: selectedMonth, year: selectedYear, search, userId: selectedUser || undefined }),
-          firmAdminService.getUsers({ limit: 100 }),
-        ]);
-        setLogs(repRes.data || []);
-        setUsers(userRes.data || userRes.users || []);
+        const res = await attendanceService.getFirmReport({
+          month: selectedMonth,
+          year: selectedYear,
+          search,
+          userId: selectedUser || undefined,
+        });
+        setLogs(res.data || []);
       } else {
         const myRes = await attendanceService.getMyLogs({ month: selectedMonth, year: selectedYear });
         setLogs(myRes.data || []);
@@ -56,7 +68,7 @@ export const AttendanceManagement = () => {
 
   useEffect(() => {
     fetchAttendance();
-  }, [selectedMonth, selectedYear, search, selectedUser]);
+  }, [selectedMonth, selectedYear, search, selectedUser, isAdmin]);
 
   // Stats calculation
   const totalPresent = logs.filter((l) => l.status === 'PRESENT').length;
@@ -139,6 +151,17 @@ export const AttendanceManagement = () => {
       <PageHeader
         title={isAdmin ? 'Firm Attendance Control Center' : 'My Attendance & Working Hours ⏰'}
         subtitle="GPS Location Verified Check-In & Check-Out, Daily Working Hours Calculation, and Monthly Attendance Reports"
+        actions={
+          isAdmin && (
+            <button
+              onClick={() => setIsGeofenceModalOpen(true)}
+              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <FiMapPin className="w-4 h-4 text-emerald-300" />
+              <span>Configure Geofence Location 📍</span>
+            </button>
+          )
+        }
       />
 
       {/* Top Stats */}
@@ -201,6 +224,13 @@ export const AttendanceManagement = () => {
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <DataTable columns={columns} data={logs} isLoading={isLoading} />
       </div>
+
+      {/* Configure Geofence Location Modal */}
+      <ConfigureGeofenceModal
+        isOpen={isGeofenceModalOpen}
+        onClose={() => setIsGeofenceModalOpen(false)}
+        onSaved={fetchAttendance}
+      />
     </div>
   );
 };

@@ -25,4 +25,14 @@ export const attendanceService = {
     const res = await axiosInstance.get('/attendance/firm-report', { params });
     return res.data;
   },
+
+  getGeofenceSettings: async () => {
+    const res = await axiosInstance.get('/attendance/geofence-settings');
+    return res.data;
+  },
+
+  updateGeofenceSettings: async (data) => {
+    const res = await axiosInstance.put('/attendance/geofence-settings', data);
+    return res.data;
+  },
 };
