@@ -88,6 +88,23 @@ class TaskController {
     }
   }
 
+  async rejectClientRequest(req, res, next) {
+    try {
+      const firmId = req.user.firmId;
+      const taskId = parseInt(req.params.taskId, 10);
+      const performedBy = req.user.id;
+      const performedName = `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() || 'Firm Admin';
+      const task = await taskService.rejectClientRequest(taskId, firmId, performedBy, performedName);
+      return res.status(200).json({
+        success: true,
+        message: 'Client Work Request rejected successfully',
+        data: task,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getClientRequests(req, res, next) {
     try {
       const firmId = req.user.firmId;

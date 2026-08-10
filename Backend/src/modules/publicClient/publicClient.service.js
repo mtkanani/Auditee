@@ -136,7 +136,7 @@ class PublicClientService {
         title: title.trim(),
         description: description ? description.trim() : null,
         priority: priority || 'MEDIUM',
-        status: 'PENDING',
+        status: 'REQUESTED',
         dueDate: dueDate ? new Date(dueDate) : null,
         createdByType: 'CLIENT',
         createdBy: clientId,

@@ -26,6 +26,7 @@ router.post('/', authorizeRoles('FIRM_ADMIN'), createTaskValidation, validate, t
 router.get('/:taskId', taskController.getTaskById);
 router.patch('/:taskId/status', updateTaskStatusValidation, validate, taskController.updateTaskStatus);
 router.patch('/:taskId/approve-request', authorizeRoles('FIRM_ADMIN'), approveClientRequestValidation, validate, taskController.approveClientRequest);
+router.patch('/:taskId/reject-request', authorizeRoles('FIRM_ADMIN'), taskController.rejectClientRequest);
 
 // Subtasks
 router.post('/:taskId/subtasks', addSubtaskValidation, validate, taskController.addSubtask);

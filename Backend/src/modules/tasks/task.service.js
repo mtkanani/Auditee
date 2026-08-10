@@ -113,6 +113,24 @@ class TaskService {
     return await this.getTaskById(taskId, firmId);
   }
 
+  async rejectClientRequest(taskId, firmId, performedBy, performedName = 'Firm Admin') {
+    const task = await taskRepository.findTaskById(taskId, firmId);
+    if (!task) {
+      throw new NotFoundError('Client request not found');
+    }
+
+    await taskRepository.updateTask(taskId, firmId, { status: 'CANCELLED' });
+
+    await taskRepository.logHistory(taskId, {
+      action: 'CLIENT_REQUEST_REJECTED',
+      details: 'Client Work Request rejected by Firm Admin.',
+      performedBy,
+      performedName,
+    });
+
+    return { id: taskId, status: 'CANCELLED' };
+  }
+
   // --- Subtasks ---
   async addSubtask(taskId, title, firmId, performedBy, performedName = 'Firm Admin') {
     const task = await taskRepository.findTaskById(taskId, firmId);

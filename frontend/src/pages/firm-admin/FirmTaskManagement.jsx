@@ -22,6 +22,7 @@ import {
   FiUser,
   FiGlobe,
   FiCheck,
+  FiXCircle,
   FiLayers,
 } from 'react-icons/fi';
 import { taskService } from '../../services/taskService';
@@ -110,6 +111,17 @@ export const FirmTaskManagement = () => {
       fetchTasks();
     } catch (err) {
       toast.error(err.message || 'Failed to approve request');
+    }
+  };
+
+  const handleRejectRequest = async (taskId) => {
+    if (!window.confirm('Are you sure you want to reject this client work request?')) return;
+    try {
+      await taskService.rejectClientRequest(taskId);
+      toast.success('Client Work Request rejected');
+      fetchTasks();
+    } catch (err) {
+      toast.error(err.message || 'Failed to reject client request');
     }
   };
 
@@ -425,15 +437,22 @@ export const FirmTaskManagement = () => {
 
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
                   <button
+                    onClick={() => handleRejectRequest(req.id)}
+                    className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-slate-700 hover:border-rose-800 font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all"
+                  >
+                    <FiXCircle className="w-3.5 h-3.5" />
+                    <span>Reject Request</span>
+                  </button>
+                  <button
                     onClick={() => {
                       setSelectedRequest(req);
                       setRequestAssignmentScope('SINGLE');
                       setRequestSelectedUserIds([]);
                       setIsApproveModalOpen(true);
                     }}
-                    className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
+                    className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all"
                   >
-                    <FiCheck />
+                    <FiCheck className="w-3.5 h-3.5" />
                     <span>Accept & Assign Auditor</span>
                   </button>
                 </div>

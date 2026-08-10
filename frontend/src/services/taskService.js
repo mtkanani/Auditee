@@ -44,6 +44,11 @@ export const taskService = {
     return res.data;
   },
 
+  rejectClientRequest: async (taskId) => {
+    const res = await axiosInstance.patch(`${getBaseUrl()}/${taskId}/reject-request`);
+    return res.data;
+  },
+
   // Subtasks
   addSubtask: async (taskId, title) => {
     const res = await axiosInstance.post(`${getBaseUrl()}/${taskId}/subtasks`, { title });

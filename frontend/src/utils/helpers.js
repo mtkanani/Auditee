@@ -76,6 +76,10 @@ export const getStatusBadgeColor = (status) => {
     case 'IN PROGRESS':
     case 'MEDIUM':
       return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+    case 'REQUESTED':
+      return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+    case 'CANCELLED':
+    case 'REJECTED':
     case 'INACTIVE':
     case 'SUSPENDED':
     case 'DELETED':
