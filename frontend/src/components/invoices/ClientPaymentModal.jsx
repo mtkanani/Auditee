@@ -21,12 +21,12 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
 
   // Dynamic Firm Bank Details
   const [bankDetails, setBankDetails] = useState({
-    bankName: 'ICICI Bank',
-    accountNumber: '987654321012',
-    ifscCode: 'ICIC0001234',
-    accountHolderName: invoice?.firm?.firmName || 'Codelix CA Firm',
-    branchName: 'PNTC Vejalpur, Ahmedabad Main',
-    upiId: 'codelix.ca@okicici',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    accountHolderName: invoice?.firm?.firmName || '',
+    branchName: '',
+    upiId: '',
   });
 
   // Form input states
@@ -55,8 +55,8 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
 
   if (!isOpen || !invoice) return null;
 
-  const upiId = bankDetails.upiId || '9825621601@ptyes';
-  const firmName = invoice.firm?.firmName || bankDetails.accountHolderName || 'Codelix CA Firm';
+  const upiId = bankDetails.upiId || '';
+  const firmName = invoice.firm?.firmName || bankDetails.accountHolderName || 'CA Firm';
   const payAmountVal = parseFloat(amountToPay || invoice.balanceAmount || 0).toFixed(2);
   const invoiceRefNo = invoice.invoiceNumber || 'INV-2026';
 
@@ -388,12 +388,18 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
 
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1.5">
                   <span className="font-bold text-slate-200 block">Firm Bank Account Details (NEFT/RTGS):</span>
-                  <div className="grid grid-cols-2 gap-2 text-slate-400 text-[11px]">
-                    <div>Bank: <strong className="text-slate-200">{bankDetails.bankName || 'ICICI Bank'}</strong></div>
-                    <div>Account #: <strong className="text-slate-200">{bankDetails.accountNumber || '987654321012'}</strong></div>
-                    <div>IFSC Code: <strong className="text-slate-200">{bankDetails.ifscCode || 'ICIC0001234'}</strong></div>
-                    <div>Branch: <strong className="text-slate-200">{bankDetails.branchName || 'Ahmedabad Main'}</strong></div>
-                  </div>
+                  {bankDetails.bankName || bankDetails.accountNumber ? (
+                    <div className="grid grid-cols-2 gap-2 text-slate-400 text-[11px]">
+                      <div>Bank: <strong className="text-slate-200">{bankDetails.bankName || 'N/A'}</strong></div>
+                      <div>Account #: <strong className="text-slate-200">{bankDetails.accountNumber || 'N/A'}</strong></div>
+                      <div>IFSC Code: <strong className="text-slate-200">{bankDetails.ifscCode || 'N/A'}</strong></div>
+                      <div>Branch: <strong className="text-slate-200">{bankDetails.branchName || 'N/A'}</strong></div>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-amber-400 italic">
+                      ⚠️ Bank details have not been configured by your CA firm admin yet.
+                    </p>
+                  )}
                 </div>
 
                 <div>

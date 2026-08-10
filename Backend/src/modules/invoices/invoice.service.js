@@ -192,28 +192,27 @@ class InvoiceService {
     const fallbackStore = store[fId] || {};
 
     return {
-      bankName: firm?.bankName || fallbackStore.bankName || 'Kotak Bank',
-      accountNumber: firm?.accountNumber || fallbackStore.accountNumber || '6850277999',
-      ifscCode: firm?.ifscCode || fallbackStore.ifscCode || 'KKBK00002587',
-      accountHolderName: firm?.accountHolderName || fallbackStore.accountHolderName || 'Codelix CA Firm',
-      branchName: firm?.branchName || fallbackStore.branchName || 'Ellis bridge, Ahmedabad Main',
-      upiId: firm?.upiId || fallbackStore.upiId || '9825621601@ptyes',
-      notes: firm?.bankNotes !== null && firm?.bankNotes !== undefined ? firm.bankNotes : (fallbackStore.notes || 'Please quote invoice number on all NEFT/RTGS/UPI transfers.'),
+      bankName: firm?.bankName || fallbackStore.bankName || '',
+      accountNumber: firm?.accountNumber || fallbackStore.accountNumber || '',
+      ifscCode: firm?.ifscCode || fallbackStore.ifscCode || '',
+      accountHolderName: firm?.accountHolderName || fallbackStore.accountHolderName || '',
+      branchName: firm?.branchName || fallbackStore.branchName || '',
+      upiId: firm?.upiId || fallbackStore.upiId || '',
+      notes: firm?.bankNotes !== null && firm?.bankNotes !== undefined ? firm.bankNotes : (fallbackStore.notes || ''),
     };
   }
 
   async updateFirmBankDetails(firmId, data) {
     const fId = parseInt(firmId, 10) || 1;
-    const existing = await this.getFirmBankDetails(fId);
 
     const updatedData = {
-      bankName: data.bankName || existing.bankName,
-      accountNumber: data.accountNumber || existing.accountNumber,
-      ifscCode: data.ifscCode || existing.ifscCode,
-      accountHolderName: data.accountHolderName || existing.accountHolderName,
-      branchName: data.branchName || existing.branchName,
-      upiId: data.upiId || existing.upiId,
-      notes: data.notes !== undefined ? data.notes : existing.notes,
+      bankName: data.bankName !== undefined ? data.bankName.trim() : '',
+      accountNumber: data.accountNumber !== undefined ? data.accountNumber.trim() : '',
+      ifscCode: data.ifscCode !== undefined ? data.ifscCode.trim() : '',
+      accountHolderName: data.accountHolderName !== undefined ? data.accountHolderName.trim() : '',
+      branchName: data.branchName !== undefined ? data.branchName.trim() : '',
+      upiId: data.upiId !== undefined ? data.upiId.trim() : '',
+      notes: data.notes !== undefined ? data.notes.trim() : '',
     };
 
     try {
