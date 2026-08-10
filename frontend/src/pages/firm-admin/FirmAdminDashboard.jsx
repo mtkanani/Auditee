@@ -3,7 +3,7 @@ import {
   FiUsers, FiBriefcase, FiCheckSquare, FiShield,
   FiPlus, FiUserPlus, FiTrendingUp, FiArrowRight,
   FiCalendar, FiDollarSign, FiActivity, FiZap,
-  FiAward, FiTarget, FiClock, FiBarChart2,
+  FiAward, FiTarget, FiClock, FiBarChart2, FiMapPin,
 } from 'react-icons/fi';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { firmAdminService } from '../../services/firmAdminService';
 import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
+import { ConfigureGeofenceModal } from '../../components/attendance/ConfigureGeofenceModal';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -75,6 +76,7 @@ export const FirmAdminDashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
 
@@ -167,6 +169,13 @@ export const FirmAdminDashboard = () => {
 
           {/* Quick Actions */}
           <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setIsGeofenceModalOpen(true)}
+              className="flex items-center gap-2 py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all duration-200 cursor-pointer"
+            >
+              <FiMapPin className="w-3.5 h-3.5" />
+              <span>Set Office Geofence 📍</span>
+            </button>
             {quickActions.map((a) => (
               <button
                 key={a.label}
@@ -383,6 +392,11 @@ export const FirmAdminDashboard = () => {
         })}
       </div>
 
+      {/* Office GPS Geofence Control Modal */}
+      <ConfigureGeofenceModal
+        isOpen={isGeofenceModalOpen}
+        onClose={() => setIsGeofenceModalOpen(false)}
+      />
     </div>
   );
 };
