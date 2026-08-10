@@ -250,11 +250,8 @@ class TaskRepository {
     return await prisma.task.findMany({
       where: {
         firmId,
+        status: 'REQUESTED',
         deletedAt: null,
-        OR: [
-          { status: 'REQUESTED' },
-          { createdByType: 'CLIENT', status: 'PENDING' },
-        ],
       },
       orderBy: { createdAt: 'desc' },
       include: {

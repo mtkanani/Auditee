@@ -30,4 +30,24 @@ export const leaveService = {
     const res = await axiosInstance.get('/leave/calendar', { params });
     return res.data;
   },
+
+  getLeavePolicy: async () => {
+    const res = await axiosInstance.get('/leave/policy');
+    return res.data;
+  },
+
+  updateLeavePolicy: async (policyData) => {
+    const res = await axiosInstance.put('/leave/policy', policyData);
+    return res.data;
+  },
+
+  getAllEmployeeBalances: async () => {
+    const res = await axiosInstance.get('/leave/balances');
+    return res.data;
+  },
+
+  updateEmployeeLeaveBalance: async (userId, balanceData) => {
+    const res = await axiosInstance.patch(`/leave/balances/${userId}`, balanceData);
+    return res.data;
+  },
 };

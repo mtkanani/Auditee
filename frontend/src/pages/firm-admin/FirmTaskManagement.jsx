@@ -55,6 +55,8 @@ export const FirmTaskManagement = () => {
   const [requestAssignmentScope, setRequestAssignmentScope] = useState('SINGLE');
   const [requestSelectedUserIds, setRequestSelectedUserIds] = useState([]);
   const [users, setUsers] = useState([]);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchTasks = async () => {
     setIsLoading(true);
@@ -99,6 +101,7 @@ export const FirmTaskManagement = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await taskService.approveClientRequest(selectedRequest.id, {
         assignmentScope: requestAssignmentScope,
@@ -108,20 +111,25 @@ export const FirmTaskManagement = () => {
       toast.success('Client Work Request approved and assigned!');
       setIsApproveModalOpen(false);
       setSelectedRequest(null);
-      fetchTasks();
+      await fetchTasks();
     } catch (err) {
       toast.error(err.message || 'Failed to approve request');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRejectRequest = async (taskId) => {
     if (!window.confirm('Are you sure you want to reject this client work request?')) return;
+    setActionLoadingId(taskId);
     try {
       await taskService.rejectClientRequest(taskId);
       toast.success('Client Work Request rejected');
-      fetchTasks();
+      await fetchTasks();
     } catch (err) {
       toast.error(err.message || 'Failed to reject client request');
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -437,20 +445,24 @@ export const FirmTaskManagement = () => {
 
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
                   <button
+                    type="button"
+                    disabled={actionLoadingId === req.id || isSubmitting}
                     onClick={() => handleRejectRequest(req.id)}
-                    className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-slate-700 hover:border-rose-800 font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all"
+                    className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-slate-700 hover:border-rose-800 font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <FiXCircle className="w-3.5 h-3.5" />
-                    <span>Reject Request</span>
+                    <span>{actionLoadingId === req.id ? 'Rejecting...' : 'Reject Request'}</span>
                   </button>
                   <button
+                    type="button"
+                    disabled={actionLoadingId === req.id || isSubmitting}
                     onClick={() => {
                       setSelectedRequest(req);
                       setRequestAssignmentScope('SINGLE');
                       setRequestSelectedUserIds([]);
                       setIsApproveModalOpen(true);
                     }}
-                    className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all"
+                    className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <FiCheck className="w-3.5 h-3.5" />
                     <span>Accept & Assign Auditor</span>
@@ -575,9 +587,10 @@ export const FirmTaskManagement = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={isSubmitting}
+            className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Confirm & Assign Task
+            {isSubmitting ? 'Accepting & Assigning...' : 'Confirm & Assign Task'}
           </button>
         </form>
       </Modal>

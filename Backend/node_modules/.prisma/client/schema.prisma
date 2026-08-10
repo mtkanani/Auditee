@@ -397,6 +397,7 @@ model Firm {
   invoices          Invoice[]
   leads             Lead[]
   leaveBalances     LeaveBalance[]
+  leavePolicy       LeavePolicy?
   leaveRequests     LeaveRequest[]
   meetings          Meeting[]
   taskTemplates     TaskTemplate[]
@@ -664,6 +665,28 @@ model LeaveBalance {
 
   @@unique([userId, year])
   @@map("leave_balances")
+}
+
+model LeavePolicy {
+  id               Int              @id @default(autoincrement())
+  firmId           Int              @unique
+  accrualMode      LeaveAccrualMode @default(YEARLY)
+  casualLeaveQuota Float            @default(12.0)
+  sickLeaveQuota   Float            @default(10.0)
+  earnedLeaveQuota Float            @default(15.0)
+  perMonthCasual   Float            @default(1.0)
+  perMonthSick     Float            @default(0.83)
+  perMonthEarned   Float            @default(1.25)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  firm             Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  @@map("leave_policies")
+}
+
+enum LeaveAccrualMode {
+  YEARLY
+  MONTHLY
 }
 
 model DocumentVault {

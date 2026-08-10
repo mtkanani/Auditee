@@ -1,6 +1,42 @@
 const prisma = require('../../config/db');
 
 class LeaveRepository {
+  async getOrCreateLeavePolicy(firmId) {
+    const fId = parseInt(firmId, 10) || 1;
+    let policy = await prisma.leavePolicy.findUnique({
+      where: { firmId: fId },
+    });
+
+    if (!policy) {
+      policy = await prisma.leavePolicy.create({
+        data: {
+          firmId: fId,
+          accrualMode: 'YEARLY',
+          casualLeaveQuota: 12.0,
+          sickLeaveQuota: 10.0,
+          earnedLeaveQuota: 15.0,
+          perMonthCasual: 1.0,
+          perMonthSick: 0.83,
+          perMonthEarned: 1.25,
+        },
+      });
+    }
+
+    return policy;
+  }
+
+  async updateLeavePolicy(firmId, data) {
+    const fId = parseInt(firmId, 10) || 1;
+    return await prisma.leavePolicy.upsert({
+      where: { firmId: fId },
+      update: data,
+      create: {
+        firmId: fId,
+        ...data,
+      },
+    });
+  }
+
   async getOrCreateUserLeaveBalance(userId, firmId, year = 2026) {
     let balance = await prisma.leaveBalance.findUnique({
       where: {
@@ -12,16 +48,17 @@ class LeaveRepository {
     });
 
     if (!balance) {
+      const policy = await this.getOrCreateLeavePolicy(firmId);
       balance = await prisma.leaveBalance.create({
         data: {
           firmId,
           userId,
           year,
-          casualLeave: 12.0,
+          casualLeave: policy.casualLeaveQuota,
           casualLeaveUsed: 0.0,
-          sickLeave: 10.0,
+          sickLeave: policy.sickLeaveQuota,
           sickLeaveUsed: 0.0,
-          earnedLeave: 15.0,
+          earnedLeave: policy.earnedLeaveQuota,
           earnedLeaveUsed: 0.0,
         },
       });
@@ -34,6 +71,24 @@ class LeaveRepository {
     return await prisma.leaveBalance.update({
       where: { id },
       data,
+    });
+  }
+
+  async updateUserLeaveBalanceByUserId(userId, firmId, year, data) {
+    const balance = await this.getOrCreateUserLeaveBalance(userId, firmId, year);
+    return await prisma.leaveBalance.update({
+      where: { id: balance.id },
+      data,
+    });
+  }
+
+  async getAllFirmLeaveBalances(firmId, year = 2026) {
+    const fId = parseInt(firmId, 10) || 1;
+    return await prisma.leaveBalance.findMany({
+      where: { firmId: fId, year },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true, designation: true } },
+      },
     });
   }
 

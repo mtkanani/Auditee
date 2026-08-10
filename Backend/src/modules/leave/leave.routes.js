@@ -13,8 +13,12 @@ router.use(authenticateSession);
 router.post('/apply', applyLeaveValidation, validate, leaveController.applyLeave);
 router.get('/my-requests', leaveController.getMyLeaveData);
 router.get('/calendar', leaveController.getLeaveCalendar);
+router.get('/policy', leaveController.getLeavePolicy);
 
-// Firm Admin Approval & Pending Inbox Endpoints
+// Firm Admin Approval & Policy Configuration Endpoints
+router.put('/policy', authorizeRoles('FIRM_ADMIN'), leaveController.updateLeavePolicy);
+router.get('/balances', authorizeRoles('FIRM_ADMIN'), leaveController.getAllEmployeeBalances);
+router.patch('/balances/:userId', authorizeRoles('FIRM_ADMIN'), leaveController.updateEmployeeLeaveBalance);
 router.get('/pending-requests', authorizeRoles('FIRM_ADMIN'), leaveController.getPendingRequests);
 router.get('/all-requests', authorizeRoles('FIRM_ADMIN'), leaveController.getAllFirmLeaveRequests);
 router.patch('/:id/review', authorizeRoles('FIRM_ADMIN'), reviewLeaveValidation, validate, leaveController.reviewLeave);

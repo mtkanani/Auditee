@@ -86,6 +86,61 @@ class LeaveController {
       next(error);
     }
   }
+
+  async getLeavePolicy(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const policy = await leaveService.getLeavePolicy(firmId);
+      return res.status(200).json({
+        success: true,
+        data: policy,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateLeavePolicy(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const updated = await leaveService.updateLeavePolicy(req.body, firmId);
+      return res.status(200).json({
+        success: true,
+        message: 'Leave policy updated successfully',
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateEmployeeLeaveBalance(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const targetUserId = parseInt(req.params.userId, 10);
+      const updated = await leaveService.updateEmployeeLeaveBalance(targetUserId, req.body, firmId);
+      return res.status(200).json({
+        success: true,
+        message: 'Employee leave balance adjusted successfully',
+        data: updated,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllEmployeeBalances(req, res, next) {
+    try {
+      const firmId = req.user.firmId || 1;
+      const balances = await leaveService.getAllEmployeeBalances(firmId);
+      return res.status(200).json({
+        success: true,
+        data: balances,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new LeaveController();

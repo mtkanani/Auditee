@@ -4,6 +4,8 @@ import { StatsCard } from '../../components/common/StatsCard';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ApplyLeaveModal } from '../../components/leave/ApplyLeaveModal';
+import { ConfigureLeavePolicyModal } from '../../components/leave/ConfigureLeavePolicyModal';
+import { AdjustEmployeeLeaveModal } from '../../components/leave/AdjustEmployeeLeaveModal';
 import {
   FiCalendar,
   FiCheckCircle,
@@ -15,6 +17,8 @@ import {
   FiGrid,
   FiList,
   FiCheck,
+  FiSettings,
+  FiSliders,
 } from 'react-icons/fi';
 import { leaveService } from '../../services/leaveService';
 import { useAuth } from '../../context/AuthContext';
@@ -28,10 +32,11 @@ export const LeaveManagement = () => {
   const userRole = (user?.role || '').toUpperCase();
   const isAdmin = userRole === 'FIRM_ADMIN' || userRole === 'ADMIN';
 
-  const [myLeaveData, setMyLeaveData] = useState({ balance: null, requests: [] });
+  const [myLeaveData, setMyLeaveData] = useState({ balance: null, requests: [], policy: null });
   const [pendingRequests, setPendingRequests] = useState([]);
   const [allFirmRequests, setAllFirmRequests] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [employeeBalances, setEmployeeBalances] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Tab State: 'pending' | 'all_firm' | 'my_leaves' | 'calendar'
@@ -42,28 +47,33 @@ export const LeaveManagement = () => {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(Boolean(location.state?.openApplyModal));
+  const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+  const [displayQuotaMode, setDisplayQuotaMode] = useState('YEARLY'); // 'YEARLY' | 'MONTHLY'
   const [adminRemarks, setAdminRemarks] = useState({});
 
   const fetchLeaveData = async () => {
     setIsLoading(true);
     try {
       if (isAdmin) {
-        const [myRes, pendRes, allRes, calRes] = await Promise.all([
-          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [] } })),
+        const [myRes, pendRes, allRes, calRes, balRes] = await Promise.all([
+          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [], policy: null } })),
           leaveService.getPendingRequests().catch(() => ({ data: { pendingRequests: [] } })),
           leaveService.getAllFirmRequests().catch(() => ({ data: [] })),
           leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }).catch(() => ({ data: [] })),
+          leaveService.getAllEmployeeBalances().catch(() => ({ data: [] })),
         ]);
-        setMyLeaveData(myRes.data || { balance: null, requests: [] });
+        setMyLeaveData(myRes.data || { balance: null, requests: [], policy: null });
         setPendingRequests(pendRes.data?.pendingRequests || pendRes.pendingRequests || []);
         setAllFirmRequests(allRes.data || []);
         setCalendarEvents(calRes.data || []);
+        setEmployeeBalances(balRes.data || []);
       } else {
         const [myRes, calRes] = await Promise.all([
-          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [] } })),
+          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [], policy: null } })),
           leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }).catch(() => ({ data: [] })),
         ]);
-        setMyLeaveData(myRes.data || { balance: null, requests: [] });
+        setMyLeaveData(myRes.data || { balance: null, requests: [], policy: null });
         setCalendarEvents(calRes.data || []);
       }
     } catch (err) {
@@ -161,35 +171,104 @@ export const LeaveManagement = () => {
     <div className="space-y-6">
       <PageHeader
         title="Leave Management System 🌴"
-        subtitle="Apply for leave, track Casual/Sick/Earned Leave balances, review incoming applications, and view Leave Calendar"
+        subtitle="Apply for leave, track Casual/Sick/Earned Leave balances, configure custom firm quotas, and review applications"
         actions={
-          <button
-            onClick={() => setIsApplyModalOpen(true)}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
-          >
-            <FiPlus className="w-4 h-4" />
-            <span>Apply for Leave</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => setIsPolicyModalOpen(true)}
+                  className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 shadow-lg flex items-center gap-1.5 transition-all"
+                >
+                  <FiSettings className="w-4 h-4 text-indigo-400" />
+                  <span>Configure Policy</span>
+                </button>
+                <button
+                  onClick={() => setIsAdjustModalOpen(true)}
+                  className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 shadow-lg flex items-center gap-1.5 transition-all"
+                >
+                  <FiSliders className="w-4 h-4 text-emerald-400" />
+                  <span>Adjust Employee Quotas</span>
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setIsApplyModalOpen(true)}
+              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
+            >
+              <FiPlus className="w-4 h-4" />
+              <span>Apply for Leave</span>
+            </button>
+          </div>
         }
       />
+
+      {/* Quota View Mode Switcher Header */}
+      <div className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-slate-900/40 border border-slate-800/80">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-300">Quota Breakdown Display:</span>
+          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button
+              onClick={() => setDisplayQuotaMode('YEARLY')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                displayQuotaMode === 'YEARLY' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Per Year (Annual Limit)
+            </button>
+            <button
+              onClick={() => setDisplayQuotaMode('MONTHLY')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                displayQuotaMode === 'MONTHLY' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Per Month (Accrual Rate)
+            </button>
+          </div>
+        </div>
+
+        {myLeaveData.policy && (
+          <span className="text-[11px] text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
+            Default Firm Policy: <strong>{myLeaveData.policy.accrualMode}</strong> Accrual
+          </span>
+        )}
+      </div>
 
       {/* Top Metrics / Quotas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatsCard
           title="Casual Leave (CL)"
-          value={balance ? `${(balance.casualLeave - balance.casualLeaveUsed).toFixed(1)} / ${balance.casualLeave} Days` : '12 Days'}
+          value={
+            displayQuotaMode === 'MONTHLY'
+              ? `${myLeaveData.policy?.perMonthCasual ?? 1.0} Days / Month`
+              : balance
+              ? `${(balance.casualLeave - balance.casualLeaveUsed).toFixed(1)} / ${balance.casualLeave} Days`
+              : '12 Days'
+          }
           icon={FiCalendar}
           color="indigo"
         />
         <StatsCard
           title="Sick Leave (SL)"
-          value={balance ? `${(balance.sickLeave - balance.sickLeaveUsed).toFixed(1)} / ${balance.sickLeave} Days` : '10 Days'}
+          value={
+            displayQuotaMode === 'MONTHLY'
+              ? `${myLeaveData.policy?.perMonthSick ?? 0.83} Days / Month`
+              : balance
+              ? `${(balance.sickLeave - balance.sickLeaveUsed).toFixed(1)} / ${balance.sickLeave} Days`
+              : '10 Days'
+          }
           icon={FiClock}
           color="purple"
         />
         <StatsCard
           title="Earned Leave (EL)"
-          value={balance ? `${(balance.earnedLeave - balance.earnedLeaveUsed).toFixed(1)} / ${balance.earnedLeave} Days` : '15 Days'}
+          value={
+            displayQuotaMode === 'MONTHLY'
+              ? `${myLeaveData.policy?.perMonthEarned ?? 1.25} Days / Month`
+              : balance
+              ? `${(balance.earnedLeave - balance.earnedLeaveUsed).toFixed(1)} / ${balance.earnedLeave} Days`
+              : '15 Days'
+          }
           icon={FiCheckCircle}
           color="emerald"
         />
@@ -389,6 +468,22 @@ export const LeaveManagement = () => {
         isOpen={isApplyModalOpen}
         onClose={() => setIsApplyModalOpen(false)}
         onSuccess={fetchLeaveData}
+      />
+
+      {/* Configure Firm Leave Policy Modal */}
+      <ConfigureLeavePolicyModal
+        isOpen={isPolicyModalOpen}
+        onClose={() => setIsPolicyModalOpen(false)}
+        currentPolicy={myLeaveData.policy}
+        onPolicyUpdated={fetchLeaveData}
+      />
+
+      {/* Adjust Employee Leave Balance Modal */}
+      <AdjustEmployeeLeaveModal
+        isOpen={isAdjustModalOpen}
+        onClose={() => setIsAdjustModalOpen(false)}
+        employeeBalances={employeeBalances}
+        onBalanceAdjusted={fetchLeaveData}
       />
     </div>
   );

@@ -82,7 +82,57 @@ class LeaveService {
     const currentYear = new Date().getFullYear();
     const balance = await leaveRepository.getOrCreateUserLeaveBalance(userId, firmId, currentYear);
     const requests = await leaveRepository.findUserLeaveRequests(userId, firmId);
-    return { balance, requests };
+    const policy = await leaveRepository.getOrCreateLeavePolicy(firmId);
+    return { balance, requests, policy };
+  }
+
+  async getLeavePolicy(firmId) {
+    return await leaveRepository.getOrCreateLeavePolicy(firmId);
+  }
+
+  async updateLeavePolicy(data, firmId) {
+    const payload = {};
+    if (data.accrualMode) payload.accrualMode = data.accrualMode;
+    if (data.casualLeaveQuota !== undefined) payload.casualLeaveQuota = parseFloat(data.casualLeaveQuota);
+    if (data.sickLeaveQuota !== undefined) payload.sickLeaveQuota = parseFloat(data.sickLeaveQuota);
+    if (data.earnedLeaveQuota !== undefined) payload.earnedLeaveQuota = parseFloat(data.earnedLeaveQuota);
+    if (data.perMonthCasual !== undefined) payload.perMonthCasual = parseFloat(data.perMonthCasual);
+    if (data.perMonthSick !== undefined) payload.perMonthSick = parseFloat(data.perMonthSick);
+    if (data.perMonthEarned !== undefined) payload.perMonthEarned = parseFloat(data.perMonthEarned);
+
+    const updatedPolicy = await leaveRepository.updateLeavePolicy(firmId, payload);
+
+    // Apply to all existing balances if updateAllBalances flag is set
+    if (data.updateAllBalances) {
+      const currentYear = new Date().getFullYear();
+      const allBalances = await leaveRepository.getAllFirmLeaveBalances(firmId, currentYear);
+      for (const b of allBalances) {
+        const updateObj = {};
+        if (payload.casualLeaveQuota !== undefined) updateObj.casualLeave = payload.casualLeaveQuota;
+        if (payload.sickLeaveQuota !== undefined) updateObj.sickLeave = payload.sickLeaveQuota;
+        if (payload.earnedLeaveQuota !== undefined) updateObj.earnedLeave = payload.earnedLeaveQuota;
+        if (Object.keys(updateObj).length > 0) {
+          await leaveRepository.updateUserLeaveBalance(b.id, updateObj);
+        }
+      }
+    }
+
+    return updatedPolicy;
+  }
+
+  async updateEmployeeLeaveBalance(targetUserId, data, firmId) {
+    const currentYear = new Date().getFullYear();
+    const payload = {};
+    if (data.casualLeave !== undefined) payload.casualLeave = parseFloat(data.casualLeave);
+    if (data.sickLeave !== undefined) payload.sickLeave = parseFloat(data.sickLeave);
+    if (data.earnedLeave !== undefined) payload.earnedLeave = parseFloat(data.earnedLeave);
+
+    return await leaveRepository.updateUserLeaveBalanceByUserId(targetUserId, firmId, currentYear, payload);
+  }
+
+  async getAllEmployeeBalances(firmId) {
+    const currentYear = new Date().getFullYear();
+    return await leaveRepository.getAllFirmLeaveBalances(firmId, currentYear);
   }
 
   async getPendingLeaveRequests(firmId) {
