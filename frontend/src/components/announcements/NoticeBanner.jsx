@@ -46,13 +46,12 @@ export const NoticeBanner = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className={`p-4 rounded-2xl border shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
-          currentNotice.priority === 'URGENT'
+        className={`p-4 rounded-2xl border shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${currentNotice.priority === 'URGENT'
             ? 'bg-rose-950/40 border-rose-500/30 text-rose-200 shadow-rose-950/20'
             : currentNotice.priority === 'WARNING'
-            ? 'bg-amber-950/40 border-amber-500/30 text-amber-200 shadow-amber-950/20'
-            : 'bg-indigo-950/40 border-indigo-500/30 text-indigo-200 shadow-indigo-950/20'
-        }`}
+              ? 'bg-amber-950/40 border-amber-500/30 text-amber-200 shadow-amber-950/20'
+              : 'bg-indigo-950/40 border-indigo-500/30 text-indigo-200 shadow-indigo-950/20'
+          }`}
       >
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 shrink-0">
