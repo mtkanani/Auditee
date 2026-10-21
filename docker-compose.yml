@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+      - TZ=Asia/Kolkata
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - ACCESS_TOKEN_EXPIRY_MINUTES=${ACCESS_TOKEN_EXPIRY_MINUTES:-1440}
+      - REFRESH_TOKEN_EXPIRY_DAYS=${REFRESH_TOKEN_EXPIRY_DAYS:-7}
+      - ID_TOKEN_EXPIRY_MINUTES=${ID_TOKEN_EXPIRY_MINUTES:-60}
+      - GMAIL_CLIENT_ID=${GMAIL_CLIENT_ID}
+      - GMAIL_CLIENT_SECRET=${GMAIL_CLIENT_SECRET}
+      - GMAIL_REFRESH_TOKEN=${GMAIL_REFRESH_TOKEN}
+      - GST_API_URL=${GST_API_URL}
+      - GST_API_KEY=${GST_API_KEY}
+      - GST_API_SECRET=${GST_API_SECRET}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
