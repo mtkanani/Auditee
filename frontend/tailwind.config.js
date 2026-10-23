@@ -6,13 +6,6 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    screens: {
-      'sm-mobile': '320px',
-      'mobile': '425px',
-      'tablet': '768px',
-      'laptop': '1024px',
-      'desktop': '1440px',
-    },
     extend: {
       colors: {
         brand: {
