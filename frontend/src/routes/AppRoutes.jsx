@@ -43,6 +43,7 @@ const MyTasks = lazy(() => import('../pages/user/MyTasks').then((m) => ({ defaul
 const MyClients = lazy(() => import('../pages/user/MyClients').then((m) => ({ default: m.MyClients })));
 const TimeEntries = lazy(() => import('../pages/user/TimeEntries').then((m) => ({ default: m.TimeEntries })));
 const UserProfile = lazy(() => import('../pages/user/UserProfile').then((m) => ({ default: m.UserProfile })));
+const DeleteAccount = lazy(() => import('../pages/DeleteAccount'));
 const CalendarPage = lazy(() => import('../pages/user/Calendar'));
 
 // Lazy-loaded Client Pages
@@ -125,6 +126,7 @@ export const AppRoutes = () => {
             <Route path="/user/document-vault" element={<DocumentVault />} />
             <Route path="/user/meetings" element={<MeetingsManagement />} />
             <Route path="/user/profile" element={<UserProfile />} />
+            <Route path="/user/delete-account" element={<DeleteAccount />} />
             <Route path="/calendar" element={<CalendarPage />} />
           </Route>
 

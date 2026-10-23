@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { Mail, Shield, AlertTriangle, ArrowRight, ArrowLeft, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../api/authApi';
-import DashboardLayout from '../../layouts/DashboardLayout';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
 
@@ -60,18 +59,10 @@ const DeleteAccount = () => {
       await authApi.sendDeleteOTP(data.email);
       setEmailAddress(data.email);
       setTimer(300); // Reset timer
-      toast.success('Deletion OTP sent successfully! Please check your email.', {
-        position: 'top-right',
-        autoClose: 3500,
-        theme: 'dark',
-      });
+      toast.success('Deletion OTP sent successfully! Please check your email.');
       setStep(2);
     } catch (error) {
-      toast.error(error.message || 'Failed to request OTP. Is this email registered?', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Failed to request OTP. Is this email registered?');
     } finally {
       setSubmitting(false);
     }
@@ -80,29 +71,17 @@ const DeleteAccount = () => {
   // Step 2: Verify OTP
   const handleVerifyOTP = async (data) => {
     if (timer === 0) {
-      toast.error('OTP code has expired. Please request a new code.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error('OTP code has expired. Please request a new code.');
       return;
     }
 
     setSubmitting(true);
     try {
       await authApi.verifyDeleteOTP(emailAddress, data.otp);
-      toast.success('OTP verified successfully! Please confirm deletion.', {
-        position: 'top-right',
-        autoClose: 3500,
-        theme: 'dark',
-      });
+      toast.success('OTP verified successfully! Please confirm deletion.');
       setStep(3);
     } catch (error) {
-      toast.error(error.message || 'Invalid or incorrect OTP. Please try again.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Invalid or incorrect OTP. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -114,11 +93,7 @@ const DeleteAccount = () => {
     try {
       await authApi.deleteAccount(emailAddress);
       
-      toast.success('Your account has been permanently deleted.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.success('Your account has been permanently deleted.');
       
       // Close confirmation modal
       setShowModal(false);
@@ -129,11 +104,7 @@ const DeleteAccount = () => {
       // Redirect to login page
       navigate('/login');
     } catch (error) {
-      toast.error(error.message || 'Failed to delete account. Session may have expired.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Failed to delete account. Session may have expired.');
     } finally {
       setSubmitting(false);
     }
@@ -148,7 +119,7 @@ const DeleteAccount = () => {
   };
 
   return (
-    <DashboardLayout title="Delete Account">
+    <>
       <div className="glass-panel p-8 rounded-2xl shadow-glass-md border border-slate-800/80 max-w-xl">
         
         {/* Header warning indicator */}
@@ -319,7 +290,7 @@ const DeleteAccount = () => {
                   type="button"
                   variant="secondary"
                   disabled={submitting}
-                  onClick={() => navigate('/profile')}
+                  onClick={() => navigate('/user/profile')}
                   fullWidth={false}
                 >
                   Cancel
@@ -380,7 +351,7 @@ const DeleteAccount = () => {
           </div>
         </div>
       )}
-    </DashboardLayout>
+    </>
   );
 };
 

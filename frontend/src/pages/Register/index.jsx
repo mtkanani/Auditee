@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
 import { Mail, Shield, User, Phone, MapPin, Lock, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import AuthLayout from '../../layouts/AuthLayout';
@@ -45,18 +45,10 @@ const Register = () => {
     try {
       await authApi.sendOTP(data.email);
       setEmailAddress(data.email);
-      toast.success('OTP sent successfully! Please check your email.', {
-        position: 'top-right',
-        autoClose: 3500,
-        theme: 'dark',
-      });
+      toast.success('OTP sent successfully! Please check your email.');
       setStep(2);
     } catch (error) {
-      toast.error(error.message || 'Failed to send OTP. Please try again.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Failed to send OTP. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -67,18 +59,10 @@ const Register = () => {
     setSubmitting(true);
     try {
       await authApi.verifyOTP(emailAddress, data.otp);
-      toast.success('OTP verified successfully! Please complete registration.', {
-        position: 'top-right',
-        autoClose: 3500,
-        theme: 'dark',
-      });
+      toast.success('OTP verified successfully! Please complete registration.');
       setStep(3);
     } catch (error) {
-      toast.error(error.message || 'Invalid or expired OTP. Please try again.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Invalid or expired OTP. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -100,18 +84,10 @@ const Register = () => {
       };
 
       await authApi.register(payload);
-      toast.success('Registration successful! Please log in.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.success('Registration successful! Please log in.');
       navigate('/login');
     } catch (error) {
-      toast.error(error.message || 'Registration failed. Please check input parameters.', {
-        position: 'top-right',
-        autoClose: 4000,
-        theme: 'dark',
-      });
+      toast.error(error.message || 'Registration failed. Please check input parameters.');
     } finally {
       setSubmitting(false);
     }

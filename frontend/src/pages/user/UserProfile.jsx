@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Avatar } from '../../components/common/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { FiUser, FiLock, FiSave } from 'react-icons/fi';
+import { FiUser, FiLock, FiSave, FiAlertTriangle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { userService } from '../../services/userService';
 import { authService } from '../../services/authService';
@@ -170,6 +171,25 @@ export const UserProfile = () => {
             {isPasswordLoading ? 'Updating Password...' : 'Update Password'}
           </button>
         </form>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
+            <FiAlertTriangle className="text-rose-400" />
+            <span>Danger Zone</span>
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Permanently delete your account and personal user data.
+          </p>
+        </div>
+        <Link
+          to="/user/delete-account"
+          className="inline-flex items-center justify-center py-2 px-4 rounded-xl bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 hover:border-rose-500 text-rose-300 hover:text-white font-semibold text-xs transition-all w-fit"
+        >
+          Delete Account
+        </Link>
       </div>
     </div>
   );

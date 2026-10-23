@@ -1,16 +1,13 @@
 import axiosInstance from './axiosInstance';
+import { getRole } from '../utils/helpers';
 
 const getBaseUrl = () => {
-  try {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const role = (JSON.parse(userStr)?.role || '').toUpperCase();
-      if (role === 'CLIENT') return '/client/tasks';
-      if (role === 'USER' || role === 'EMPLOYEE') return '/user/tasks';
-    }
-  } catch (e) {}
+  const role = getRole();
+  if (role === 'CLIENT') return '/client/tasks';
+  if (role === 'USER') return '/user/tasks';
   return '/firm-admin/tasks';
 };
+
 
 export const taskService = {
   // Tasks APIs

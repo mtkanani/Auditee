@@ -1,4 +1,5 @@
 import axiosInstance from './axiosInstance';
+import { getRole } from '../utils/helpers';
 
 export const announcementService = {
   createNotice: async (noticeData) => {
@@ -22,26 +23,15 @@ export const announcementService = {
   },
 
   getUserNotices: async () => {
-    let url = '/user/announcements';
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr && JSON.parse(userStr)?.role?.toUpperCase() === 'CLIENT') {
-        url = '/client/announcements';
-      }
-    } catch (e) {}
+    const url = getRole() === 'CLIENT' ? '/client/announcements' : '/user/announcements';
     const res = await axiosInstance.get(url);
     return res.data;
   },
 
   acknowledgeNotice: async (id) => {
-    let url = `/user/announcements/${id}/acknowledge`;
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr && JSON.parse(userStr)?.role?.toUpperCase() === 'CLIENT') {
-        url = `/client/announcements/${id}/acknowledge`;
-      }
-    } catch (e) {}
+    const url = getRole() === 'CLIENT' ? `/client/announcements/${id}/acknowledge` : `/user/announcements/${id}/acknowledge`;
     const res = await axiosInstance.post(url);
     return res.data;
   },
 };
+
