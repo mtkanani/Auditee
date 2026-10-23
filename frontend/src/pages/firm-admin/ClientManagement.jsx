@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
@@ -18,6 +19,7 @@ export const ClientManagement = () => {
   const [clients, setClients] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [clientTypeFilter, setClientTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -40,7 +42,7 @@ export const ClientManagement = () => {
       const res = await firmAdminService.getClients({
         page,
         limit: 10,
-        search,
+        search: debouncedSearch || undefined,
         clientType: clientTypeFilter || undefined,
         status: statusFilter || undefined,
       });
@@ -56,7 +58,7 @@ export const ClientManagement = () => {
 
   useEffect(() => {
     fetchClients();
-  }, [page, search, clientTypeFilter, statusFilter]);
+  }, [page, debouncedSearch, clientTypeFilter, statusFilter]);
 
   const handleCreateClient = async (data) => {
     try {

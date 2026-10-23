@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./modules/events/event.routes');
@@ -58,6 +59,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -1,3 +1,4 @@
+const prisma = require('../../config/db');
 const leaveRepository = require('./leave.repository');
 const { BadRequestError, NotFoundError } = require('../../utils/errors');
 
@@ -102,22 +103,23 @@ class LeaveService {
 
     const updatedPolicy = await leaveRepository.updateLeavePolicy(firmId, payload);
 
-    // Apply to all existing balances if updateAllBalances flag is set
+    // Apply to all existing balances if updateAllBalances flag is set (bulk update in 1 query)
     if (data.updateAllBalances) {
-      const currentYear = new Date().getFullYear();
-      const allBalances = await leaveRepository.getAllFirmLeaveBalances(firmId, currentYear);
-      for (const b of allBalances) {
-        const updateObj = {};
-        if (payload.casualLeaveQuota !== undefined) updateObj.casualLeave = payload.casualLeaveQuota;
-        if (payload.sickLeaveQuota !== undefined) updateObj.sickLeave = payload.sickLeaveQuota;
-        if (payload.earnedLeaveQuota !== undefined) updateObj.earnedLeave = payload.earnedLeaveQuota;
-        if (Object.keys(updateObj).length > 0) {
-          await leaveRepository.updateUserLeaveBalance(b.id, updateObj);
-        }
+      const updateObj = {};
+      if (payload.casualLeaveQuota !== undefined) updateObj.casualLeave = payload.casualLeaveQuota;
+      if (payload.sickLeaveQuota !== undefined) updateObj.sickLeave = payload.sickLeaveQuota;
+      if (payload.earnedLeaveQuota !== undefined) updateObj.earnedLeave = payload.earnedLeaveQuota;
+
+      if (Object.keys(updateObj).length > 0) {
+        await prisma.leaveBalance.updateMany({
+          where: { firmId: parseInt(firmId, 10), year: new Date().getFullYear() },
+          data: updateObj,
+        });
       }
     }
 
     return updatedPolicy;
+
   }
 
   async updateEmployeeLeaveBalance(targetUserId, data, firmId) {

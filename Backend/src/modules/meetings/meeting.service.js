@@ -44,14 +44,16 @@ class MeetingService {
     // Check if Admin requested to invite all users & clients under the firm
     const resolvedParticipants = [];
     if (data.inviteAll || data.inviteAllFirm) {
-      const allUsers = await prisma.user.findMany({
-        where: { firmId: parseInt(firmId, 10) },
-        select: { id: true, email: true },
-      });
-      const allClients = await prisma.client.findMany({
-        where: { firmId: parseInt(firmId, 10), deletedAt: null },
-        select: { id: true, email: true },
-      });
+      const [allUsers, allClients] = await Promise.all([
+        prisma.user.findMany({
+          where: { firmId: parseInt(firmId, 10), deletedAt: null },
+          select: { id: true, email: true },
+        }),
+        prisma.client.findMany({
+          where: { firmId: parseInt(firmId, 10), deletedAt: null },
+          select: { id: true, email: true },
+        }),
+      ]);
 
       for (const u of allUsers) {
         resolvedParticipants.push({ userId: u.id, email: u.email });
@@ -60,28 +62,27 @@ class MeetingService {
         resolvedParticipants.push({ clientId: c.id, email: c.email });
       }
     } else {
-      // Resolve participant emails to actual User or Client IDs in database
-      for (const p of participants) {
-        const email = p.email ? p.email.trim().toLowerCase() : '';
-        let targetUserId = p.userId ? parseInt(p.userId, 10) : null;
-        let targetClientId = p.clientId ? parseInt(p.clientId, 10) : null;
+      // Collect all distinct emails once
+      const emails = [...new Set(
+        participants.map((p) => (p.email || '').trim().toLowerCase()).filter(Boolean)
+      )];
 
-        if (email) {
-          if (!targetUserId) {
-            const u = await prisma.user.findFirst({
-              where: { email: { equals: email, mode: 'insensitive' } },
-              select: { id: true },
-            });
-            if (u) targetUserId = u.id;
-          }
-          if (!targetClientId && !targetUserId) {
-            const c = await prisma.client.findFirst({
-              where: { email: { equals: email, mode: 'insensitive' } },
-              select: { id: true },
-            });
-            if (c) targetClientId = c.id;
-          }
-        }
+      // 2 queries total using index instead of 2 sequential queries per participant
+      const [matchedUsers, matchedClients] = emails.length
+        ? await Promise.all([
+            prisma.user.findMany({ where: { email: { in: emails } }, select: { id: true, email: true } }),
+            prisma.client.findMany({ where: { email: { in: emails }, deletedAt: null }, select: { id: true, email: true } }),
+          ])
+        : [[], []];
+
+      const userByEmail = new Map(matchedUsers.map((u) => [u.email.toLowerCase(), u.id]));
+      const clientByEmail = new Map(matchedClients.map((c) => [c.email.toLowerCase(), c.id]));
+
+      for (const p of participants) {
+        const email = (p.email || '').trim().toLowerCase();
+        let targetUserId = p.userId ? parseInt(p.userId, 10) : (userByEmail.get(email) ?? null);
+        let targetClientId = p.clientId ? parseInt(p.clientId, 10) : null;
+        if (!targetClientId && !targetUserId) targetClientId = clientByEmail.get(email) ?? null;
 
         if (targetUserId || targetClientId || email) {
           resolvedParticipants.push({
@@ -104,6 +105,7 @@ class MeetingService {
         }
       }
     }
+
 
     const meeting = await meetingRepository.createMeeting({
       firmId: parseInt(firmId, 10),
@@ -141,12 +143,18 @@ class MeetingService {
     let targetEmail = email ? email.trim().toLowerCase() : '';
 
     if (targetEmail) {
-      if (!targetUserId) {
-        const u = await prisma.user.findFirst({ where: { email: { equals: targetEmail, mode: 'insensitive' } }, select: { id: true } });
+      if (!targetUserId && !targetClientId) {
+        const [u, c] = await Promise.all([
+          prisma.user.findFirst({ where: { email: targetEmail }, select: { id: true } }),
+          prisma.client.findFirst({ where: { email: targetEmail, deletedAt: null }, select: { id: true } }),
+        ]);
         if (u) targetUserId = u.id;
-      }
-      if (!targetClientId && !targetUserId) {
-        const c = await prisma.client.findFirst({ where: { email: { equals: targetEmail, mode: 'insensitive' } }, select: { id: true } });
+        if (c) targetClientId = c.id;
+      } else if (!targetUserId) {
+        const u = await prisma.user.findFirst({ where: { email: targetEmail }, select: { id: true } });
+        if (u) targetUserId = u.id;
+      } else if (!targetClientId) {
+        const c = await prisma.client.findFirst({ where: { email: targetEmail, deletedAt: null }, select: { id: true } });
         if (c) targetClientId = c.id;
       }
     }

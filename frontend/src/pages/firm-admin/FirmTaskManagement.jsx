@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
@@ -58,20 +59,40 @@ export const FirmTaskManagement = () => {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchTasks = async () => {
-    setIsLoading(true);
+  const debouncedSearch = useDebounce(search, 400);
+
+  // Fetch users and client requests once on mount (avoids re-fetching 100 users on every search keystroke)
+  const fetchAuxiliaryData = async () => {
     try {
-      const [taskRes, reqRes, usersRes] = await Promise.all([
-        taskService.getAllTasks({ page, limit: 20, search, status: statusFilter || undefined, priority: priorityFilter || undefined }),
+      const [reqRes, usersRes] = await Promise.all([
         taskService.getClientRequests(),
         firmAdminService.getUsers({ limit: 100 }),
       ]);
+      setClientRequests(reqRes.data || []);
+      setUsers(usersRes.data || usersRes.users || []);
+    } catch (err) {
+      // silent catch for background lists
+    }
+  };
+
+  useEffect(() => {
+    fetchAuxiliaryData();
+  }, []);
+
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      const taskRes = await taskService.getAllTasks({
+        page,
+        limit: 20,
+        search: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+        priority: priorityFilter || undefined,
+      });
 
       setTasks(taskRes.data || []);
       setTotalPages(taskRes.pagination?.totalPages || 1);
       setTotalRecords(taskRes.pagination?.totalRecords || 0);
-      setClientRequests(reqRes.data || []);
-      setUsers(usersRes.data || usersRes.users || []);
     } catch (err) {
       toast.error('Failed to load firm tasks');
     } finally {
@@ -81,7 +102,20 @@ export const FirmTaskManagement = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [page, search, statusFilter, priorityFilter]);
+  }, [page, debouncedSearch, statusFilter, priorityFilter]);
+
+  // Memoize Kanban task grouping to avoid O(columns * tasks) filter loops on each render
+  const tasksByStatus = useMemo(() => {
+    const map = { PENDING: [], IN_PROGRESS: [], UNDER_REVIEW: [], COMPLETED: [] };
+    for (const t of tasks) {
+      if (map[t.status]) {
+        map[t.status].push(t);
+      } else {
+        map[t.status] = [t];
+      }
+    }
+    return map;
+  }, [tasks]);
 
   const handleStatusChange = async (taskId, newStatus) => {
     try {
@@ -349,7 +383,7 @@ export const FirmTaskManagement = () => {
       {activeTab === 'kanban' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {['PENDING', 'IN_PROGRESS', 'UNDER_REVIEW', 'COMPLETED'].map((colStatus) => {
-            const colTasks = tasks.filter((t) => t.status === colStatus);
+            const colTasks = tasksByStatus[colStatus] || [];
             return (
               <div key={colStatus} className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 min-h-[60vh]">
                 <div className="flex items-center justify-between border-b border-slate-800 pb-2">

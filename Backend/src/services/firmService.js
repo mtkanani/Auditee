@@ -3,6 +3,7 @@ const prisma = require('../config/db');
 const firmRepository = require('../repositories/firmRepository');
 const { sendCredentialsEmail } = require('./emailService');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { invalidateSessionCache } = require('../middlewares/auth.middleware');
 
 /**
  * Creates a new Firm and its Firm Admin.
@@ -225,6 +226,7 @@ const changeFirmStatus = async (firmId, status) => {
           userId: { in: userIds },
         },
       });
+      invalidateSessionCache();
     }
   }
 
@@ -260,9 +262,12 @@ const resetFirmAdminPassword = async (firmId, newPassword) => {
     }),
   ]);
 
+  invalidateSessionCache();
+
   return {
     success: true,
     message: 'Firm Admin password reset successfully.',
+
   };
 };
 

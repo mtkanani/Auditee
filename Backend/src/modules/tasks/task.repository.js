@@ -117,10 +117,9 @@ class TaskRepository {
               user: { select: { id: true, firstName: true, lastName: true, designation: true } },
             },
           },
-          subtasks: true,
-          documents: true,
+          subtasks: { select: { isCompleted: true } },
           _count: {
-            select: { comments: true, subtasks: true },
+            select: { comments: true, subtasks: true, documents: true },
           },
         },
       }),

@@ -3,24 +3,17 @@ const { NotFoundError, ForbiddenError } = require('../../utils/errors');
 
 class PublicUserService {
   async getDashboard(userId, firmId) {
-    const [assignedClientsCount, totalTasks, pendingTasks, inProgressTasks, completedTasks, recentTasks] = await Promise.all([
+    const [assignedClientsCount, taskGroups, recentTasks] = await Promise.all([
       prisma.clientAssignment.count({
         where: {
           userId,
           client: { firmId, deletedAt: null },
         },
       }),
-      prisma.task.count({
+      prisma.task.groupBy({
+        by: ['status'],
         where: { userId, firmId, deletedAt: null },
-      }),
-      prisma.task.count({
-        where: { userId, firmId, status: 'PENDING', deletedAt: null },
-      }),
-      prisma.task.count({
-        where: { userId, firmId, status: 'IN_PROGRESS', deletedAt: null },
-      }),
-      prisma.task.count({
-        where: { userId, firmId, status: 'COMPLETED', deletedAt: null },
+        _count: { _all: true },
       }),
       prisma.task.findMany({
         where: { userId, firmId, deletedAt: null },
@@ -34,6 +27,12 @@ class PublicUserService {
       }),
     ]);
 
+    const byStatus = Object.fromEntries(taskGroups.map((g) => [g.status, g._count._all]));
+    const pendingTasks = byStatus.PENDING || 0;
+    const inProgressTasks = byStatus.IN_PROGRESS || 0;
+    const completedTasks = byStatus.COMPLETED || 0;
+    const totalTasks = taskGroups.reduce((acc, g) => acc + g._count._all, 0);
+
     return {
       assignedClientsCount,
       tasksSummary: {
@@ -45,6 +44,7 @@ class PublicUserService {
       recentTasks,
     };
   }
+
 
   async getProfile(userId) {
     const user = await prisma.user.findUnique({

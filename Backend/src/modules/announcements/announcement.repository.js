@@ -26,59 +26,56 @@ class AnnouncementRepository {
   }
 
   async findAllByFirm(firmId) {
-    const totalUsersCount = await prisma.user.count({
-      where: { firmId, deletedAt: null, status: 'ACTIVE' },
-    });
-
-    const announcements = await prisma.announcement.findMany({
-      where: {
-        firmId,
-        deletedAt: null,
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+    const [totalUsersCount, announcements, ackCounts] = await Promise.all([
+      prisma.user.count({
+        where: { firmId, deletedAt: null, status: 'ACTIVE' },
+      }),
+      prisma.announcement.findMany({
+        where: {
+          firmId,
+          deletedAt: null,
         },
-        reads: {
-          select: {
-            id: true,
-            userId: true,
-            readAt: true,
-            acknowledgedAt: true,
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-                designation: true,
-              },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
             },
           },
+          _count: {
+            select: { reads: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.announcementRead.groupBy({
+        by: ['announcementId'],
+        where: {
+          announcement: { firmId },
+          acknowledgedAt: { not: null },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const ackMap = new Map(ackCounts.map((a) => [a.announcementId, a._count._all]));
 
     return announcements.map((item) => {
-      const acknowledgedCount = item.reads.filter((r) => r.acknowledgedAt !== null).length;
-      const readCount = item.reads.length;
+      const acknowledgedCount = ackMap.get(item.id) || 0;
       return {
         ...item,
         metrics: {
           totalUsers: totalUsersCount,
-          readCount,
+          readCount: item._count.reads,
           acknowledgedCount,
           acknowledgedPercentage: totalUsersCount > 0 ? Math.round((acknowledgedCount / totalUsersCount) * 100) : 0,
         },
       };
     });
   }
+
 
   async findByIdAndFirm(id, firmId) {
     return await prisma.announcement.findFirst({
@@ -139,23 +136,14 @@ class AnnouncementRepository {
   }
 
   async markReadOrAcknowledged(announcementId, userId) {
-    const existing = await prisma.announcementRead.findUnique({
+    return await prisma.announcementRead.upsert({
       where: {
         announcementId_userId: { announcementId, userId },
       },
-    });
-
-    if (existing) {
-      return await prisma.announcementRead.update({
-        where: { id: existing.id },
-        data: {
-          acknowledgedAt: new Date(),
-        },
-      });
-    }
-
-    return await prisma.announcementRead.create({
-      data: {
+      update: {
+        acknowledgedAt: new Date(),
+      },
+      create: {
         announcementId,
         userId,
         readAt: new Date(),
@@ -163,6 +151,7 @@ class AnnouncementRepository {
       },
     });
   }
+
 
   async softDelete(id, firmId) {
     return await prisma.announcement.updateMany({

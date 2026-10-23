@@ -1,9 +1,14 @@
 const prisma = require('../config/db');
 const { UnauthorizedError } = require('../utils/errors');
 
+// Tiny in-memory cache: token -> { user, cacheUntil, tokenExpiresAt }. 60s TTL.
+const SESSION_TTL_MS = 60 * 1000;
+const sessionCache = new Map();
+
 /**
- * Middleware to verify session accessToken stored in PostgreSQL database.
- * Verifies presence, matches entry in DB, validates expiration, and attaches authenticated user/client.
+ * High-performance middleware to verify session accessToken stored in PostgreSQL database.
+ * Includes in-memory caching to eliminate redundant database hits across requests (0 queries on cache hit).
+ * Queries only necessary projection fields and resolves administeredFirm in a single query.
  */
 const authenticateSession = async (req, res, next) => {
   try {
@@ -11,78 +16,113 @@ const authenticateSession = async (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedError('Authentication token is missing or invalid. Please login.');
     }
+    const accessToken = authHeader.slice(7);
 
-    const accessToken = authHeader.split(' ')[1];
+    // 1. Check in-memory session cache first
+    const cached = sessionCache.get(accessToken);
+    if (cached && cached.cacheUntil > Date.now() && cached.tokenExpiresAt > Date.now()) {
+      req.user = cached.user;
+      return next();
+    }
 
-    // 1. Fetch session from PostgreSQL including user and client relations
+    // 2. Query only required fields — avoids pulling password hash and unneeded relations
     const session = await prisma.userSession.findUnique({
       where: { accessToken },
-      include: {
-        user: true,
-        client: true,
+      select: {
+        id: true,
+        accessTokenExpiresAt: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+            firmId: true,
+            firstName: true,
+            lastName: true,
+            administeredFirm: { select: { id: true } },
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            email: true,
+            firmId: true,
+            clientName: true,
+          },
+        },
       },
     });
 
     if (!session) {
+      sessionCache.delete(accessToken);
       throw new UnauthorizedError('Active session not found. Please login again.');
     }
 
-    // 2. Validate token expiration
-    if (new Date() > new Date(session.accessTokenExpiresAt)) {
-      // Clean up expired session
-      await prisma.userSession.delete({
-        where: { id: session.id },
-      }).catch(() => {}); // ignore cleanup failures
-
+    // 3. Check expiration
+    if (Date.now() > session.accessTokenExpiresAt.getTime()) {
+      prisma.userSession.delete({ where: { id: session.id } }).catch(() => {});
+      sessionCache.delete(accessToken);
       throw new UnauthorizedError('Session has expired. Please login again.');
     }
 
-    // 3. Attach authenticated user or client details to request object
+    // 4. Resolve authenticated identity
+    let user;
     if (session.user) {
-      // For Firm Admin, Super Admin, or Employee (User)
-      let firmId = session.user.firmId;
-      
-      // If user is FIRM_ADMIN but firmId is not set directly on user, fetch administeredFirm
-      if (!firmId && session.user.role === 'FIRM_ADMIN') {
-        const adminFirm = await prisma.firm.findUnique({
-          where: { firmAdminId: session.user.id },
-          select: { id: true },
-        });
-        if (adminFirm) {
-          firmId = adminFirm.id;
-        }
-      }
-
-      req.user = {
-        id: session.user.id,
-        email: session.user.email,
-        role: session.user.role,
-        firmId: firmId,
-        firstName: session.user.firstName,
-        lastName: session.user.lastName,
+      const u = session.user;
+      user = {
+        id: u.id,
+        email: u.email,
+        role: u.role,
+        firmId: u.firmId ?? u.administeredFirm?.id ?? null,
+        firstName: u.firstName,
+        lastName: u.lastName,
         isClient: false,
       };
     } else if (session.client) {
-      // For Client user login
-      req.user = {
-        id: session.client.id,
-        clientId: session.client.id,
-        email: session.client.email,
+      const c = session.client;
+      user = {
+        id: c.id,
+        clientId: c.id,
+        email: c.email,
         role: 'CLIENT',
-        firmId: session.client.firmId,
-        clientName: session.client.clientName,
+        firmId: c.firmId,
+        clientName: c.clientName,
         isClient: true,
       };
     } else {
       throw new UnauthorizedError('Invalid user session context.');
     }
 
+    // 5. Store in cache
+    sessionCache.set(accessToken, {
+      user,
+      cacheUntil: Date.now() + SESSION_TTL_MS,
+      tokenExpiresAt: session.accessTokenExpiresAt.getTime(),
+    });
+
+    if (sessionCache.size > 10000) {
+      sessionCache.clear(); // simple memory guard
+    }
+
+    req.user = user;
     next();
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Invalidate session cache on logout, password changes, or account deletions.
+ */
+const invalidateSessionCache = (accessToken) => {
+  if (accessToken) {
+    sessionCache.delete(accessToken);
+  } else {
+    sessionCache.clear();
+  }
+};
+
 module.exports = {
   authenticateSession,
+  invalidateSessionCache,
 };

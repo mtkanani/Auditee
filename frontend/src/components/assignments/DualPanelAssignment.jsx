@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiUserCheck,
@@ -41,17 +41,33 @@ export const DualPanelAssignment = ({
   });
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
 
-  const filteredClients = clients.filter(
-    (c) =>
-      c.clientName?.toLowerCase().includes(searchClient.toLowerCase()) ||
-      c.companyName?.toLowerCase().includes(searchClient.toLowerCase())
-  );
+  const assignedCountByClient = useMemo(() => {
+    const m = new Map();
+    for (const a of assignments) {
+      m.set(a.clientId, (m.get(a.clientId) || 0) + 1);
+    }
+    return m;
+  }, [assignments]);
 
-  const filteredUsers = users.filter(
-    (u) =>
-      `${u.firstName} ${u.lastName}`.toLowerCase().includes(searchUser.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchUser.toLowerCase())
-  );
+  const filteredClients = useMemo(() => {
+    const q = searchClient.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter(
+      (c) =>
+        c.clientName?.toLowerCase().includes(q) ||
+        c.companyName?.toLowerCase().includes(q)
+    );
+  }, [clients, searchClient]);
+
+  const filteredUsers = useMemo(() => {
+    const q = searchUser.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q)
+    );
+  }, [users, searchUser]);
 
   const handleAssignClick = async () => {
     if (!selectedClient || !selectedUser) return;
@@ -130,7 +146,7 @@ export const DualPanelAssignment = ({
           <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {filteredClients.map((client) => {
               const isSelected = selectedClient?.id === client.id;
-              const assignedCount = assignments.filter((a) => a.clientId === client.id).length;
+              const assignedCount = assignedCountByClient.get(client.id) || 0;
 
               return (
                 <motion.div

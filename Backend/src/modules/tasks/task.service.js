@@ -57,22 +57,28 @@ class TaskService {
   }
 
   async updateTaskStatus(taskId, status, firmId, performedBy, performedName = 'Firm Admin') {
-    const task = await taskRepository.findTaskById(taskId, firmId);
+    const tId = parseInt(taskId, 10);
+    const fId = parseInt(firmId, 10);
+    const task = await prisma.task.findFirst({
+      where: { id: tId, firmId: fId, deletedAt: null },
+      select: { id: true, status: true },
+    });
     if (!task) {
       throw new NotFoundError('Task not found');
     }
 
-    await taskRepository.updateTask(taskId, firmId, { status });
+    await taskRepository.updateTask(tId, fId, { status });
 
-    await taskRepository.logHistory(taskId, {
+    await taskRepository.logHistory(tId, {
       action: 'STATUS_UPDATED',
       details: `Task status changed from '${task.status}' to '${status}'.`,
       performedBy,
       performedName,
     });
 
-    return await this.getTaskById(taskId, firmId);
+    return await this.getTaskById(tId, fId);
   }
+
 
   async approveClientRequest(taskId, approvalData, firmId, performedBy, performedName = 'Firm Admin') {
     const task = await taskRepository.findTaskById(taskId, firmId);

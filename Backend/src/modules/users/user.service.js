@@ -99,14 +99,20 @@ class UserService {
 
   async getDashboard(firmId) {
     const prisma = require('../../config/db');
-    const [totalClients, totalUsers, pendingTasks, completedTasks, inProgressTasks, recentUsers] = await Promise.all([
-      prisma.client.count({ where: { firmId, deletedAt: null } }),
-      prisma.user.count({ where: { firmId, deletedAt: null, role: 'USER' } }),
-      prisma.task.count({ where: { firmId, status: 'PENDING', deletedAt: null } }),
-      prisma.task.count({ where: { firmId, status: 'COMPLETED', deletedAt: null } }),
-      prisma.task.count({ where: { firmId, status: 'IN_PROGRESS', deletedAt: null } }),
+    const fId = parseInt(firmId, 10);
+    const [totalClients, totalUsers, taskGroups, pendingCompliance, recentUsers] = await Promise.all([
+      prisma.client.count({ where: { firmId: fId, deletedAt: null } }),
+      prisma.user.count({ where: { firmId: fId, deletedAt: null, role: 'USER' } }),
+      prisma.task.groupBy({
+        by: ['status'],
+        where: { firmId: fId, deletedAt: null },
+        _count: { _all: true },
+      }),
+      prisma.complianceItem.count({
+        where: { firmId: fId, status: { in: ['UPCOMING', 'IN_PROGRESS', 'OVERDUE'] } },
+      }),
       prisma.user.findMany({
-        where: { firmId, deletedAt: null, role: 'USER' },
+        where: { firmId: fId, deletedAt: null, role: 'USER' },
         take: 5,
         orderBy: { createdAt: 'desc' },
         select: {
@@ -121,18 +127,21 @@ class UserService {
       }),
     ]);
 
+    const byStatus = Object.fromEntries(taskGroups.map((g) => [g.status, g._count._all]));
+
     return {
       metrics: {
         totalClients,
         totalUsers,
-        pendingTasks,
-        completedTasks,
-        inProgressTasks,
-        pendingCompliance: 5,
+        pendingTasks: byStatus.PENDING || 0,
+        completedTasks: byStatus.COMPLETED || 0,
+        inProgressTasks: byStatus.IN_PROGRESS || 0,
+        pendingCompliance,
       },
       recentUsers,
     };
   }
+
 }
 
 module.exports = new UserService();

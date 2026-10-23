@@ -15,13 +15,6 @@ const authorizeRoles = (...allowedRoles) => {
       const rawRole = req.user.role || '';
       const userRoleUpper = rawRole.toUpperCase();
 
-      console.log('🔒 RBAC Check:', {
-        userId: req.user.id,
-        email: req.user.email,
-        userRole: rawRole,
-        allowedRoles,
-      });
-
       // Expand allowed roles (case-insensitive & handle common aliases)
       const expandedAllowedRoles = allowedRoles.flatMap((r) => {
         const upper = String(r).toUpperCase();

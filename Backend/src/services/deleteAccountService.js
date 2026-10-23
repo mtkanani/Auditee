@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const prisma = require('../config/db');
 const { sendDeleteAccountEmail } = require('./emailService');
 const { BadRequestError, RateLimitError, NotFoundError } = require('../utils/errors');
+const { invalidateSessionCache } = require('../middlewares/auth.middleware');
 
 /**
  * Business logic for requesting and sending an account deletion OTP.
@@ -149,9 +150,11 @@ const deleteUserAccount = async (email) => {
   ]);
 
   console.log(`[Security Log] Account permanently deleted for email: ${normalizedEmail}`);
+  invalidateSessionCache();
 
   return { message: 'Account deleted successfully.' };
 };
+
 
 module.exports = {
   requestDeleteOtp,

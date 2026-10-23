@@ -240,4 +240,10 @@ const { authenticateSession } = require('../middlewares/auth.middleware');
  */
 router.get('/me', authenticateSession, authController.getMe);
 
+/**
+ * Route: POST /api/auth/logout
+ * Terminates active user session and clears session cache.
+ */
+router.post('/logout', authenticateSession, authController.logout);
+
 module.exports = router;

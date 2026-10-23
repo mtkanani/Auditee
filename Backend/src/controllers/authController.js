@@ -1,4 +1,6 @@
 const authService = require('../services/authService');
+const prisma = require('../config/db');
+const { invalidateSessionCache } = require('../middlewares/auth.middleware');
 
 /**
  * Controller for sending OTP.
@@ -91,6 +93,7 @@ const changePassword = async (req, res, next) => {
   try {
     const { email, currentPassword, newPassword } = req.body;
     await authService.updateUserPassword(email, currentPassword, newPassword);
+    invalidateSessionCache();
     return res.status(200).json({
       success: true,
       message: 'Password changed successfully',
@@ -139,6 +142,7 @@ const resetPassword = async (req, res, next) => {
   try {
     const { email, newPassword } = req.body;
     await authService.resetUserPassword(email, newPassword);
+    invalidateSessionCache();
     return res.status(200).json({
       success: true,
       message: 'Password reset successfully',
@@ -162,6 +166,28 @@ const getMe = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller for session Logout.
+ */
+const logout = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const accessToken = authHeader.slice(7);
+      await prisma.userSession.deleteMany({
+        where: { accessToken },
+      }).catch(() => {});
+      invalidateSessionCache(accessToken);
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   sendOtp,
   verifyOtp,
@@ -173,4 +199,6 @@ module.exports = {
   verifyForgotPasswordOtp,
   resetPassword,
   getMe,
+  logout,
 };
+

@@ -22,16 +22,51 @@ class EventService {
     const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'FIRM_ADMIN'].includes(user.role);
     const userFilter = isAdmin ? {} : { userId: user.id };
 
-    // TASKS (using dueDate as event)
-    const taskRows = await prisma.task.findMany({
-      where: {
-        firmId: user.firmId,
-        dueDate: { gte: startDate, lte: endDate },
-        ...userFilter,
-      },
-      select: { id: true, title: true, dueDate: true },
-    });
-    const taskEvents = taskRows.map(t => ({
+    // Run all 4 queries concurrently in parallel
+    const [taskRows, compRows, meetingRows, leaveRows] = await Promise.all([
+      // 1. TASKS (using dueDate as event)
+      prisma.task.findMany({
+        where: {
+          firmId: user.firmId,
+          deletedAt: null,
+          dueDate: { gte: startDate, lte: endDate },
+          ...userFilter,
+        },
+        select: { id: true, title: true, dueDate: true },
+      }),
+
+      // 2. COMPLIANCE items (dueDate) - ComplianceItem has no userId column, filtered by firmId
+      prisma.complianceItem.findMany({
+        where: {
+          firmId: user.firmId,
+          dueDate: { gte: startDate, lte: endDate },
+        },
+        select: { id: true, title: true, dueDate: true, period: true },
+      }),
+
+      // 3. MEETINGS from lead meeting notes - safely scoped to user's firm
+      prisma.leadMeetingNote.findMany({
+        where: {
+          meetingDate: { gte: startDate, lte: endDate },
+          lead: { firmId: user.firmId },
+          ...(isAdmin ? {} : { loggedBy: user.id }),
+        },
+        select: { id: true, meetingTitle: true, meetingNotes: true, meetingDate: true },
+      }),
+
+      // 4. LEAVE requests
+      prisma.leaveRequest.findMany({
+        where: {
+          firmId: user.firmId,
+          startDate: { lte: endDate },
+          endDate: { gte: startDate },
+          ...(isAdmin ? {} : { userId: user.id }),
+        },
+        select: { id: true, leaveType: true, startDate: true, endDate: true, reason: true },
+      }),
+    ]);
+
+    const taskEvents = taskRows.map((t) => ({
       id: t.id,
       type: 'TASK',
       title: t.title,
@@ -40,16 +75,7 @@ class EventService {
       metadata: {},
     }));
 
-    // COMPLIANCE items (dueDate)
-    const compRows = await prisma.complianceItem.findMany({
-      where: {
-        firmId: user.firmId,
-        dueDate: { gte: startDate, lte: endDate },
-        ...userFilter,
-      },
-      select: { id: true, title: true, dueDate: true, period: true },
-    });
-    const compEvents = compRows.map(c => ({
+    const compEvents = compRows.map((c) => ({
       id: c.id,
       type: 'COMPLIANCE',
       title: c.title,
@@ -58,15 +84,7 @@ class EventService {
       metadata: { period: c.period },
     }));
 
-    // MEETINGS from lead meeting notes
-    const meetingRows = await prisma.leadMeetingNote.findMany({
-      where: {
-        meetingDate: { gte: startDate, lte: endDate },
-        ...(isAdmin ? {} : { loggedBy: user.id }),
-      },
-      select: { id: true, meetingTitle: true, meetingNotes: true, meetingDate: true },
-    });
-    const meetingEvents = meetingRows.map(m => ({
+    const meetingEvents = meetingRows.map((m) => ({
       id: m.id,
       type: 'MEETING',
       title: m.meetingTitle,
@@ -75,17 +93,7 @@ class EventService {
       metadata: { notes: m.meetingNotes },
     }));
 
-    // LEAVE requests
-    const leaveRows = await prisma.leaveRequest.findMany({
-      where: {
-        firmId: user.firmId,
-        startDate: { lte: endDate },
-        endDate: { gte: startDate },
-        ...(isAdmin ? {} : { userId: user.id }),
-      },
-      select: { id: true, leaveType: true, startDate: true, endDate: true, reason: true },
-    });
-    const leaveEvents = leaveRows.map(l => ({
+    const leaveEvents = leaveRows.map((l) => ({
       id: l.id,
       type: 'LEAVE',
       title: `Leave – ${l.leaveType}`,
