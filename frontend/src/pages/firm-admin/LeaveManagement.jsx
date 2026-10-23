@@ -6,20 +6,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { ApplyLeaveModal } from '../../components/leave/ApplyLeaveModal';
 import { ConfigureLeavePolicyModal } from '../../components/leave/ConfigureLeavePolicyModal';
 import { AdjustEmployeeLeaveModal } from '../../components/leave/AdjustEmployeeLeaveModal';
-import {
-  FiCalendar,
-  FiCheckCircle,
-  FiClock,
-  FiPlus,
-  FiUser,
-  FiAlertTriangle,
-  FiXCircle,
-  FiGrid,
-  FiList,
-  FiCheck,
-  FiSettings,
-  FiSliders,
-} from 'react-icons/fi';
+import { Calendar, CircleCheckBig, Clock, List, Plus, Settings, SlidersVertical, TriangleAlert, User } from 'lucide-react';
 import { leaveService } from '../../services/leaveService';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from 'react-router-dom';
@@ -130,7 +117,7 @@ export const LeaveManagement = () => {
       render: (r) => (
         <div>
           <p className="text-xs font-bold text-amber-400 flex items-center gap-1">
-            <FiCalendar /> {new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}
+            <Calendar size="1em" /> {new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}
           </p>
           <p className="text-[10px] text-indigo-400 font-semibold">{r.totalDays} Day(s)</p>
         </div>
@@ -180,14 +167,14 @@ export const LeaveManagement = () => {
                   onClick={() => setIsPolicyModalOpen(true)}
                   className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 shadow-lg flex items-center gap-1.5 transition-all"
                 >
-                  <FiSettings className="w-4 h-4 text-indigo-400" />
+                  <Settings className="w-4 h-4 text-indigo-400"  />
                   <span>Configure Policy</span>
                 </button>
                 <button
                   onClick={() => setIsAdjustModalOpen(true)}
                   className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 shadow-lg flex items-center gap-1.5 transition-all"
                 >
-                  <FiSliders className="w-4 h-4 text-emerald-400" />
+                  <SlidersVertical className="w-4 h-4 text-emerald-400"  />
                   <span>Adjust Employee Quotas</span>
                 </button>
               </>
@@ -197,7 +184,7 @@ export const LeaveManagement = () => {
                 onClick={() => setIsApplyModalOpen(true)}
                 className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
               >
-                <FiPlus className="w-4 h-4" />
+                <Plus className="w-4 h-4"  />
                 <span>Apply for Leave</span>
               </button>
             )}
@@ -247,7 +234,7 @@ export const LeaveManagement = () => {
               ? `${(balance.casualLeave - balance.casualLeaveUsed).toFixed(1)} / ${balance.casualLeave} Days`
               : '12 Days'
           }
-          icon={FiCalendar}
+          icon={Calendar}
           color="indigo"
         />
         <StatsCard
@@ -259,7 +246,7 @@ export const LeaveManagement = () => {
               ? `${(balance.sickLeave - balance.sickLeaveUsed).toFixed(1)} / ${balance.sickLeave} Days`
               : '10 Days'
           }
-          icon={FiClock}
+          icon={Clock}
           color="purple"
         />
         <StatsCard
@@ -271,13 +258,13 @@ export const LeaveManagement = () => {
               ? `${(balance.earnedLeave - balance.earnedLeaveUsed).toFixed(1)} / ${balance.earnedLeave} Days`
               : '15 Days'
           }
-          icon={FiCheckCircle}
+          icon={CircleCheckBig}
           color="emerald"
         />
         <StatsCard
           title={isAdmin ? 'Pending Approval Inbox' : 'My Total Requests'}
           value={isAdmin ? pendingRequests.length : myLeaveData.requests?.length || 0}
-          icon={FiAlertTriangle}
+          icon={TriangleAlert}
           color="amber"
         />
       </div>
@@ -293,7 +280,7 @@ export const LeaveManagement = () => {
                   activeTab === 'pending' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <FiAlertTriangle />
+                <TriangleAlert size="1em" />
                 <span>Pending Inbox ({pendingRequests.length})</span>
               </button>
 
@@ -303,7 +290,7 @@ export const LeaveManagement = () => {
                   activeTab === 'all_firm' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <FiList />
+                <List size="1em" />
                 <span>All Employee Leaves ({allFirmRequests.length})</span>
               </button>
             </>
@@ -315,7 +302,7 @@ export const LeaveManagement = () => {
               activeTab === 'my_leaves' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiUser />
+            <User size="1em" />
             <span>My Personal Leaves</span>
           </button>
 
@@ -325,7 +312,7 @@ export const LeaveManagement = () => {
               activeTab === 'calendar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiCalendar />
+            <Calendar size="1em" />
             <span>Leave Calendar Grid</span>
           </button>
         </div>
@@ -363,7 +350,7 @@ export const LeaveManagement = () => {
           {pendingRequests.length > 0 && (
             <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/60 via-purple-950/40 to-slate-900 border border-amber-500/30 space-y-3 shadow-xl">
               <h3 className="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <FiAlertTriangle /> Pending Employee Applications ({pendingRequests.length})
+                <TriangleAlert size="1em" /> Pending Employee Applications ({pendingRequests.length})
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -434,7 +421,7 @@ export const LeaveManagement = () => {
       {activeTab === 'calendar' && (
         <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 shadow-xl">
           <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-            <FiCalendar className="text-indigo-400" />
+            <Calendar size="1em" className="text-indigo-400"  />
             <span>Firm Approved Leave Calendar Grid</span>
           </h3>
 

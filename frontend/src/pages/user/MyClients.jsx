@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { FiBriefcase, FiMail, FiPhone, FiMapPin, FiFileText } from 'react-icons/fi';
+import { Briefcase, FileText, Mail, MapPin, Phone } from 'lucide-react';
 import { userService } from '../../services/userService';
 import toast from 'react-hot-toast';
 
@@ -51,7 +51,7 @@ export const MyClients = () => {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <FiBriefcase className="w-5 h-5" />
+                  <Briefcase className="w-5 h-5"  />
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-100">{client.clientName}</h4>
@@ -63,19 +63,19 @@ export const MyClients = () => {
 
             <div className="space-y-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <FiMail className="text-slate-500" />
+                <Mail size="1em" className="text-slate-500"  />
                 <span className="truncate">{client.email}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FiPhone className="text-slate-500" />
+                <Phone size="1em" className="text-slate-500"  />
                 <span>{client.phone || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FiFileText className="text-slate-500" />
+                <FileText size="1em" className="text-slate-500"  />
                 <span>GST: {client.gstNumber || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FiMapPin className="text-slate-500" />
+                <MapPin size="1em" className="text-slate-500"  />
                 <span>{client.city || 'N/A'}</span>
               </div>
             </div>

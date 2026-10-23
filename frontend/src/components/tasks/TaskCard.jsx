@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiClock, FiPaperclip, FiUser } from 'react-icons/fi';
+import { Clock, User } from 'lucide-react';
 import { PriorityBadge } from '../common/PriorityBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import { formatDate } from '../../utils/helpers';
@@ -26,14 +26,14 @@ export const TaskCard = ({ task, onClick, onStatusChange }) => {
       <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs text-slate-400">
         {task.dueDate && (
           <div className="flex items-center gap-1">
-            <FiClock className="w-3.5 h-3.5 text-slate-500" />
+            <Clock className="w-3.5 h-3.5 text-slate-500"  />
             <span>{formatDate(task.dueDate)}</span>
           </div>
         )}
 
         {task.client && (
           <div className="flex items-center gap-1 font-medium text-slate-300">
-            <FiUser className="w-3.5 h-3.5 text-indigo-400" />
+            <User className="w-3.5 h-3.5 text-indigo-400"  />
             <span className="truncate max-w-[100px]">{task.client.clientName}</span>
           </div>
         )}

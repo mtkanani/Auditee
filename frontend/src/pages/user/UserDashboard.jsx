@@ -5,7 +5,7 @@ import { KanbanBoard } from '../../components/tasks/KanbanBoard';
 import { NoticeBanner } from '../../components/announcements/NoticeBanner';
 import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
 import { userService } from '../../services/userService';
-import { FiBriefcase, FiCheckSquare, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { Briefcase, CircleCheckBig, Clock, SquareCheckBig } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const UserDashboard = () => {
@@ -54,25 +54,25 @@ export const UserDashboard = () => {
           <StatsCard
             title="Assigned Clients"
             value={data?.metrics?.assignedClients || 8}
-            icon={FiBriefcase}
+            icon={Briefcase}
             color="indigo"
           />
           <StatsCard
             title="Pending Tasks"
             value={data?.metrics?.pendingTasks || 5}
-            icon={FiCheckSquare}
+            icon={SquareCheckBig}
             color="amber"
           />
           <StatsCard
             title="Completed Tasks"
             value={data?.metrics?.completedTasks || 18}
-            icon={FiCheckCircle}
+            icon={CircleCheckBig}
             color="emerald"
           />
           <StatsCard
             title="Today's Time Logged"
             value={data?.metrics?.todayTime || '6h 30m'}
-            icon={FiClock}
+            icon={Clock}
             color="blue"
           />
         </div>

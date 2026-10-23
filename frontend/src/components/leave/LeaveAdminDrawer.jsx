@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer } from '../common/Drawer';
-import { FiCheckCircle, FiXCircle, FiCalendar, FiClock, FiUser, FiZap } from 'react-icons/fi';
+import { Calendar, CircleCheckBig, CircleX } from 'lucide-react';
 import { leaveService } from '../../services/leaveService';
 import toast from 'react-hot-toast';
 
@@ -50,7 +50,7 @@ export const LeaveAdminDrawer = ({ isOpen, onClose, onRefresh }) => {
           <div className="text-center py-8 text-xs text-slate-400">Loading pending leave applications...</div>
         ) : pendingRequests.length === 0 ? (
           <div className="text-center py-12 text-xs text-slate-500 space-y-2">
-            <FiCheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
+            <CircleCheckBig className="w-8 h-8 text-emerald-400 mx-auto"  />
             <p className="font-bold text-slate-300">All caught up!</p>
             <p>There are no pending leave applications to review right now.</p>
           </div>
@@ -81,7 +81,7 @@ export const LeaveAdminDrawer = ({ isOpen, onClose, onRefresh }) => {
               <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 space-y-1">
                 <div className="flex items-center justify-between font-semibold">
                   <span className="text-amber-400 flex items-center gap-1">
-                    <FiCalendar /> {new Date(item.startDate).toLocaleDateString()} to {new Date(item.endDate).toLocaleDateString()}
+                    <Calendar size="1em" /> {new Date(item.startDate).toLocaleDateString()} to {new Date(item.endDate).toLocaleDateString()}
                   </span>
                   <span className="text-indigo-400 font-bold">{item.totalDays} Day(s)</span>
                 </div>
@@ -105,14 +105,14 @@ export const LeaveAdminDrawer = ({ isOpen, onClose, onRefresh }) => {
                   onClick={() => handleReview(item.id, 'APPROVED')}
                   className="py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md"
                 >
-                  <FiCheckCircle /> Approve Leave
+                  <CircleCheckBig size="1em" /> Approve Leave
                 </button>
 
                 <button
                   onClick={() => handleReview(item.id, 'REJECTED')}
                   className="py-1.5 rounded-xl bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/20 font-bold text-xs flex items-center justify-center gap-1"
                 >
-                  <FiXCircle /> Reject Leave
+                  <CircleX size="1em" /> Reject Leave
                 </button>
               </div>
             </div>

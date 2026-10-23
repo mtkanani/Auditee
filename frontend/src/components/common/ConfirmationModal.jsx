@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
-import { FiAlertTriangle } from 'react-icons/fi';
+import { TriangleAlert } from 'lucide-react';
 
 export const ConfirmationModal = ({
   isOpen,
@@ -21,7 +21,7 @@ export const ConfirmationModal = ({
             isDanger ? 'bg-rose-500/10 text-rose-500' : 'bg-amber-500/10 text-amber-500'
           }`}
         >
-          <FiAlertTriangle className="w-6 h-6" />
+          <TriangleAlert className="w-6 h-6"  />
         </div>
 
         <p className="text-sm text-slate-300 mb-6">{message}</p>

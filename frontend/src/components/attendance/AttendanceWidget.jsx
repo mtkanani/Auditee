@@ -1,15 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  FiMapPin,
-  FiClock,
-  FiCheckCircle,
-  FiLogIn,
-  FiLogOut,
-  FiLoader,
-  FiCalendar,
-  FiWifi,
-  FiList,
-} from 'react-icons/fi';
+import { Calendar, Clock, List, Loader, LogIn, LogOut, MapPin, Wifi } from 'lucide-react';
 import { attendanceService } from '../../services/attendanceService';
 import toast from 'react-hot-toast';
 
@@ -159,12 +149,12 @@ export const AttendanceWidget = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/25">
-            <FiClock className="w-4 h-4 text-white" />
+            <Clock className="w-4 h-4 text-white"  />
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-100 leading-none">Attendance</h3>
             <p className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
-              <FiCalendar className="w-2.5 h-2.5" />
+              <Calendar className="w-2.5 h-2.5"  />
               {getTodayDate()}
             </p>
           </div>
@@ -195,7 +185,7 @@ export const AttendanceWidget = () => {
       {/* Action Button */}
       {loading ? (
         <div className="flex items-center justify-center py-2">
-          <FiLoader className="w-5 h-5 text-indigo-400 animate-spin" />
+          <Loader className="w-5 h-5 text-indigo-400 animate-spin"  />
         </div>
       ) : hasOpenEntry ? (
         <button
@@ -204,9 +194,9 @@ export const AttendanceWidget = () => {
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold text-sm shadow-lg shadow-rose-600/25 transition-all active:scale-[0.98] disabled:opacity-60"
         >
           {actionLoading ? (
-            <><FiLoader className="w-4 h-4 animate-spin" /> Getting location...</>
+            <><Loader className="w-4 h-4 animate-spin"  /> Getting location...</>
           ) : (
-            <><FiLogOut className="w-4 h-4" /> Check Out</>
+            <><LogOut className="w-4 h-4"  /> Check Out</>
           )}
         </button>
       ) : (
@@ -216,9 +206,9 @@ export const AttendanceWidget = () => {
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-lg shadow-emerald-600/25 transition-all active:scale-[0.98] disabled:opacity-60"
         >
           {actionLoading ? (
-            <><FiLoader className="w-4 h-4 animate-spin" /> Getting location...</>
+            <><Loader className="w-4 h-4 animate-spin"  /> Getting location...</>
           ) : (
-            <><FiMapPin className="w-3.5 h-3.5" /><FiLogIn className="w-4 h-4" /> Check In with GPS</>
+            <><MapPin className="w-3.5 h-3.5"  /><LogIn className="w-4 h-4"  /> Check In with GPS</>
           )}
         </button>
       )}
@@ -227,7 +217,7 @@ export const AttendanceWidget = () => {
       {entries.length > 0 && (
         <div className="border-t border-slate-800 pt-3">
           <div className="flex items-center gap-1.5 mb-2.5">
-            <FiList className="w-3.5 h-3.5 text-slate-500" />
+            <List className="w-3.5 h-3.5 text-slate-500"  />
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
               Today's Punches ({entries.length})
             </span>
@@ -260,7 +250,7 @@ export const AttendanceWidget = () => {
                       </div>
                       {entry.checkInLocation && (
                         <p className="text-[9px] text-slate-600 mt-0.5 truncate max-w-[140px]">
-                          <FiMapPin className="inline w-2 h-2 mr-0.5" />
+                          <MapPin className="inline w-2 h-2 mr-0.5"  />
                           {entry.checkInLocation}
                         </p>
                       )}
@@ -289,7 +279,7 @@ export const AttendanceWidget = () => {
 
       {/* GPS footer */}
       <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400">
-        <FiWifi className="w-2.5 h-2.5 text-indigo-400" />
+        <Wifi className="w-2.5 h-2.5 text-indigo-400"  />
         <span>
           {status?.geofence?.geofenceEnabled
             ? `📍 Office GPS Geofence Active (${status.geofence.geofenceRadiusMeters}m radius)`

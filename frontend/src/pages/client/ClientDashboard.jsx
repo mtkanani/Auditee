@@ -6,7 +6,7 @@ import { PriorityBadge } from '../../components/common/PriorityBadge';
 import { Avatar } from '../../components/common/Avatar';
 import { clientService } from '../../services/clientService';
 import { NoticeBanner } from '../../components/announcements/NoticeBanner';
-import { FiFileText, FiClock, FiCheckCircle, FiUser, FiPlus, FiArrowRight } from 'react-icons/fi';
+import { CircleCheckBig, Clock, FileText, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -46,7 +46,7 @@ export const ClientDashboard = () => {
             onClick={() => navigate('/client/work-requests')}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Create Work Request</span>
           </button>
         }
@@ -57,10 +57,10 @@ export const ClientDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Requests" value={data?.metrics?.totalRequests || 12} icon={FiFileText} color="indigo" />
-        <StatsCard title="Pending Requests" value={data?.metrics?.pendingRequests || 3} icon={FiClock} color="amber" />
-        <StatsCard title="Completed Items" value={data?.metrics?.completedRequests || 9} icon={FiCheckCircle} color="emerald" />
-        <StatsCard title="Active Services" value="Tax & Audit" icon={FiCheckCircle} color="blue" />
+        <StatsCard title="Total Requests" value={data?.metrics?.totalRequests || 12} icon={FileText} color="indigo" />
+        <StatsCard title="Pending Requests" value={data?.metrics?.pendingRequests || 3} icon={Clock} color="amber" />
+        <StatsCard title="Completed Items" value={data?.metrics?.completedRequests || 9} icon={CircleCheckBig} color="emerald" />
+        <StatsCard title="Active Services" value="Tax & Audit" icon={CircleCheckBig} color="blue" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

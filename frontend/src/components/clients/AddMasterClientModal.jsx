@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiCheckCircle, FiShield, FiLock, FiUnlock, FiAlertCircle, FiCheck, FiRefreshCw } from 'react-icons/fi';
+import { Check, CircleAlert, CircleCheckBig, Lock, LockOpen, RefreshCw, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { firmAdminService } from '../../services/firmAdminService';
 
@@ -267,7 +267,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                 isVerified ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'
               }`}
             >
-              {isVerified ? <FiUnlock className="w-5 h-5" /> : <FiLock className="w-5 h-5" />}
+              {isVerified ? <LockOpen className="w-5 h-5"  /> : <Lock className="w-5 h-5"  />}
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider">
@@ -354,12 +354,12 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                   >
                     {isVerifying ? (
                       <>
-                        <FiRefreshCw className="w-4 h-4 animate-spin" />
+                        <RefreshCw className="w-4 h-4 animate-spin"  />
                         <span>Verifying...</span>
                       </>
                     ) : (
                       <>
-                        <FiShield className="w-4 h-4" />
+                        <Shield className="w-4 h-4"  />
                         <span>Verify GST</span>
                       </>
                     )}
@@ -367,7 +367,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
                 {fieldErrors.gstNumberInput && (
                   <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1.5 animate-fadeIn">
-                    <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <CircleAlert className="w-3.5 h-3.5 text-rose-400 shrink-0"  />
                     <span>{fieldErrors.gstNumberInput}</span>
                   </p>
                 )}
@@ -378,7 +378,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                 <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-2.5 animate-fadeIn">
                   <div className="flex items-center justify-between pb-2 border-b border-emerald-900/50">
                     <span className="font-extrabold text-emerald-400 flex items-center gap-1.5 text-xs">
-                      <FiCheckCircle className="w-4 h-4" />
+                      <CircleCheckBig className="w-4 h-4"  />
                       GSTIN VERIFIED & ACTIVE ({verificationResult.data.gstNumber})
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -419,7 +419,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
             /* PAN Verification Block for Exempt Entities */
             <div className="space-y-3">
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2">
-                <FiAlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <CircleAlert className="w-4 h-4 shrink-0 mt-0.5"  />
                 <span>
                   For small businesses or unregistered clients without GSTIN, valid <strong>PAN Verification</strong> is required to proceed.
                 </span>
@@ -449,12 +449,12 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                   >
                     {isVerifying ? (
                       <>
-                        <FiRefreshCw className="w-4 h-4 animate-spin" />
+                        <RefreshCw className="w-4 h-4 animate-spin"  />
                         <span>Verifying...</span>
                       </>
                     ) : (
                       <>
-                        <FiShield className="w-4 h-4" />
+                        <Shield className="w-4 h-4"  />
                         <span>Verify PAN</span>
                       </>
                     )}
@@ -467,7 +467,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                 <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-xs space-y-2 animate-fadeIn">
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
-                      <FiCheckCircle className="w-4 h-4" />
+                      <CircleCheckBig className="w-4 h-4"  />
                       PAN Card Verified Active
                     </span>
                     <span className="text-[10px] font-mono text-slate-300 font-bold">
@@ -495,7 +495,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
           {!isVerified && (
             <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px] z-20 rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-slate-800">
               <div className="p-3 rounded-full bg-slate-900 border border-slate-700 text-amber-400 mb-3 shadow-xl">
-                <FiLock className="w-6 h-6" />
+                <Lock className="w-6 h-6"  />
               </div>
               <h4 className="text-sm font-bold text-slate-100 mb-1">Sections Locked</h4>
               <p className="text-xs text-slate-400 max-w-sm">
@@ -535,7 +535,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                   />
                   {fieldErrors.clientName && (
                     <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
-                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <CircleAlert className="w-3.5 h-3.5 text-rose-400 shrink-0"  />
                       <span>{fieldErrors.clientName}</span>
                     </p>
                   )}
@@ -607,7 +607,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                   />
                   {fieldErrors.email && (
                     <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
-                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <CircleAlert className="w-3.5 h-3.5 text-rose-400 shrink-0"  />
                       <span>{fieldErrors.email}</span>
                     </p>
                   )}
@@ -630,7 +630,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                   />
                   {fieldErrors.password && (
                     <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
-                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <CircleAlert className="w-3.5 h-3.5 text-rose-400 shrink-0"  />
                       <span>{fieldErrors.password}</span>
                     </p>
                   )}
@@ -695,7 +695,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
                   />
                   {(fieldErrors.contactPersonPhone || fieldErrors.phone) && (
                     <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1 animate-fadeIn">
-                      <FiAlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <CircleAlert className="w-3.5 h-3.5 text-rose-400 shrink-0"  />
                       <span>{fieldErrors.contactPersonPhone || fieldErrors.phone}</span>
                     </p>
                   )}
@@ -763,12 +763,12 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
             >
               {isSubmitting ? (
                 <>
-                  <FiRefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin"  />
                   <span>Creating Account...</span>
                 </>
               ) : (
                 <>
-                  <FiCheck className="w-4 h-4" />
+                  <Check className="w-4 h-4"  />
                   <span>Create Master Client Account</span>
                 </>
               )}

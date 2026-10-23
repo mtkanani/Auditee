@@ -1,17 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FiUserCheck,
-  FiPlus,
-  FiTrash2,
-  FiUser,
-  FiBriefcase,
-  FiCheckCircle,
-  FiCheckSquare,
-  FiX,
-  FiClock,
-  FiLayers,
-} from 'react-icons/fi';
+import { Briefcase, CircleCheckBig, Layers, Plus, SquareCheckBig, Trash2, User, UserCheck, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const DualPanelAssignment = ({
@@ -127,7 +116,7 @@ export const DualPanelAssignment = ({
         <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col h-[520px]">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <h3 className="font-bold text-slate-100 flex items-center gap-2">
-              <FiBriefcase className="text-indigo-400" />
+              <Briefcase size="1em" className="text-indigo-400"  />
               <span>Select Client (Optional)</span>
             </h3>
             <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">
@@ -167,7 +156,7 @@ export const DualPanelAssignment = ({
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                       {assignedCount} Users
                     </span>
-                    {isSelected && <FiCheckCircle className="w-4 h-4 text-indigo-400" />}
+                    {isSelected && <CircleCheckBig className="w-4 h-4 text-indigo-400"  />}
                   </div>
                 </motion.div>
               );
@@ -179,7 +168,7 @@ export const DualPanelAssignment = ({
         <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col h-[520px]">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <h3 className="font-bold text-slate-100 flex items-center gap-2">
-              <FiUser className="text-purple-400" />
+              <User size="1em" className="text-purple-400"  />
               <span>Select Employee User (Required)</span>
             </h3>
             <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">
@@ -216,7 +205,7 @@ export const DualPanelAssignment = ({
                     </h4>
                     <p className="text-xs text-slate-400">{user.designation || user.email}</p>
                   </div>
-                  {isSelected && <FiCheckCircle className="w-4 h-4 text-purple-400" />}
+                  {isSelected && <CircleCheckBig className="w-4 h-4 text-purple-400"  />}
                 </motion.div>
               );
             })}
@@ -226,7 +215,7 @@ export const DualPanelAssignment = ({
         {/* Action Column (1 Col) */}
         <div className="lg:col-span-1 p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-center items-center text-center space-y-4">
           <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <FiUserCheck className="w-8 h-8" />
+            <UserCheck className="w-8 h-8"  />
           </div>
 
           <div>
@@ -241,7 +230,7 @@ export const DualPanelAssignment = ({
             className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-xs shadow-lg shadow-indigo-500/20 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
             title="Requires both 1 Client and 1 Employee selected"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Pair Client</span>
           </button>
 
@@ -252,7 +241,7 @@ export const DualPanelAssignment = ({
             className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 font-semibold text-xs border border-purple-500/30 hover:border-purple-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5"
             title="Assign a direct task to the selected employee (Client optional)"
           >
-            <FiCheckSquare className="w-4 h-4 text-purple-400" />
+            <SquareCheckBig className="w-4 h-4 text-purple-400"  />
             <span>Direct Task</span>
           </button>
         </div>
@@ -270,7 +259,7 @@ export const DualPanelAssignment = ({
                   : 'bg-slate-950 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiLayers />
+              <Layers size="1em" />
               <span>Client-User Pairs ({assignments.length})</span>
             </button>
 
@@ -282,7 +271,7 @@ export const DualPanelAssignment = ({
                   : 'bg-slate-950 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiCheckSquare />
+              <SquareCheckBig size="1em" />
               <span>Assigned Firm Tasks ({tasks.length})</span>
             </button>
           </div>
@@ -318,7 +307,7 @@ export const DualPanelAssignment = ({
                         className="p-1.5 rounded-lg text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition-colors"
                         title="Remove Assignment"
                       >
-                        <FiTrash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4"  />
                       </button>
                     </td>
                   </tr>
@@ -424,14 +413,14 @@ export const DualPanelAssignment = ({
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                  <FiCheckSquare className="text-purple-400" />
+                  <SquareCheckBig size="1em" className="text-purple-400"  />
                   <span>Assign Direct Task</span>
                 </h3>
                 <button
                   onClick={() => setIsTaskModalOpen(false)}
                   className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <X className="w-5 h-5"  />
                 </button>
               </div>
 

@@ -3,18 +3,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { CreateNoticeModal } from '../../components/announcements/CreateNoticeModal';
 import { announcementService } from '../../services/announcementService';
 import { motion } from 'framer-motion';
-import {
-  FiRadio,
-  FiPlus,
-  FiTrash2,
-  FiCheckCircle,
-  FiClock,
-  FiUsers,
-  FiAlertTriangle,
-  FiInfo,
-  FiChevronDown,
-  FiChevronUp,
-} from 'react-icons/fi';
+import { ChevronDown, ChevronUp, CircleCheckBig, Clock, Plus, Radio, Trash2, TriangleAlert, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const FirmAnnouncements = () => {
@@ -73,7 +62,7 @@ export const FirmAnnouncements = () => {
           onClick={() => setIsModalOpen(true)}
           className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-2 shrink-0"
         >
-          <FiPlus className="w-4 h-4" />
+          <Plus className="w-4 h-4"  />
           <span>New Broadcast Notice</span>
         </button>
       </div>
@@ -84,7 +73,7 @@ export const FirmAnnouncements = () => {
           <div className="p-8 text-center text-sm text-slate-500">Loading firm notices...</div>
         ) : notices.length === 0 ? (
           <div className="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500 space-y-2">
-            <FiRadio className="w-10 h-10 mx-auto text-slate-600" />
+            <Radio className="w-10 h-10 mx-auto text-slate-600"  />
             <p className="font-semibold text-slate-300">No active notice broadcasts yet.</p>
             <p className="text-xs text-slate-500">
               Click "New Broadcast Notice" above to publish a firm-wide notice to all staff members.
@@ -116,9 +105,9 @@ export const FirmAnnouncements = () => {
                       }`}
                     >
                       {notice.priority === 'URGENT' ? (
-                        <FiAlertTriangle className="w-5 h-5" />
+                        <TriangleAlert className="w-5 h-5"  />
                       ) : (
-                        <FiRadio className="w-5 h-5" />
+                        <Radio className="w-5 h-5"  />
                       )}
                     </div>
 
@@ -145,7 +134,7 @@ export const FirmAnnouncements = () => {
 
                   <div className="flex items-center gap-3 self-end sm:self-center text-xs text-slate-400">
                     <div className="flex items-center gap-1.5">
-                      <FiClock className="w-3.5 h-3.5" />
+                      <Clock className="w-3.5 h-3.5"  />
                       <span>{new Date(notice.createdAt).toLocaleDateString()}</span>
                     </div>
                     <button
@@ -153,7 +142,7 @@ export const FirmAnnouncements = () => {
                       className="p-2 rounded-xl text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition-colors"
                       title="Delete Notice"
                     >
-                      <FiTrash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4"  />
                     </button>
                   </div>
                 </div>
@@ -167,7 +156,7 @@ export const FirmAnnouncements = () => {
                 <div className="pt-2 border-t border-slate-800/60 space-y-2">
                   <div className="flex items-center justify-between text-xs font-semibold">
                     <span className="text-slate-400 flex items-center gap-1.5">
-                      <FiUsers className="text-indigo-400" />
+                      <Users size="1em" className="text-indigo-400"  />
                       <span>Staff Acknowledgment Status</span>
                     </span>
                     <span className="text-indigo-300">
@@ -189,7 +178,7 @@ export const FirmAnnouncements = () => {
                     className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
                   >
                     <span>{isExpanded ? 'Hide Staff Receipts' : 'View Staff Receipts List'}</span>
-                    {isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                    {isExpanded ? <ChevronUp size="1em" /> : <ChevronDown size="1em" />}
                   </button>
 
                   {/* Staff List Breakdown */}
@@ -214,7 +203,7 @@ export const FirmAnnouncements = () => {
                                 <p className="text-[10px] text-slate-400">{r.user?.email}</p>
                               </div>
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                                <FiCheckCircle /> Acknowledged
+                                <CircleCheckBig size="1em" /> Acknowledged
                               </span>
                             </div>
                           ))}

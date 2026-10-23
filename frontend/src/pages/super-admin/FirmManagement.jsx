@@ -6,7 +6,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
-import { FiPlus, FiEdit2, FiTrash2, FiKey, FiCheckCircle } from 'react-icons/fi';
+import { Key, Pen, Plus, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { superAdminService } from '../../services/superAdminService';
@@ -154,7 +154,7 @@ export const FirmManagement = () => {
             className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-colors"
             title="Edit Firm"
           >
-            <FiEdit2 className="w-4 h-4" />
+            <Pen className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -164,7 +164,7 @@ export const FirmManagement = () => {
             className="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/10 transition-colors"
             title="Reset Admin Password"
           >
-            <FiKey className="w-4 h-4" />
+            <Key className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -174,7 +174,7 @@ export const FirmManagement = () => {
             className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
             title="Delete Firm"
           >
-            <FiTrash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4"  />
           </button>
         </div>
       ),
@@ -194,7 +194,7 @@ export const FirmManagement = () => {
             }}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Create New Firm</span>
           </button>
         }

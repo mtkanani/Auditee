@@ -2,7 +2,7 @@ import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { DataTable } from '../../components/common/DataTable';
-import { FiClock, FiCalendar, FiCheckCircle } from 'react-icons/fi';
+import { Calendar, CircleCheckBig, Clock } from 'lucide-react';
 
 export const TimeEntries = () => {
   const timeLogs = [
@@ -27,9 +27,9 @@ export const TimeEntries = () => {
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <StatsCard title="Hours Logged Today" value="6.5 hrs" icon={FiClock} color="indigo" />
-        <StatsCard title="Hours Logged This Week" value="32.0 hrs" icon={FiCalendar} color="emerald" />
-        <StatsCard title="Total Billable Entries" value="48" icon={FiCheckCircle} color="blue" />
+        <StatsCard title="Hours Logged Today" value="6.5 hrs" icon={Clock} color="indigo" />
+        <StatsCard title="Hours Logged This Week" value="32.0 hrs" icon={Calendar} color="emerald" />
+        <StatsCard title="Total Billable Entries" value="48" icon={CircleCheckBig} color="blue" />
       </div>
 
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 shadow-xl">

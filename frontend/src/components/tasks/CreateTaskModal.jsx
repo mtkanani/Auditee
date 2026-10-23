@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiPlus, FiTrash2, FiUsers, FiUser, FiGlobe } from 'react-icons/fi';
+import { Globe, Trash2, User, Users } from 'lucide-react';
 import { firmAdminService } from '../../services/firmAdminService';
 import { taskService } from '../../services/taskService';
 import toast from 'react-hot-toast';
@@ -158,7 +158,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiUser className="w-4 h-4" />
+              <User className="w-4 h-4"  />
               <span>Single Auditor</span>
             </button>
 
@@ -171,7 +171,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiUsers className="w-4 h-4" />
+              <Users className="w-4 h-4"  />
               <span>Multiple / Team</span>
             </button>
 
@@ -184,7 +184,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
                   : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiGlobe className="w-4 h-4" />
+              <Globe className="w-4 h-4"  />
               <span>ALL Employees</span>
             </button>
           </div>
@@ -282,7 +282,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
               <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-slate-900 text-xs text-slate-200">
                 <span>{i + 1}. {st}</span>
                 <button type="button" onClick={() => handleRemoveSubtask(i)} className="text-rose-400 hover:text-rose-300">
-                  <FiTrash2 />
+                  <Trash2 size="1em" />
                 </button>
               </div>
             ))}

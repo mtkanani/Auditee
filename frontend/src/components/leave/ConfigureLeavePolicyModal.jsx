@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiSettings, FiCalendar, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { Calendar, Clock, Settings } from 'lucide-react';
 import { leaveService } from '../../services/leaveService';
 import toast from 'react-hot-toast';
 
@@ -128,7 +128,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 <p className="font-bold text-slate-100">Per Year (Annual)</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">Full yearly quota allocated upfront</p>
               </div>
-              <FiCalendar className="w-5 h-5 text-indigo-400" />
+              <Calendar className="w-5 h-5 text-indigo-400"  />
             </button>
 
             <button
@@ -144,7 +144,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
                 <p className="font-bold text-slate-100">Per Month (Accrual)</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">Accrued monthly limit breakdown</p>
               </div>
-              <FiClock className="w-5 h-5 text-purple-400" />
+              <Clock className="w-5 h-5 text-purple-400"  />
             </button>
           </div>
         </div>
@@ -248,7 +248,7 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
           disabled={isSubmitting}
           className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
         >
-          <FiSettings className="w-4 h-4" />
+          <Settings className="w-4 h-4"  />
           <span>{isSubmitting ? 'Updating Policy...' : 'Save Firm Leave Policy'}</span>
         </button>
       </form>

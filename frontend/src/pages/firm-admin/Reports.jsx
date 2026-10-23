@@ -17,33 +17,7 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import {
-  FiDownload,
-  FiPrinter,
-  FiFilter,
-  FiRefreshCw,
-  FiCalendar,
-  FiUser,
-  FiCheckCircle,
-  FiClock,
-  FiTrendingUp,
-  FiDollarSign,
-  FiAlertTriangle,
-  FiPieChart,
-  FiSliders,
-  FiSearch,
-  FiFileText,
-  FiBriefcase,
-  FiUsers,
-  FiChevronRight,
-  FiChevronLeft,
-  FiArrowUpRight,
-  FiX,
-  FiCheck,
-  FiLayers,
-  FiGrid,
-  FiActivity,
-} from 'react-icons/fi';
+import { Activity, Briefcase, Check, ChevronLeft, ChevronRight, CircleCheckBig, Clock, DollarSign, Download, FileText, Layers, Printer, RefreshCw, Search, SlidersVertical, TrendingUp, TriangleAlert, User, Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getSummaryOverview, getReport, generateCustomReport, downloadReportCSV } from '../../services/reportService';
 import axiosInstance from '../../services/axiosInstance';
@@ -249,26 +223,26 @@ export const Reports = () => {
     {
       categoryName: 'Executive & Overview',
       tabs: [
-        { id: 'overview', label: 'Executive Overview', icon: FiActivity, color: 'text-indigo-400' },
-        { id: 'custom', label: 'Custom Builder', icon: FiSliders, color: 'text-indigo-400' },
+        { id: 'overview', label: 'Executive Overview', icon: Activity, color: 'text-indigo-400' },
+        { id: 'custom', label: 'Custom Builder', icon: SlidersVertical, color: 'text-indigo-400' },
       ],
     },
     {
       categoryName: 'Operations & Workload',
       tabs: [
-        { id: 'pending-tasks', label: 'Pending Tasks', icon: FiClock, color: 'text-amber-400' },
-        { id: 'completed-tasks', label: 'Completed Tasks', icon: FiCheckCircle, color: 'text-emerald-400' },
-        { id: 'employee-performance', label: 'Staff Performance', icon: FiUser, color: 'text-purple-400' },
-        { id: 'compliance-report', label: 'Compliance Audit', icon: FiAlertTriangle, color: 'text-amber-400' },
+        { id: 'pending-tasks', label: 'Pending Tasks', icon: Clock, color: 'text-amber-400' },
+        { id: 'completed-tasks', label: 'Completed Tasks', icon: CircleCheckBig, color: 'text-emerald-400' },
+        { id: 'employee-performance', label: 'Staff Performance', icon: User, color: 'text-purple-400' },
+        { id: 'compliance-report', label: 'Compliance Audit', icon: TriangleAlert, color: 'text-amber-400' },
       ],
     },
     {
       categoryName: 'Finance & Clients',
       tabs: [
-        { id: 'client-report', label: 'Client Directory', icon: FiBriefcase, color: 'text-blue-400' },
-        { id: 'billing-report', label: 'Billing Invoices', icon: FiFileText, color: 'text-cyan-400' },
-        { id: 'revenue-report', label: 'Revenue Trends', icon: FiTrendingUp, color: 'text-emerald-400' },
-        { id: 'outstanding-payments', label: 'Outstanding Dues', icon: FiDollarSign, color: 'text-rose-400' },
+        { id: 'client-report', label: 'Client Directory', icon: Briefcase, color: 'text-blue-400' },
+        { id: 'billing-report', label: 'Billing Invoices', icon: FileText, color: 'text-cyan-400' },
+        { id: 'revenue-report', label: 'Revenue Trends', icon: TrendingUp, color: 'text-emerald-400' },
+        { id: 'outstanding-payments', label: 'Outstanding Dues', icon: DollarSign, color: 'text-rose-400' },
       ],
     },
   ];
@@ -292,7 +266,7 @@ export const Reports = () => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[11px] font-bold uppercase tracking-widest mb-3">
-              <FiActivity className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5"  />
               <span>Enterprise Intelligence Engine</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
@@ -308,7 +282,7 @@ export const Reports = () => {
               onClick={handlePrint}
               className="py-2.5 px-4 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-200 text-xs font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center gap-2 shadow-md hover:shadow-indigo-500/10"
             >
-              <FiPrinter className="w-4 h-4 text-indigo-400" />
+              <Printer className="w-4 h-4 text-indigo-400"  />
               <span>Print / PDF</span>
             </button>
 
@@ -316,7 +290,7 @@ export const Reports = () => {
               onClick={handleExportCSV}
               className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-xl shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2.5"
             >
-              <FiDownload className="w-4 h-4" />
+              <Download className="w-4 h-4"  />
               <span>Download CSV</span>
             </button>
           </div>
@@ -327,12 +301,12 @@ export const Reports = () => {
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { label: 'Pending Tasks', val: summary.totalPendingTasks, icon: FiClock, color: 'from-amber-500/20 to-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-400' },
-            { label: 'Completed', val: summary.totalCompletedTasks, icon: FiCheckCircle, color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
-            { label: 'Active Clients', val: summary.totalClients, icon: FiBriefcase, color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
-            { label: 'Firm Staff', val: summary.totalEmployees, icon: FiUsers, color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
-            { label: 'Total Billed', val: `₹${(summary.totalBilled || 0).toLocaleString()}`, icon: FiTrendingUp, color: 'from-cyan-500/20 to-cyan-500/5', border: 'border-cyan-500/30', text: 'text-cyan-400' },
-            { label: 'Outstanding', val: `₹${(summary.outstandingAmount || 0).toLocaleString()}`, icon: FiDollarSign, color: 'from-rose-500/20 to-rose-500/5', border: 'border-rose-500/30', text: 'text-rose-400' },
+            { label: 'Pending Tasks', val: summary.totalPendingTasks, icon: Clock, color: 'from-amber-500/20 to-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-400' },
+            { label: 'Completed', val: summary.totalCompletedTasks, icon: CircleCheckBig, color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
+            { label: 'Active Clients', val: summary.totalClients, icon: Briefcase, color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
+            { label: 'Firm Staff', val: summary.totalEmployees, icon: Users, color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
+            { label: 'Total Billed', val: `₹${(summary.totalBilled || 0).toLocaleString()}`, icon: TrendingUp, color: 'from-cyan-500/20 to-cyan-500/5', border: 'border-cyan-500/30', text: 'text-cyan-400' },
+            { label: 'Outstanding', val: `₹${(summary.outstandingAmount || 0).toLocaleString()}`, icon: DollarSign, color: 'from-rose-500/20 to-rose-500/5', border: 'border-rose-500/30', text: 'text-rose-400' },
           ].map((kpi, idx) => {
             const Icon = kpi.icon;
             return (
@@ -382,7 +356,7 @@ export const Reports = () => {
               className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all z-10 mr-1 shadow-md"
               title="Scroll left"
             >
-              <FiChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4"  />
             </button>
 
             {/* Scrollable Tabs Track */}
@@ -424,7 +398,7 @@ export const Reports = () => {
               className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all z-10 ml-1 shadow-md"
               title="Scroll right"
             >
-              <FiChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4"  />
             </button>
           </div>
         </div>
@@ -488,7 +462,7 @@ export const Reports = () => {
 
             {/* Search Input */}
             <div className="relative min-w-[200px]">
-              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-3.5 h-3.5" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-3.5 h-3.5"  />
               <input
                 type="text"
                 placeholder="Search..."
@@ -502,7 +476,7 @@ export const Reports = () => {
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 >
-                  <FiX className="w-3.5 h-3.5" />
+                  <X className="w-3.5 h-3.5"  />
                 </button>
               )}
             </div>
@@ -513,7 +487,7 @@ export const Reports = () => {
               onClick={resetFilters}
               className="py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5"
             >
-              <FiX className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5"  />
               <span>Reset</span>
             </button>
 
@@ -521,7 +495,7 @@ export const Reports = () => {
               onClick={fetchActiveReport}
               className="py-2 px-4 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 transition-all flex items-center gap-1.5"
             >
-              <FiRefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3.5 h-3.5"  />
               <span>Apply Filters</span>
             </button>
           </div>
@@ -533,7 +507,7 @@ export const Reports = () => {
         <div className="p-16 text-center text-slate-400 font-medium text-xs flex flex-col items-center justify-center gap-4 bg-slate-900/60 rounded-3xl border border-slate-800/80 backdrop-blur-md">
           <div className="relative">
             <div className="w-12 h-12 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-            <FiActivity className="w-5 h-5 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <Activity className="w-5 h-5 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"  />
           </div>
           <p className="text-slate-300 font-semibold text-sm">Aggregating live report metrics & dataset...</p>
         </div>
@@ -594,7 +568,7 @@ export const Reports = () => {
               <div className="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
                 <div className="flex items-center gap-3">
                   <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                    <FiLayers className="w-4 h-4" />
+                    <Layers className="w-4 h-4"  />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">
@@ -635,7 +609,7 @@ export const Reports = () => {
                       <tr>
                         <td colSpan={12} className="py-16 text-center text-slate-500">
                           <div className="flex flex-col items-center gap-2">
-                            <FiSearch className="w-8 h-8 text-slate-600" />
+                            <Search className="w-8 h-8 text-slate-600"  />
                             <p className="text-slate-400 font-semibold">No records found</p>
                             <p className="text-slate-600 text-xs">Try adjusting your filters or date range</p>
                           </div>
@@ -706,7 +680,7 @@ export const Reports = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-black text-white flex items-center gap-2">
-                      <FiSliders className="w-5 h-5 text-indigo-400" />
+                      <SlidersVertical className="w-5 h-5 text-indigo-400"  />
                       <span>Custom Report Builder</span>
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">Configure data entities, select custom column attributes, and generate exported datasets.</p>
@@ -718,10 +692,10 @@ export const Reports = () => {
                   <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Step 1: Choose Primary Data Entity</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                      { id: 'tasks', label: 'Tasks & Workflow', desc: 'Audit tasks, assignees & deadlines', icon: FiClock, color: 'text-amber-400' },
-                      { id: 'clients', label: 'Client Directory', desc: 'Client profiles & status', icon: FiBriefcase, color: 'text-blue-400' },
-                      { id: 'invoices', label: 'Invoices & Billing', desc: 'Financial invoices & balances', icon: FiFileText, color: 'text-cyan-400' },
-                      { id: 'employees', label: 'Staff & Staffing', desc: 'Employee productivity & roles', icon: FiUsers, color: 'text-purple-400' },
+                      { id: 'tasks', label: 'Tasks & Workflow', desc: 'Audit tasks, assignees & deadlines', icon: Clock, color: 'text-amber-400' },
+                      { id: 'clients', label: 'Client Directory', desc: 'Client profiles & status', icon: Briefcase, color: 'text-blue-400' },
+                      { id: 'invoices', label: 'Invoices & Billing', desc: 'Financial invoices & balances', icon: FileText, color: 'text-cyan-400' },
+                      { id: 'employees', label: 'Staff & Staffing', desc: 'Employee productivity & roles', icon: Users, color: 'text-purple-400' },
                     ].map((ent) => {
                       const Icon = ent.icon;
                       const isSelected = customEntity === ent.id;
@@ -742,7 +716,7 @@ export const Reports = () => {
                             <div className={`p-2 rounded-xl bg-slate-900 ${ent.color}`}>
                               <Icon className="w-4 h-4" />
                             </div>
-                            {isSelected && <FiCheck className="w-4 h-4 text-indigo-400" />}
+                            {isSelected && <Check className="w-4 h-4 text-indigo-400"  />}
                           </div>
                           <p className="text-xs font-bold text-white">{ent.label}</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">{ent.desc}</p>
@@ -794,7 +768,7 @@ export const Reports = () => {
                               : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
                           }`}
                         >
-                          {isChecked ? <FiCheck className="w-3.5 h-3.5 text-indigo-400" /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-700" />}
+                          {isChecked ? <Check className="w-3.5 h-3.5 text-indigo-400"  /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-700" />}
                           <span>{f.label}</span>
                         </button>
                       );
@@ -809,9 +783,9 @@ export const Reports = () => {
                     className="py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold shadow-xl shadow-indigo-600/25 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 transition-all flex items-center gap-2"
                   >
                     {customLoading ? (
-                      <FiRefreshCw className="w-4 h-4 animate-spin" />
+                      <RefreshCw className="w-4 h-4 animate-spin"  />
                     ) : (
-                      <FiCheckCircle className="w-4 h-4" />
+                      <CircleCheckBig className="w-4 h-4"  />
                     )}
                     <span>Generate Custom Dataset</span>
                   </button>
@@ -830,7 +804,7 @@ export const Reports = () => {
                       onClick={handleExportCSV}
                       className="py-2 px-3 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 flex items-center gap-2"
                     >
-                      <FiDownload className="w-4 h-4" />
+                      <Download className="w-4 h-4"  />
                       <span>Export Custom CSV</span>
                     </button>
                   </div>

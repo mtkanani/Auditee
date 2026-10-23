@@ -5,19 +5,7 @@ import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { LeadDetailModal } from '../../components/leads/LeadDetailModal';
-import {
-  FiUsers,
-  FiMessageSquare,
-  FiFileText,
-  FiCheckCircle,
-  FiPlus,
-  FiGrid,
-  FiList,
-  FiPhone,
-  FiZap,
-  FiDollarSign,
-  FiArrowRight,
-} from 'react-icons/fi';
+import { ArrowRight, CircleCheckBig, FileText, Grid3x3, List, MessageSquare, Plus, Users } from 'lucide-react';
 import { leadService } from '../../services/leadService';
 import toast from 'react-hot-toast';
 
@@ -187,7 +175,7 @@ export const LeadManagement = () => {
             onClick={() => setIsAddModalOpen(true)}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Add New Lead</span>
           </button>
         }
@@ -195,13 +183,13 @@ export const LeadManagement = () => {
 
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Active Leads" value={totalLeads} icon={FiUsers} color="indigo" />
-        <StatsCard title="Leads in Discussion" value={inDiscussionCount} icon={FiMessageSquare} color="purple" />
-        <StatsCard title="Proposals Sent" value={proposalSentCount} icon={FiFileText} color="amber" />
+        <StatsCard title="Total Active Leads" value={totalLeads} icon={Users} color="indigo" />
+        <StatsCard title="Leads in Discussion" value={inDiscussionCount} icon={MessageSquare} color="purple" />
+        <StatsCard title="Proposals Sent" value={proposalSentCount} icon={FileText} color="amber" />
         <StatsCard
           title="Converted Won Value"
           value={`₹${wonValueTotal.toLocaleString('en-IN')}`}
-          icon={FiCheckCircle}
+          icon={CircleCheckBig}
           color="emerald"
         />
       </div>
@@ -215,7 +203,7 @@ export const LeadManagement = () => {
               viewMode === 'kanban' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiGrid />
+            <Grid3x3 size="1em" />
             <span>Visual Pipeline Board</span>
           </button>
           <button
@@ -224,7 +212,7 @@ export const LeadManagement = () => {
               viewMode === 'table' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiList />
+            <List size="1em" />
             <span>Lead Master Table</span>
           </button>
         </div>
@@ -294,7 +282,7 @@ export const LeadManagement = () => {
                           <span className="text-emerald-400 font-bold">Converted</span>
                         ) : (
                           <span className="text-slate-500 group-hover:text-indigo-400 flex items-center gap-0.5">
-                            Manage <FiArrowRight />
+                            Manage <ArrowRight size="1em" />
                           </span>
                         )}
                       </div>

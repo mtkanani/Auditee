@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal } from '../common/Modal';
-import { FiZap, FiCheck, FiLayers } from 'react-icons/fi';
+import { Check, Zap } from 'lucide-react';
 
 const PRESET_TEMPLATES = [
   {
@@ -86,7 +86,7 @@ export const TaskTemplatesModal = ({ isOpen, onClose, onSelectTemplate }) => {
                   }}
                   className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-1.5"
                 >
-                  <FiZap />
+                  <Zap size="1em" />
                   <span>Use Template</span>
                 </button>
               </div>
@@ -99,7 +99,7 @@ export const TaskTemplatesModal = ({ isOpen, onClose, onSelectTemplate }) => {
                 <span className="text-[10px] font-bold text-slate-500 uppercase">Preset Subtasks ({tmpl.subtasks.length}):</span>
                 {tmpl.subtasks.map((st, i) => (
                   <div key={i} className="text-[11px] text-slate-300 flex items-center gap-1.5">
-                    <FiCheck className="text-indigo-400 flex-shrink-0" />
+                    <Check size="1em" className="text-indigo-400 flex-shrink-0"  />
                     <span>{st}</span>
                   </div>
                 ))}

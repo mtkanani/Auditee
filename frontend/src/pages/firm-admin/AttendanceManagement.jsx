@@ -4,15 +4,7 @@ import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import {
-  FiClock,
-  FiMapPin,
-  FiCheckCircle,
-  FiAlertTriangle,
-  FiUserCheck,
-  FiCalendar,
-  FiZap,
-} from 'react-icons/fi';
+import { Calendar, CircleCheckBig, Clock, MapPin, TriangleAlert, UserCheck } from 'lucide-react';
 import { attendanceService } from '../../services/attendanceService';
 import { firmAdminService } from '../../services/firmAdminService';
 import { useAuth } from '../../context/AuthContext';
@@ -96,7 +88,7 @@ export const AttendanceManagement = () => {
       key: 'date',
       render: (r) => (
         <span className="font-bold text-slate-200 flex items-center gap-1.5">
-          <FiCalendar className="text-indigo-400" /> {new Date(r.date).toLocaleDateString()}
+          <Calendar size="1em" className="text-indigo-400"  /> {new Date(r.date).toLocaleDateString()}
         </span>
       ),
     },
@@ -109,7 +101,7 @@ export const AttendanceManagement = () => {
             {r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
           </p>
           <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-            <FiMapPin className="text-emerald-400" /> {r.checkInLocation || 'Verified Location'}
+            <MapPin size="1em" className="text-emerald-400"  /> {r.checkInLocation || 'Verified Location'}
           </p>
         </div>
       ),
@@ -124,7 +116,7 @@ export const AttendanceManagement = () => {
           </p>
           {r.checkOutLocation && (
             <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-              <FiMapPin className="text-rose-400" /> {r.checkOutLocation}
+              <MapPin size="1em" className="text-rose-400"  /> {r.checkOutLocation}
             </p>
           )}
         </div>
@@ -157,7 +149,7 @@ export const AttendanceManagement = () => {
               onClick={() => setIsGeofenceModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2 transition-all cursor-pointer"
             >
-              <FiMapPin className="w-4 h-4 text-emerald-300" />
+              <MapPin className="w-4 h-4 text-emerald-300"  />
               <span>Configure Geofence Location 📍</span>
             </button>
           )
@@ -166,10 +158,10 @@ export const AttendanceManagement = () => {
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Present Days" value={totalPresent} icon={FiCheckCircle} color="emerald" />
-        <StatsCard title="Half Days / Short Hours" value={halfDays} icon={FiAlertTriangle} color="amber" />
-        <StatsCard title="Total Hours Worked" value={`${totalHoursWorked.toFixed(1)} Hrs`} icon={FiClock} color="indigo" />
-        <StatsCard title="Avg Working Hours / Day" value={`${avgHoursPerDay} Hrs`} icon={FiUserCheck} color="purple" />
+        <StatsCard title="Present Days" value={totalPresent} icon={CircleCheckBig} color="emerald" />
+        <StatsCard title="Half Days / Short Hours" value={halfDays} icon={TriangleAlert} color="amber" />
+        <StatsCard title="Total Hours Worked" value={`${totalHoursWorked.toFixed(1)} Hrs`} icon={Clock} color="indigo" />
+        <StatsCard title="Avg Working Hours / Day" value={`${avgHoursPerDay} Hrs`} icon={UserCheck} color="purple" />
       </div>
 
       {/* Control Bar & Filters */}

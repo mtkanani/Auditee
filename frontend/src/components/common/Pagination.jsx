@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const Pagination = ({
   currentPage = 1,
@@ -43,7 +43,7 @@ export const Pagination = ({
             disabled={currentPage <= 1}
             className="p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <FiChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4"  />
           </button>
 
           <span className="px-3 py-1 text-xs font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
@@ -55,7 +55,7 @@ export const Pagination = ({
             disabled={currentPage >= totalPages}
             className="p-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            <FiChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4"  />
           </button>
         </div>
       </div>

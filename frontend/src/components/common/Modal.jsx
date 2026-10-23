@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX } from 'react-icons/fi';
+import { X } from 'lucide-react';
 
 export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-xl' }) => {
   useEffect(() => {
@@ -46,7 +46,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-xl' 
                   onClick={onClose}
                   className="p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <X className="w-5 h-5"  />
                 </button>
               </div>
 

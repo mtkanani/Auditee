@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  FiUsers, FiBriefcase, FiCheckSquare, FiShield,
-  FiPlus, FiUserPlus, FiTrendingUp, FiArrowRight,
-  FiCalendar, FiDollarSign, FiActivity, FiZap,
-  FiAward, FiTarget, FiClock, FiBarChart2, FiMapPin,
-} from 'react-icons/fi';
+import { ArrowRight, Award, Briefcase, DollarSign, MapPin, Shield, SquareCheckBig, Target, TrendingUp, UserPlus, Users, Zap } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
   CartesianGrid, AreaChart, Area, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend,
@@ -57,10 +52,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const quickActions = [
-  { label: 'Add Client', icon: FiBriefcase, color: 'from-indigo-600 to-purple-600', shadow: 'shadow-indigo-500/25', path: '/firm-admin/clients' },
-  { label: 'Add Employee', icon: FiUserPlus, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-500/25', path: '/firm-admin/users' },
-  { label: 'New Invoice', icon: FiDollarSign, color: 'from-amber-600 to-orange-600', shadow: 'shadow-amber-500/25', path: '/firm-admin/billing' },
-  { label: 'Compliance', icon: FiShield, color: 'from-rose-600 to-pink-600', shadow: 'shadow-rose-500/25', path: '/firm-admin/compliance' },
+  { label: 'Add Client', icon: Briefcase, color: 'from-indigo-600 to-purple-600', shadow: 'shadow-indigo-500/25', path: '/firm-admin/clients' },
+  { label: 'Add Employee', icon: UserPlus, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-500/25', path: '/firm-admin/users' },
+  { label: 'New Invoice', icon: DollarSign, color: 'from-amber-600 to-orange-600', shadow: 'shadow-amber-500/25', path: '/firm-admin/billing' },
+  { label: 'Compliance', icon: Shield, color: 'from-rose-600 to-pink-600', shadow: 'shadow-rose-500/25', path: '/firm-admin/compliance' },
 ];
 
 const recentActivity = [
@@ -98,7 +93,7 @@ export const FirmAdminDashboard = () => {
     {
       label: 'Total Clients',
       value: data?.metrics?.totalClients ?? 42,
-      icon: FiBriefcase,
+      icon: Briefcase,
       change: '+14%',
       trend: 'up',
       gradient: 'from-indigo-500 to-purple-600',
@@ -109,7 +104,7 @@ export const FirmAdminDashboard = () => {
     {
       label: 'Total Employees',
       value: data?.metrics?.totalUsers ?? 18,
-      icon: FiUsers,
+      icon: Users,
       change: '+8%',
       trend: 'up',
       gradient: 'from-emerald-500 to-teal-600',
@@ -120,7 +115,7 @@ export const FirmAdminDashboard = () => {
     {
       label: 'Pending Tasks',
       value: data?.metrics?.pendingTasks ?? 14,
-      icon: FiCheckSquare,
+      icon: SquareCheckBig,
       change: '-3%',
       trend: 'down',
       gradient: 'from-amber-500 to-orange-600',
@@ -131,7 +126,7 @@ export const FirmAdminDashboard = () => {
     {
       label: 'Compliance Due',
       value: data?.metrics?.pendingCompliance ?? 5,
-      icon: FiShield,
+      icon: Shield,
       change: 'Urgent',
       trend: 'down',
       gradient: 'from-rose-500 to-pink-600',
@@ -173,7 +168,7 @@ export const FirmAdminDashboard = () => {
               onClick={() => setIsGeofenceModalOpen(true)}
               className="flex items-center gap-2 py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all duration-200 cursor-pointer"
             >
-              <FiMapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-3.5 h-3.5"  />
               <span>Set Office Geofence 📍</span>
             </button>
             {quickActions.map((a) => (
@@ -258,7 +253,7 @@ export const FirmAdminDashboard = () => {
               <p className="text-[11px] text-slate-500 mt-0.5">Monthly billing performance (₹)</p>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-              <FiTrendingUp className="w-3 h-3" />
+              <TrendingUp className="w-3 h-3"  />
               +18.4% this month
             </div>
           </div>
@@ -341,7 +336,7 @@ export const FirmAdminDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-extrabold text-slate-100">Recent Activity</h3>
             <button className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-0.5">
-              View all <FiArrowRight className="w-3 h-3" />
+              View all <ArrowRight className="w-3 h-3"  />
             </button>
           </div>
           <div className="space-y-3">
@@ -363,9 +358,9 @@ export const FirmAdminDashboard = () => {
       {/* ── PERFORMANCE GOALS ───────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Client Acquisition', current: 42, target: 60, color: '#6366f1', icon: FiTarget },
-          { label: 'Tasks Completion Rate', current: 72, target: 100, color: '#10b981', icon: FiZap },
-          { label: 'Compliance Score', current: 89, target: 100, color: '#f59e0b', icon: FiAward },
+          { label: 'Client Acquisition', current: 42, target: 60, color: '#6366f1', icon: Target },
+          { label: 'Tasks Completion Rate', current: 72, target: 100, color: '#10b981', icon: Zap },
+          { label: 'Compliance Score', current: 89, target: 100, color: '#f59e0b', icon: Award },
         ].map((g) => {
           const pct = Math.round((g.current / g.target) * 100);
           return (

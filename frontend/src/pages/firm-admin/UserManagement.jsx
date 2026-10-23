@@ -8,7 +8,7 @@ import { Modal } from '../../components/common/Modal';
 import { Drawer } from '../../components/common/Drawer';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 import { Avatar } from '../../components/common/Avatar';
-import { FiUserPlus, FiEdit2, FiTrash2, FiKey, FiEye, FiDownload, FiCheckCircle } from 'react-icons/fi';
+import { Download, Eye, Key, Pen, Trash2, UserPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { firmAdminService } from '../../services/firmAdminService';
@@ -175,7 +175,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
             title="View Details"
           >
-            <FiEye className="w-4 h-4" />
+            <Eye className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -186,7 +186,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-colors"
             title="Edit User"
           >
-            <FiEdit2 className="w-4 h-4" />
+            <Pen className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -196,7 +196,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/10 transition-colors"
             title="Reset Password"
           >
-            <FiKey className="w-4 h-4" />
+            <Key className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -206,7 +206,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
             title="Delete User"
           >
-            <FiTrash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4"  />
           </button>
         </div>
       ),
@@ -224,7 +224,7 @@ export const UserManagement = () => {
               onClick={handleExport}
               className="py-2.5 px-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-2"
             >
-              <FiDownload className="w-4 h-4" />
+              <Download className="w-4 h-4"  />
               <span>Export CSV</span>
             </button>
             <button
@@ -234,7 +234,7 @@ export const UserManagement = () => {
               }}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
             >
-              <FiUserPlus className="w-4 h-4" />
+              <UserPlus className="w-4 h-4"  />
               <span>Add New Employee</span>
             </button>
           </div>

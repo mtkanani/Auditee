@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiCalendar, FiFileText, FiZap, FiCheckCircle, FiClock, FiShield } from 'react-icons/fi';
+import { Clock } from 'lucide-react';
 import { leaveService } from '../../services/leaveService';
 import toast from 'react-hot-toast';
 
@@ -140,7 +140,7 @@ export const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Calculated Days Badge */}
         <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800">
           <span className="text-xs text-slate-400 font-bold flex items-center gap-1.5">
-            <FiClock className="text-indigo-400" /> Calculated Duration:
+            <Clock size="1em" className="text-indigo-400"  /> Calculated Duration:
           </span>
           <span className="text-xs font-black text-amber-400">
             {daysCount} Day(s) Requested

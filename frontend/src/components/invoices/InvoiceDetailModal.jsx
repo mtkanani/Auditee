@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { StatusBadge } from '../common/StatusBadge';
-import { FiPrinter, FiMail, FiDollarSign, FiZap, FiCheckCircle, FiClock, FiFileText } from 'react-icons/fi';
+import { DollarSign, Mail, Printer, Zap } from 'lucide-react';
 import { invoiceService } from '../../services/invoiceService';
 import toast from 'react-hot-toast';
 
@@ -326,7 +326,7 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
                   onClick={handleConvertProforma}
                   className="py-1 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1 shadow-md"
                 >
-                  <FiZap /> Convert to Tax Invoice
+                  <Zap size="1em" /> Convert to Tax Invoice
                 </button>
               )}
             </div>
@@ -336,14 +336,14 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
                 onClick={handleSendEmail}
                 className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/20 hover:bg-purple-600/30 text-xs font-bold flex items-center gap-1.5"
               >
-                <FiMail /> Send Email
+                <Mail size="1em" /> Send Email
               </button>
 
               <button
                 onClick={handlePrint}
                 className="py-1.5 px-3 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 text-xs font-bold flex items-center gap-1.5"
               >
-                <FiPrinter /> Print / Download PDF
+                <Printer size="1em" /> Print / Download PDF
               </button>
 
               {invoice.status !== 'PAID' && (
@@ -351,7 +351,7 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
                   onClick={() => setIsPaymentFormOpen(!isPaymentFormOpen)}
                   className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
                 >
-                  <FiDollarSign /> Record Payment
+                  <DollarSign size="1em" /> Record Payment
                 </button>
               )}
             </div>
@@ -361,7 +361,7 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
           {isPaymentFormOpen && (
             <form onSubmit={handleRecordPayment} className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-3 print:hidden">
               <h4 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <FiDollarSign /> Log Payment Received
+                <DollarSign size="1em" /> Log Payment Received
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>

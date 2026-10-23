@@ -9,23 +9,7 @@ import { Modal } from '../../components/common/Modal';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskTemplatesModal } from '../../components/tasks/TaskTemplatesModal';
-import {
-  FiPlus,
-  FiZap,
-  FiInbox,
-  FiCheckCircle,
-  FiClock,
-  FiUserCheck,
-  FiBriefcase,
-  FiEye,
-  FiEdit2,
-  FiCalendar,
-  FiUser,
-  FiGlobe,
-  FiCheck,
-  FiXCircle,
-  FiLayers,
-} from 'react-icons/fi';
+import { Check, CircleCheckBig, CircleX, Clock, Eye, Inbox, Layers, Plus, Zap } from 'lucide-react';
 import { taskService } from '../../services/taskService';
 import { firmAdminService } from '../../services/firmAdminService';
 import toast from 'react-hot-toast';
@@ -273,7 +257,7 @@ export const FirmTaskManagement = () => {
           className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
           title="Open Task Hub"
         >
-          <FiEye className="w-4 h-4" />
+          <Eye className="w-4 h-4"  />
         </button>
       ),
     },
@@ -290,7 +274,7 @@ export const FirmTaskManagement = () => {
               onClick={() => setIsTemplatesModalOpen(true)}
               className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
             >
-              <FiZap />
+              <Zap size="1em" />
               <span>Use Template</span>
             </button>
 
@@ -298,7 +282,7 @@ export const FirmTaskManagement = () => {
               onClick={() => setIsCreateModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 flex items-center gap-2"
             >
-              <FiPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4"  />
               <span>Create & Assign Task</span>
             </button>
           </div>
@@ -307,13 +291,13 @@ export const FirmTaskManagement = () => {
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Tasks" value={totalRecords} icon={FiLayers} color="indigo" />
-        <StatsCard title="In Progress Tasks" value={inProgressCount} icon={FiClock} color="purple" />
-        <StatsCard title="Completed Tasks" value={completedCount} icon={FiCheckCircle} color="emerald" />
+        <StatsCard title="Total Tasks" value={totalRecords} icon={Layers} color="indigo" />
+        <StatsCard title="In Progress Tasks" value={inProgressCount} icon={Clock} color="purple" />
+        <StatsCard title="Completed Tasks" value={completedCount} icon={CircleCheckBig} color="emerald" />
         <StatsCard
           title="Client Work Requests"
           value={clientRequests.length}
-          icon={FiInbox}
+          icon={Inbox}
           color="rose"
         />
       </div>
@@ -351,7 +335,7 @@ export const FirmTaskManagement = () => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiInbox />
+            <Inbox size="1em" />
             <span>Client Work Requests ({clientRequests.length})</span>
           </button>
         </div>
@@ -484,7 +468,7 @@ export const FirmTaskManagement = () => {
                     onClick={() => handleRejectRequest(req.id)}
                     className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-slate-700 hover:border-rose-800 font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FiXCircle className="w-3.5 h-3.5" />
+                    <CircleX className="w-3.5 h-3.5"  />
                     <span>{actionLoadingId === req.id ? 'Rejecting...' : 'Reject Request'}</span>
                   </button>
                   <button
@@ -498,7 +482,7 @@ export const FirmTaskManagement = () => {
                     }}
                     className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FiCheck className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5"  />
                     <span>Accept & Assign Auditor</span>
                   </button>
                 </div>

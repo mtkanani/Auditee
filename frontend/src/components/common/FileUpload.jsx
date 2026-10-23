@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiUploadCloud, FiFile, FiX } from 'react-icons/fi';
+import { CloudUpload, File, X } from 'lucide-react';
 
 export const FileUpload = ({ onFileSelect, acceptedTypes = '*', maxMb = 10 }) => {
   const [file, setFile] = useState(null);
@@ -37,7 +37,7 @@ export const FileUpload = ({ onFileSelect, acceptedTypes = '*', maxMb = 10 }) =>
           onDrop={handleDrop}
           className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-2xl bg-slate-900/40 hover:bg-slate-900/80 cursor-pointer transition-all duration-200 group"
         >
-          <FiUploadCloud className="w-10 h-10 text-indigo-400 group-hover:scale-110 transition-transform duration-200 mb-2" />
+          <CloudUpload className="w-10 h-10 text-indigo-400 group-hover:scale-110 transition-transform duration-200 mb-2"  />
           <p className="text-sm font-semibold text-slate-200">
             Click to upload <span className="font-normal text-slate-400">or drag and drop</span>
           </p>
@@ -53,7 +53,7 @@ export const FileUpload = ({ onFileSelect, acceptedTypes = '*', maxMb = 10 }) =>
         <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-              <FiFile className="w-6 h-6" />
+              <File className="w-6 h-6"  />
             </div>
             <div className="truncate">
               <p className="text-sm font-medium text-slate-200 truncate">{file.name}</p>
@@ -65,7 +65,7 @@ export const FileUpload = ({ onFileSelect, acceptedTypes = '*', maxMb = 10 }) =>
             onClick={removeFile}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
           >
-            <FiX className="w-5 h-5" />
+            <X className="w-5 h-5"  />
           </button>
         </div>
       )}

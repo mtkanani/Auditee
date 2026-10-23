@@ -4,7 +4,7 @@ import { StatsCard } from '../../components/common/StatsCard';
 import { ChartCard } from '../../components/common/ChartCard';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { FiLayers, FiCheckCircle, FiAlertOctagon, FiPlus, FiArrowUpRight } from 'react-icons/fi';
+import { ArrowUpRight, CircleCheckBig, Layers, OctagonAlert, Plus } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { superAdminService } from '../../services/superAdminService';
 import { useNavigate } from 'react-router-dom';
@@ -54,7 +54,7 @@ export const SuperAdminDashboard = () => {
           className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
         >
           <span>Manage</span>
-          <FiArrowUpRight className="w-3.5 h-3.5" />
+          <ArrowUpRight className="w-3.5 h-3.5"  />
         </button>
       ),
     },
@@ -70,7 +70,7 @@ export const SuperAdminDashboard = () => {
             onClick={() => navigate('/super-admin/firms')}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Manage All Firms</span>
           </button>
         }
@@ -78,10 +78,10 @@ export const SuperAdminDashboard = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total CA Firms" value={firms.length || 58} icon={FiLayers} color="indigo" change="18%" />
-        <StatsCard title="Active Tenants" value="52" icon={FiCheckCircle} color="emerald" change="12%" />
-        <StatsCard title="Suspended / Inactive" value="6" icon={FiAlertOctagon} color="rose" trend="down" />
-        <StatsCard title="Total Platform Users" value="1,240" icon={FiLayers} color="blue" change="24%" />
+        <StatsCard title="Total CA Firms" value={firms.length || 58} icon={Layers} color="indigo" change="18%" />
+        <StatsCard title="Active Tenants" value="52" icon={CircleCheckBig} color="emerald" change="12%" />
+        <StatsCard title="Suspended / Inactive" value="6" icon={OctagonAlert} color="rose" trend="down" />
+        <StatsCard title="Total Platform Users" value="1,240" icon={Layers} color="blue" change="24%" />
       </div>
 
       {/* Analytics Chart */}

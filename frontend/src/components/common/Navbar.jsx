@@ -1,18 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  FiMenu,
-  FiBell,
-  FiSun,
-  FiMoon,
-  FiSearch,
-  FiChevronDown,
-  FiUser,
-  FiLogOut,
-  FiCheckCircle,
-  FiClock,
-  FiMapPin,
-  FiCalendar,
-} from 'react-icons/fi';
+import { Bell, ChevronDown, CircleCheckBig, LogOut, MapPin, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Avatar } from './Avatar';
@@ -156,11 +143,11 @@ export const Navbar = ({ onMenuClick }) => {
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800"
         >
-          <FiMenu className="w-5 h-5" />
+          <Menu className="w-5 h-5"  />
         </button>
 
         <div className="relative max-w-xs sm:max-w-sm w-full hidden sm:block">
-          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"  />
           <input
             type="text"
             placeholder="Search clients, tasks, documents..."
@@ -182,7 +169,7 @@ export const Navbar = ({ onMenuClick }) => {
                 title="Click to Clock In with GPS Verification"
               >
                 <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                <FiMapPin className="w-3.5 h-3.5" />
+                <MapPin className="w-3.5 h-3.5"  />
                 <span>Check In (GPS)</span>
               </button>
             ) : !attendanceStatus?.isCheckedOut ? (
@@ -202,7 +189,7 @@ export const Navbar = ({ onMenuClick }) => {
               </div>
             ) : (
               <div className="flex items-center gap-1 px-3 py-1 text-xs font-bold text-slate-300">
-                <FiCheckCircle className="text-emerald-400" />
+                <CircleCheckBig size="1em" className="text-emerald-400"  />
                 <span>Checked Out ({attendanceStatus.workingHours || 0} hrs)</span>
               </div>
             )}
@@ -218,7 +205,7 @@ export const Navbar = ({ onMenuClick }) => {
           className="p-2.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
           title="Toggle Dark/Light Mode"
         >
-          {isDark ? <FiSun className="w-4 h-4 text-amber-400" /> : <FiMoon className="w-4 h-4 text-indigo-400" />}
+          {isDark ? <Sun className="w-4 h-4 text-amber-400"  /> : <Moon className="w-4 h-4 text-indigo-400"  />}
         </button>
 
         {/* Notifications Dropdown */}
@@ -230,7 +217,7 @@ export const Navbar = ({ onMenuClick }) => {
             }}
             className="p-2.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors relative"
           >
-            <FiBell className="w-4 h-4" />
+            <Bell className="w-4 h-4"  />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
           </button>
@@ -277,7 +264,7 @@ export const Navbar = ({ onMenuClick }) => {
                 {formatRoleName(user?.role)}
               </p>
             </div>
-            <FiChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400"  />
           </button>
 
           {showProfileMenu && (
@@ -291,7 +278,7 @@ export const Navbar = ({ onMenuClick }) => {
                 onClick={handleProfileClick}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               >
-                <FiUser className="w-4 h-4 text-indigo-400" />
+                <User className="w-4 h-4 text-indigo-400"  />
                 <span>My Profile</span>
               </button>
 
@@ -299,7 +286,7 @@ export const Navbar = ({ onMenuClick }) => {
                 onClick={logout}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors mt-1"
               >
-                <FiLogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4"  />
                 <span>Sign Out</span>
               </button>
             </div>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { FiBriefcase, FiSave } from 'react-icons/fi';
+import { Briefcase, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientService } from '../../services/clientService';
 
@@ -47,7 +47,7 @@ export const ClientProfile = () => {
 
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
         <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <FiBriefcase className="text-indigo-400" />
+          <Briefcase size="1em" className="text-indigo-400"  />
           <span>Company Profile Details</span>
         </h3>
 
@@ -114,7 +114,7 @@ export const ClientProfile = () => {
             disabled={isLoading}
             className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
           >
-            <FiSave className="w-4 h-4" />
+            <Save className="w-4 h-4"  />
             <span>{isLoading ? 'Saving...' : 'Save Profile Changes'}</span>
           </button>
         </form>

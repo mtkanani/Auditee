@@ -1,13 +1,5 @@
 import React, { useState, useRef } from 'react';
-import {
-  FiX,
-  FiUploadCloud,
-  FiFile,
-  FiLock,
-  FiUnlock,
-  FiTag,
-  FiLoader,
-} from 'react-icons/fi';
+import { CloudUpload, File, Loader, Lock, LockOpen, Tag, X } from 'lucide-react';
 import { documentService } from '../../services/documentService';
 import toast from 'react-hot-toast';
 
@@ -103,7 +95,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-gradient-to-r from-indigo-600/20 to-purple-600/20">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-              <FiUploadCloud className="w-5 h-5 text-indigo-400" />
+              <CloudUpload className="w-5 h-5 text-indigo-400"  />
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-100">Upload to Document Vault</h2>
@@ -114,7 +106,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
           >
-            <FiX className="w-5 h-5" />
+            <X className="w-5 h-5"  />
           </button>
         </div>
 
@@ -142,13 +134,13 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
             />
             {form.fileName ? (
               <div className="flex flex-col items-center gap-2">
-                <FiFile className="w-10 h-10 text-emerald-400" />
+                <File className="w-10 h-10 text-emerald-400"  />
                 <p className="text-sm font-bold text-emerald-400">{form.fileName}</p>
                 <p className="text-[11px] text-slate-400">{(form.fileSize / 1024).toFixed(1)} KB — Click to change</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <FiUploadCloud className="w-10 h-10 text-slate-500" />
+                <CloudUpload className="w-10 h-10 text-slate-500"  />
                 <p className="text-sm font-semibold text-slate-300">Drag & drop your file here</p>
                 <p className="text-[11px] text-slate-500">PDF, DOCX, XLSX, ZIP, PNG (Max 25MB)</p>
                 <span className="mt-2 py-1.5 px-4 rounded-lg bg-indigo-600/20 border border-indigo-500/30 text-xs font-bold text-indigo-400">
@@ -177,7 +169,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
             {/* Category */}
             <div>
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
-                <FiTag className="inline w-3 h-3 mr-1" />Category
+                <Tag className="inline w-3 h-3 mr-1"  />Category
               </label>
               <select
                 value={form.category}
@@ -233,7 +225,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
                 : 'border-slate-700 bg-slate-800/40 text-slate-400 hover:border-slate-600'
             }`}
           >
-            {form.isConfidential ? <FiLock className="w-4 h-4" /> : <FiUnlock className="w-4 h-4" />}
+            {form.isConfidential ? <Lock className="w-4 h-4"  /> : <LockOpen className="w-4 h-4"  />}
             <div>
               <p className="text-xs font-bold">
                 {form.isConfidential ? '🔒 Confidential Document' : '🔓 Not Confidential'}
@@ -261,9 +253,9 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
               className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isLoading ? (
-                <><FiLoader className="w-4 h-4 animate-spin" /> Uploading...</>
+                <><Loader className="w-4 h-4 animate-spin"  /> Uploading...</>
               ) : (
-                <><FiUploadCloud className="w-4 h-4" /> Upload to Vault</>
+                <><CloudUpload className="w-4 h-4"  /> Upload to Vault</>
               )}
             </button>
           </div>

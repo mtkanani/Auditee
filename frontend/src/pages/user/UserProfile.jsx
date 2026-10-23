@@ -4,7 +4,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { Avatar } from '../../components/common/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { FiUser, FiLock, FiSave, FiAlertTriangle } from 'react-icons/fi';
+import { Lock, Save, TriangleAlert, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { userService } from '../../services/userService';
 import { authService } from '../../services/authService';
@@ -81,7 +81,7 @@ export const UserProfile = () => {
       {/* Edit Profile Form */}
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
         <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <FiUser className="text-indigo-400" />
+          <User size="1em" className="text-indigo-400"  />
           <span>Personal Information</span>
         </h3>
 
@@ -129,7 +129,7 @@ export const UserProfile = () => {
             disabled={isLoading}
             className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
           >
-            <FiSave className="w-4 h-4" />
+            <Save className="w-4 h-4"  />
             <span>{isLoading ? 'Saving...' : 'Save Profile Changes'}</span>
           </button>
         </form>
@@ -138,7 +138,7 @@ export const UserProfile = () => {
       {/* Security & Change Password */}
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
         <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <FiLock className="text-purple-400" />
+          <Lock size="1em" className="text-purple-400"  />
           <span>Security & Change Password</span>
         </h3>
 
@@ -177,7 +177,7 @@ export const UserProfile = () => {
       <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
-            <FiAlertTriangle className="text-rose-400" />
+            <TriangleAlert size="1em" className="text-rose-400"  />
             <span>Danger Zone</span>
           </h3>
           <p className="text-xs text-slate-400 mt-1">

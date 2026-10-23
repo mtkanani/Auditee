@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { FileUpload } from '../../components/common/FileUpload';
 import { useForm } from 'react-hook-form';
-import { FiSend, FiFileText } from 'react-icons/fi';
+import { Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientService } from '../../services/clientService';
 import { useNavigate } from 'react-router-dom';
@@ -104,7 +104,7 @@ export const WorkRequests = () => {
             disabled={isLoading}
             className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50"
           >
-            <FiSend className="w-4 h-4" />
+            <Send className="w-4 h-4"  />
             <span>{isLoading ? 'Submitting Request...' : 'Submit Work Request'}</span>
           </button>
         </form>

@@ -10,7 +10,7 @@ import { Modal } from '../../components/common/Modal';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 import { ClientDetailModal } from '../../components/clients/ClientDetailModal';
 import { AddMasterClientModal } from '../../components/clients/AddMasterClientModal';
-import { FiPlus, FiEdit2, FiTrash2, FiEye, FiBriefcase, FiDollarSign, FiLayers, FiShield, FiX } from 'react-icons/fi';
+import { Briefcase, DollarSign, Eye, Layers, Pen, Plus, Shield, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { firmAdminService } from '../../services/firmAdminService';
@@ -200,7 +200,7 @@ export const ClientManagement = () => {
             className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
             title="Open 360 Client Hub"
           >
-            <FiEye className="w-4 h-4" />
+            <Eye className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -211,7 +211,7 @@ export const ClientManagement = () => {
             className="p-2 rounded-xl text-purple-400 hover:bg-purple-500/10 transition-colors"
             title="Edit Profile"
           >
-            <FiEdit2 className="w-4 h-4" />
+            <Pen className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -221,7 +221,7 @@ export const ClientManagement = () => {
             className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors"
             title="Delete Account"
           >
-            <FiTrash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4"  />
           </button>
         </div>
       ),
@@ -241,7 +241,7 @@ export const ClientManagement = () => {
             }}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Add Master Client</span>
           </button>
         }
@@ -252,25 +252,25 @@ export const ClientManagement = () => {
         <StatsCard
           title="Total Clients"
           value={totalRecords || clients.length}
-          icon={FiBriefcase}
+          icon={Briefcase}
           color="indigo"
         />
         <StatsCard
           title="Corporate Accounts"
           value={clients.filter((c) => c.clientType !== 'INDIVIDUAL').length}
-          icon={FiShield}
+          icon={Shield}
           color="purple"
         />
         <StatsCard
           title="Subscribed Services"
           value={totalSubscribedServices}
-          icon={FiLayers}
+          icon={Layers}
           color="emerald"
         />
         <StatsCard
           title="Total Outstanding Fees"
           value={`₹${totalOutstandingBalance.toLocaleString()}`}
-          icon={FiDollarSign}
+          icon={DollarSign}
           color="rose"
         />
       </div>

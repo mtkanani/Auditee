@@ -6,7 +6,7 @@ import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
-import { FiGrid, FiList, FiClock, FiCheckSquare } from 'react-icons/fi';
+import { Grid3x3, List } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { taskService } from '../../services/taskService';
 import toast from 'react-hot-toast';
@@ -97,7 +97,7 @@ export const MyTasks = () => {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiGrid className="w-3.5 h-3.5" />
+              <Grid3x3 className="w-3.5 h-3.5"  />
               <span>Kanban</span>
             </button>
             <button
@@ -108,7 +108,7 @@ export const MyTasks = () => {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiList className="w-3.5 h-3.5" />
+              <List className="w-3.5 h-3.5"  />
               <span>Table</span>
             </button>
           </div>

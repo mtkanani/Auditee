@@ -4,20 +4,7 @@ import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
-import {
-  FiShield,
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-  FiZap,
-  FiBell,
-  FiPlus,
-  FiCalendar,
-  FiList,
-  FiFileText,
-  FiUserCheck,
-  FiAlertCircle,
-} from 'react-icons/fi';
+import { Bell, Calendar, CircleCheckBig, Clock, List, Plus, Shield, TriangleAlert, Zap } from 'lucide-react';
 import { complianceService } from '../../services/complianceService';
 import { firmAdminService } from '../../services/firmAdminService';
 import toast from 'react-hot-toast';
@@ -180,7 +167,7 @@ export const Compliance = () => {
       key: 'dueDate',
       render: (r) => (
         <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-          <FiCalendar /> {new Date(r.dueDate).toLocaleDateString()}
+          <Calendar size="1em" /> {new Date(r.dueDate).toLocaleDateString()}
         </span>
       ),
     },
@@ -214,7 +201,7 @@ export const Compliance = () => {
             className="px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1"
             title="Convert to Task"
           >
-            <FiZap />
+            <Zap size="1em" />
             <span>Task</span>
           </button>
 
@@ -223,7 +210,7 @@ export const Compliance = () => {
             className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
             title="Broadcast Notice Reminder"
           >
-            <FiBell className="w-4 h-4" />
+            <Bell className="w-4 h-4"  />
           </button>
         </div>
       ),
@@ -241,7 +228,7 @@ export const Compliance = () => {
               onClick={() => setIsAddModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
             >
-              <FiPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4"  />
               <span>Add Custom Filing</span>
             </button>
           </div>
@@ -250,17 +237,17 @@ export const Compliance = () => {
 
       {/* Top Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Compliance Items" value={totalItems} icon={FiShield} color="indigo" />
-        <StatsCard title="Pending Statutory Filings" value={pendingCount} icon={FiClock} color="amber" />
-        <StatsCard title="Overdue Deadlines" value={overdueCount} icon={FiAlertTriangle} color="rose" />
-        <StatsCard title="Filed This Period" value={filedCount} icon={FiCheckCircle} color="emerald" />
+        <StatsCard title="Total Compliance Items" value={totalItems} icon={Shield} color="indigo" />
+        <StatsCard title="Pending Statutory Filings" value={pendingCount} icon={Clock} color="amber" />
+        <StatsCard title="Overdue Deadlines" value={overdueCount} icon={TriangleAlert} color="rose" />
+        <StatsCard title="Filed This Period" value={filedCount} icon={CircleCheckBig} color="emerald" />
       </div>
 
       {/* Statutory Presets Generator Bar */}
       <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-slate-900 border border-indigo-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <FiZap className="w-6 h-6" />
+            <Zap className="w-6 h-6"  />
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider">Indian Statutory Deadlines Generator</h4>
@@ -313,7 +300,7 @@ export const Compliance = () => {
               viewMode === 'calendar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiCalendar />
+            <Calendar size="1em" />
             <span>Compliance Calendar</span>
           </button>
 
@@ -323,7 +310,7 @@ export const Compliance = () => {
               viewMode === 'table' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiList />
+            <List size="1em" />
             <span>Master List View</span>
           </button>
         </div>
@@ -363,7 +350,7 @@ export const Compliance = () => {
       {viewMode === 'calendar' && (
         <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 shadow-xl">
           <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-            <FiCalendar className="text-indigo-400" />
+            <Calendar size="1em" className="text-indigo-400"  />
             <span>Statutory Compliance Calendar Grid</span>
           </h3>
 
@@ -378,7 +365,7 @@ export const Compliance = () => {
                     {item.category}
                   </span>
                   <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                    <FiClock /> {new Date(item.dueDate).toLocaleDateString()}
+                    <Clock size="1em" /> {new Date(item.dueDate).toLocaleDateString()}
                   </span>
                 </div>
 
@@ -415,7 +402,7 @@ export const Compliance = () => {
                       }}
                       className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] flex items-center gap-1"
                     >
-                      <FiZap />
+                      <Zap size="1em" />
                       <span>Convert Task</span>
                     </button>
 
@@ -424,7 +411,7 @@ export const Compliance = () => {
                       className="p-1 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
                       title="Send Reminder"
                     >
-                      <FiBell className="w-3.5 h-3.5" />
+                      <Bell className="w-3.5 h-3.5"  />
                     </button>
                   </div>
                 </div>

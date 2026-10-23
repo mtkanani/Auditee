@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiPlus, FiTrash2, FiDollarSign, FiFileText, FiCalendar, FiBriefcase } from 'react-icons/fi';
+import { Plus, Trash2 } from 'lucide-react';
 import { firmAdminService } from '../../services/firmAdminService';
 import { invoiceService } from '../../services/invoiceService';
 import toast from 'react-hot-toast';
@@ -180,7 +180,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               onClick={handleAddItem}
               className="py-1 px-3 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1"
             >
-              <FiPlus /> Add Line Item
+              <Plus size="1em" /> Add Line Item
             </button>
           </div>
 
@@ -241,7 +241,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                         onClick={() => handleRemoveItem(idx)}
                         className="text-rose-400 hover:text-rose-300 p-1"
                       >
-                        <FiTrash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5"  />
                       </button>
                     )}
                   </div>

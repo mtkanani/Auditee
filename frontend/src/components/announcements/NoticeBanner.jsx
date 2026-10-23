@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBell, FiCheckCircle, FiAlertTriangle, FiInfo, FiX } from 'react-icons/fi';
+import { Bell, CircleCheckBig, Info, TriangleAlert } from 'lucide-react';
 import { announcementService } from '../../services/announcementService';
 import toast from 'react-hot-toast';
 
@@ -56,11 +56,11 @@ export const NoticeBanner = () => {
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 shrink-0">
             {currentNotice.priority === 'URGENT' ? (
-              <FiAlertTriangle className="w-5 h-5 text-rose-400" />
+              <TriangleAlert className="w-5 h-5 text-rose-400"  />
             ) : currentNotice.priority === 'WARNING' ? (
-              <FiBell className="w-5 h-5 text-amber-400" />
+              <Bell className="w-5 h-5 text-amber-400"  />
             ) : (
-              <FiInfo className="w-5 h-5 text-indigo-400" />
+              <Info className="w-5 h-5 text-indigo-400"  />
             )}
           </div>
           <div>
@@ -82,7 +82,7 @@ export const NoticeBanner = () => {
             onClick={() => handleAcknowledge(currentNotice.id)}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
           >
-            <FiCheckCircle className="w-4 h-4" />
+            <CircleCheckBig className="w-4 h-4"  />
             <span>Acknowledge & Mark Read</span>
           </button>
 

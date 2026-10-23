@@ -1,20 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  FiFolder,
-  FiUploadCloud,
-  FiSearch,
-  FiDownload,
-  FiTrash2,
-  FiGrid,
-  FiList,
-  FiLock,
-  FiFile,
-  FiFileText,
-  FiImage,
-  FiArchive,
-  FiRefreshCw,
-  FiFilter,
-} from 'react-icons/fi';
+import { Archive, CloudUpload, Download, File, FileText, Folder, Funnel, Grid3x3, Image, List, Lock, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { documentService } from '../../services/documentService';
 import { UploadDocumentModal } from '../../components/documents/UploadDocumentModal';
@@ -33,17 +18,17 @@ const CATEGORIES = [
 ];
 
 const FILE_ICONS = {
-  'application/pdf': { icon: FiFileText, color: 'text-rose-400', bg: 'bg-rose-500/10' },
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { icon: FiFile, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  'application/vnd.ms-excel': { icon: FiFile, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { icon: FiFileText, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  'image/jpeg': { icon: FiImage, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  'image/png': { icon: FiImage, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  'application/zip': { icon: FiArchive, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  'application/pdf': { icon: FileText, color: 'text-rose-400', bg: 'bg-rose-500/10' },
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { icon: File, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  'application/vnd.ms-excel': { icon: File, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { icon: FileText, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  'image/jpeg': { icon: Image, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  'image/png': { icon: Image, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  'application/zip': { icon: Archive, color: 'text-purple-400', bg: 'bg-purple-500/10' },
 };
 
 const getFileStyle = (mimeType) =>
-  FILE_ICONS[mimeType] || { icon: FiFile, color: 'text-slate-400', bg: 'bg-slate-500/10' };
+  FILE_ICONS[mimeType] || { icon: File, color: 'text-slate-400', bg: 'bg-slate-500/10' };
 
 const formatFileSize = (bytes) => {
   if (!bytes) return '—';
@@ -136,7 +121,7 @@ export const DocumentVault = () => {
         <div>
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/25">
-              <FiFolder className="w-5 h-5 text-white" />
+              <Folder className="w-5 h-5 text-white"  />
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-slate-100">Document Vault</h1>
@@ -152,13 +137,13 @@ export const DocumentVault = () => {
             className="p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-100 transition-colors"
             title="Refresh"
           >
-            <FiRefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4"  />
           </button>
           <button
             onClick={() => setIsUploadModalOpen(true)}
             className="flex items-center gap-2 py-2.5 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40 transition-all"
           >
-            <FiUploadCloud className="w-4 h-4" />
+            <CloudUpload className="w-4 h-4"  />
             Upload Document
           </button>
         </div>
@@ -190,7 +175,7 @@ export const DocumentVault = () => {
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4"  />
           <input
             type="text"
             value={search}
@@ -200,7 +185,7 @@ export const DocumentVault = () => {
           />
         </div>
         <div className="flex items-center gap-2">
-          <FiFilter className="text-slate-500 w-4 h-4 flex-shrink-0" />
+          <Funnel className="text-slate-500 w-4 h-4 flex-shrink-0"  />
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
@@ -216,13 +201,13 @@ export const DocumentVault = () => {
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
             >
-              <FiGrid className="w-4 h-4" />
+              <Grid3x3 className="w-4 h-4"  />
             </button>
             <button
               onClick={() => setViewMode('list')}
               className={`p-1.5 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-100'}`}
             >
-              <FiList className="w-4 h-4" />
+              <List className="w-4 h-4"  />
             </button>
           </div>
         </div>
@@ -256,7 +241,7 @@ export const DocumentVault = () => {
       ) : docs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center">
-            <FiFolder className="w-10 h-10 text-slate-600" />
+            <Folder className="w-10 h-10 text-slate-600"  />
           </div>
           <div className="text-center">
             <p className="text-base font-bold text-slate-300">Document Vault is empty</p>
@@ -266,7 +251,7 @@ export const DocumentVault = () => {
             onClick={() => setIsUploadModalOpen(true)}
             className="py-2 px-5 rounded-xl bg-indigo-600 text-white font-bold text-sm"
           >
-            <FiUploadCloud className="inline w-4 h-4 mr-1.5" />Upload Document
+            <CloudUpload className="inline w-4 h-4 mr-1.5"  />Upload Document
           </button>
         </div>
       ) : viewMode === 'grid' ? (
@@ -287,7 +272,7 @@ export const DocumentVault = () => {
                   <div className="flex items-center gap-1">
                     {doc.isConfidential && (
                       <span title="Confidential" className="p-1 rounded-lg bg-amber-500/10 text-amber-400">
-                        <FiLock className="w-3 h-3" />
+                        <Lock className="w-3 h-3"  />
                       </span>
                     )}
                     <span className="text-[10px] font-bold py-0.5 px-2 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -321,7 +306,7 @@ export const DocumentVault = () => {
                     rel="noopener noreferrer"
                     className="flex-1 py-1.5 rounded-lg bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors"
                   >
-                    <FiDownload className="w-3 h-3" /> Download
+                    <Download className="w-3 h-3"  /> Download
                   </a>
                   {(isFirmAdmin || doc.uploadedBy === user?.id) && (
                     <button
@@ -329,7 +314,7 @@ export const DocumentVault = () => {
                       className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-colors"
                       title="Delete document"
                     >
-                      <FiTrash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5"  />
                     </button>
                   )}
                 </div>
@@ -384,7 +369,7 @@ export const DocumentVault = () => {
                     className="p-1.5 rounded-lg bg-indigo-600/10 border border-indigo-600/20 text-indigo-400 hover:bg-indigo-600/20 transition-colors"
                     title="Download"
                   >
-                    <FiDownload className="w-3.5 h-3.5" />
+                    <Download className="w-3.5 h-3.5"  />
                   </a>
                   {(isFirmAdmin || doc.uploadedBy === user?.id) && (
                     <button
@@ -392,7 +377,7 @@ export const DocumentVault = () => {
                       className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-colors"
                       title="Delete"
                     >
-                      <FiTrash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5"  />
                     </button>
                   )}
                 </div>
@@ -408,7 +393,7 @@ export const DocumentVault = () => {
           <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-                <FiTrash2 className="w-5 h-5 text-rose-400" />
+                <Trash2 className="w-5 h-5 text-rose-400"  />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-100">Delete Document?</h3>
