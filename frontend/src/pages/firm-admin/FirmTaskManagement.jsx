@@ -18,9 +18,11 @@ import {
   useRejectClientRequest,
 } from '../../queries/useTasks';
 import { useFirmUsers } from '../../queries/useLookups';
+import { useConfirm } from '../../components/common/ConfirmProvider';
 import toast from 'react-hot-toast';
 
 export const FirmTaskManagement = () => {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('kanban'); // 'kanban' | 'table' | 'requests'
 
   // Filter state
@@ -116,8 +118,14 @@ export const FirmTaskManagement = () => {
     );
   };
 
-  const handleRejectRequest = (taskId) => {
-    if (!window.confirm('Are you sure you want to reject this client work request?')) return;
+  const handleRejectRequest = async (taskId) => {
+    const ok = await confirm({
+      title: 'Reject Request',
+      message: 'Are you sure you want to reject this client work request?',
+      confirmText: 'Reject',
+      isDanger: true,
+    });
+    if (!ok) return;
     rejectRequestMutation.mutate(taskId);
   };
 

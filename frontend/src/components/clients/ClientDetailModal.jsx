@@ -9,8 +9,10 @@ import {
   useDeleteClientDocument,
 } from '../../queries/useClients';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../common/ConfirmProvider';
 
 export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'services' | 'billing' | 'documents' | 'history'
 
   // New Service Form State
@@ -63,8 +65,14 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
     );
   };
 
-  const handleRemoveService = (serviceId) => {
-    if (!window.confirm('Remove this subscribed service from client?')) return;
+  const handleRemoveService = async (serviceId) => {
+    const ok = await confirm({
+      title: 'Remove Service',
+      message: 'Remove this subscribed service from client?',
+      confirmText: 'Remove',
+      isDanger: true,
+    });
+    if (!ok) return;
     removeServiceMutation.mutate(
       { clientId, serviceId },
       {
@@ -93,8 +101,14 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
     );
   };
 
-  const handleDeleteDocument = (docId) => {
-    if (!window.confirm('Delete this master document?')) return;
+  const handleDeleteDocument = async (docId) => {
+    const ok = await confirm({
+      title: 'Delete Document',
+      message: 'Delete this master document?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!ok) return;
     deleteDocMutation.mutate(
       { clientId, documentId: docId },
       {

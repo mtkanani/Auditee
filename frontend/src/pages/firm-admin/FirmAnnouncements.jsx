@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { CreateNoticeModal } from '../../components/announcements/CreateNoticeModal';
 import { useAdminAnnouncements, useCreateNotice, useDeleteNotice } from '../../queries/useAnnouncements';
+import { useConfirm } from '../../components/common/ConfirmProvider';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CircleCheckBig, Clock, Plus, Radio, Trash2, TriangleAlert, Users } from 'lucide-react';
 
 export const FirmAnnouncements = () => {
+  const confirm = useConfirm();
   const { notices, isLoading } = useAdminAnnouncements();
   const createNoticeMutation = useCreateNotice();
   const deleteNoticeMutation = useDeleteNotice();
@@ -16,8 +18,14 @@ export const FirmAnnouncements = () => {
     await createNoticeMutation.mutateAsync(noticeData);
   };
 
-  const handleDeleteNotice = (id) => {
-    if (!window.confirm('Are you sure you want to delete this notice broadcast?')) return;
+  const handleDeleteNotice = async (id) => {
+    const ok = await confirm({
+      title: 'Delete Notice',
+      message: 'Are you sure you want to delete this notice broadcast?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!ok) return;
     deleteNoticeMutation.mutate(id);
   };
 

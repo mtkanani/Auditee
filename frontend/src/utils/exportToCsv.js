@@ -1,3 +1,5 @@
+import toast from 'react-hot-toast';
+
 /**
  * Utility to export an array of JSON objects to CSV file download
  * @param {Array<Object>} data
@@ -5,7 +7,7 @@
  */
 export const exportToCsv = (data, filename = 'export.csv') => {
   if (!data || !data.length) {
-    alert('No data available to export');
+    toast.error('No data available to export');
     return;
   }
 
