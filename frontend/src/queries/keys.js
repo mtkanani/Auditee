@@ -55,5 +55,11 @@ export const leadKeys = {
   detail: (id) => [...leadKeys.all, 'detail', id],
 };
 
+export const documentKeys = {
+  all: ['documents'],
+  lists: () => [...documentKeys.all, 'list'],
+  list: (scope, filters) => [...documentKeys.lists(), scope, filters], // scope: 'firm' | 'client' | 'user'
+};
+
 
 

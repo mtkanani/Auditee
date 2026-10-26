@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Archive, CloudUpload, Download, File, FileText, Folder, Funnel, Grid3x3, Image, List, Lock, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { documentService } from '../../services/documentService';
+import { useVaultDocuments, useDeleteDocument } from '../../queries/useDocuments';
+import { useFirmClients } from '../../queries/useLookups';
+import { useDebounce } from '../../hooks/useDebounce';
 import { UploadDocumentModal } from '../../components/documents/UploadDocumentModal';
-import { clientService } from '../../services/clientService';
-import toast from 'react-hot-toast';
 
 const CATEGORIES = [
   { value: 'ALL', label: 'All Documents', icon: '📁' },
@@ -47,72 +47,41 @@ export const DocumentVault = () => {
   const isFirmAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
   const isClient = user?.role === 'CLIENT';
 
-  const [docs, setDocs] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('ALL');
   const [viewMode, setViewMode] = useState('grid');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  const fetchDocuments = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (category !== 'ALL') params.category = category;
-      if (search) params.search = search;
+  const debouncedSearch = useDebounce(search, 400);
 
-      let res;
-      if (isFirmAdmin) res = await documentService.getFirmVault(params);
-      else if (isClient) res = await documentService.getClientVault(params);
-      else res = await documentService.getUserVault(params);
+  const filters = useMemo(() => {
+    const params = {};
+    if (category !== 'ALL') params.category = category;
+    if (debouncedSearch) params.search = debouncedSearch;
+    return params;
+  }, [category, debouncedSearch]);
 
-      setDocs(res.data?.data || res.data || []);
-    } catch (err) {
-      console.error('Error fetching documents:', err);
-      toast.error('Failed to load document vault');
-    } finally {
-      setLoading(false);
-    }
-  }, [category, search, isFirmAdmin, isClient]);
+  const scope = isFirmAdmin ? 'firm' : isClient ? 'client' : 'user';
+  const { docs, isLoading, isFetching, refetch } = useVaultDocuments(scope, filters);
+  const { data: clients = [] } = useFirmClients({ limit: 200 }, { enabled: isFirmAdmin });
+  const deleteMutation = useDeleteDocument();
 
-  const fetchClients = useCallback(async () => {
-    if (!isFirmAdmin) return;
-    try {
-      const res = await clientService.getClients({ limit: 200 });
-      setClients(res.data?.data || res.data || []);
-    } catch (err) {
-      console.error('Error fetching clients:', err);
-    }
-  }, [isFirmAdmin]);
-
-  useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  const handleDelete = async (id) => {
-    try {
-      await documentService.deleteDocument(id);
-      toast.success('Document removed from vault');
-      setDeleteConfirm(null);
-      fetchDocuments();
-    } catch (err) {
-      toast.error('Failed to delete document');
-    }
+  const handleDelete = (id) => {
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   // Stats
-  const stats = {
+  const stats = useMemo(() => ({
     total: docs.length,
     gst: docs.filter((d) => d.category === 'GST_FILINGS').length,
     tax: docs.filter((d) => d.category === 'INCOME_TAX').length,
     confidential: docs.filter((d) => d.isConfidential).length,
-  };
+  }), [docs]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8">
@@ -133,11 +102,11 @@ export const DocumentVault = () => {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchDocuments}
+            onClick={() => refetch()}
             className="p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-100 transition-colors"
             title="Refresh"
           >
-            <RefreshCw className="w-4 h-4"  />
+            <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`}  />
           </button>
           <button
             onClick={() => setIsUploadModalOpen(true)}
@@ -231,7 +200,7 @@ export const DocumentVault = () => {
       </div>
 
       {/* Documents Grid / List */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-24">
           <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -409,9 +378,10 @@ export const DocumentVault = () => {
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirm)}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-colors"
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-colors disabled:opacity-50"
               >
-                Delete
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
@@ -422,7 +392,6 @@ export const DocumentVault = () => {
       <UploadDocumentModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onSuccess={fetchDocuments}
         clients={clients}
       />
     </div>

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { CloudUpload, File, Loader, Lock, LockOpen, Tag, X } from 'lucide-react';
-import { documentService } from '../../services/documentService';
+import { useUploadDocument } from '../../queries/useDocuments';
 import toast from 'react-hot-toast';
 
 const CATEGORIES = [
@@ -27,8 +27,8 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
     notes: '',
   });
   const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
+  const uploadMutation = useUploadDocument();
 
   if (!isOpen) return null;
 
@@ -53,39 +53,34 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
     handleFileChange(file);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.title || !form.fileUrl || !form.fileName) {
       toast.error('Please fill in all required fields and select a file.');
       return;
     }
-    setIsLoading(true);
-    try {
-      await documentService.uploadDocument({
-        ...form,
-        clientId: form.clientId ? parseInt(form.clientId, 10) : null,
-        taskId: form.taskId ? parseInt(form.taskId, 10) : null,
-      });
-      toast.success('📁 Document uploaded to vault successfully!');
-      setForm({
-        title: '',
-        fileName: '',
-        fileUrl: '',
-        fileSize: 0,
-        mimeType: 'application/pdf',
-        category: 'GENERAL',
-        clientId: '',
-        taskId: '',
-        isConfidential: false,
-        notes: '',
-      });
-      onSuccess?.();
-      onClose();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || 'Upload failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    uploadMutation.mutate({
+      ...form,
+      clientId: form.clientId ? parseInt(form.clientId, 10) : null,
+      taskId: form.taskId ? parseInt(form.taskId, 10) : null,
+    }, {
+      onSuccess: () => {
+        setForm({
+          title: '',
+          fileName: '',
+          fileUrl: '',
+          fileSize: 0,
+          mimeType: 'application/pdf',
+          category: 'GENERAL',
+          clientId: '',
+          taskId: '',
+          isConfidential: false,
+          notes: '',
+        });
+        onSuccess?.();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -249,10 +244,10 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={uploadMutation.isPending}
               className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/40 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {isLoading ? (
+              {uploadMutation.isPending ? (
                 <><Loader className="w-4 h-4 animate-spin"  /> Uploading...</>
               ) : (
                 <><CloudUpload className="w-4 h-4"  /> Upload to Vault</>
