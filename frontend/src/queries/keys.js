@@ -85,5 +85,11 @@ export const meetingKeys = {
   detail: (id) => [...meetingKeys.all, 'detail', id],
 };
 
+export const reportKeys = {
+  all: ['reports'],
+  overview: () => [...reportKeys.all, 'overview'],
+  type: (reportType, params) => [...reportKeys.all, 'type', reportType, params],
+};
+
 
 

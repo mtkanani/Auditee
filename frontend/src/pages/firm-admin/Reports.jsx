@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { PageHeader } from '../../components/common/PageHeader';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChartCard } from '../../components/common/ChartCard';
 import {
   ResponsiveContainer,
@@ -9,24 +8,17 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
-  AreaChart,
-  Area,
 } from 'recharts';
 import { Activity, Briefcase, Check, ChevronLeft, ChevronRight, CircleCheckBig, Clock, DollarSign, Download, FileText, Layers, Printer, RefreshCw, Search, SlidersVertical, TrendingUp, TriangleAlert, User, Users, X } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { getSummaryOverview, getReport, generateCustomReport, downloadReportCSV } from '../../services/reportService';
-import axiosInstance from '../../services/axiosInstance';
+import { useReportOverview, useReportData, useGenerateCustomReport, useDownloadReportCSV } from '../../queries/useReports';
+import { useFirmUsers, useFirmClients } from '../../queries/useLookups';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const Reports = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState(null);
-  const [reportData, setReportData] = useState([]);
   const [customReportData, setCustomReportData] = useState([]);
 
   const tabsContainerRef = useRef(null);
@@ -41,15 +33,40 @@ export const Reports = () => {
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
-  // Lists for dropdown filters
-  const [employees, setEmployees] = useState([]);
-  const [clients, setClients] = useState([]);
+  // Dropdown filter lookups via React Query
+  const { data: employees = [] } = useFirmUsers({ limit: 200 });
+  const { data: clients = [] } = useFirmClients({ limit: 200 });
 
   // Custom Report Builder state
   const [customEntity, setCustomEntity] = useState('tasks');
   const [customFields, setCustomFields] = useState(['id', 'taskCode', 'title', 'status', 'priority', 'clientName', 'assignees']);
-  const [customLoading, setCustomLoading] = useState(false);
+
+  // React Query hooks for reports
+  const { summary, isLoading: isOverviewLoading } = useReportOverview({
+    enabled: activeTab === 'overview',
+  });
+
+  const reportParams = useMemo(() => ({
+    dateRange,
+    employeeId: selectedEmployee,
+    clientId: selectedClient,
+    status: selectedStatus,
+    search: debouncedSearchQuery,
+  }), [dateRange, selectedEmployee, selectedClient, selectedStatus, debouncedSearchQuery]);
+
+  const { reportData, isLoading: isReportLoading, refetch: refetchReport } = useReportData(
+    activeTab,
+    reportParams,
+    { enabled: activeTab !== 'overview' && activeTab !== 'custom' }
+  );
+
+  const generateCustomReportMutation = useGenerateCustomReport();
+  const downloadReportCSVMutation = useDownloadReportCSV();
+
+  const loading = activeTab === 'overview' ? isOverviewLoading : (activeTab === 'custom' ? false : isReportLoading);
+  const customLoading = generateCustomReportMutation.isPending;
 
   // Available fields for Custom Report Builder
   const entityFieldsMap = {
@@ -95,19 +112,8 @@ export const Reports = () => {
   };
 
   useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  useEffect(() => {
     setCurrentPage(1);
-    if (activeTab === 'overview') {
-      fetchOverview();
-    } else if (activeTab === 'custom') {
-      // Custom tab doesn't auto-fetch preset
-    } else {
-      fetchActiveReport();
-    }
-  }, [activeTab, dateRange, selectedEmployee, selectedClient, selectedStatus]);
+  }, [activeTab, dateRange, selectedEmployee, selectedClient, selectedStatus, debouncedSearchQuery]);
 
   const scrollTabs = (scrollOffset) => {
     if (tabsContainerRef.current) {
@@ -115,55 +121,7 @@ export const Reports = () => {
     }
   };
 
-  const fetchInitialData = async () => {
-    try {
-      const [empRes, clientRes] = await Promise.all([
-        axiosInstance.get('/firm-admin/users').catch(() => ({ data: { data: [] } })),
-        axiosInstance.get('/firm-admin/clients').catch(() => ({ data: { data: [] } })),
-      ]);
-      setEmployees(empRes.data?.data || empRes.data?.users || []);
-      setClients(clientRes.data?.data || clientRes.data?.clients || []);
-    } catch (e) {
-      console.warn('Filter options fetch notice:', e.message);
-    }
-  };
-
-  const fetchOverview = async () => {
-    setLoading(true);
-    try {
-      const res = await getSummaryOverview();
-      if (res?.data) {
-        setSummary(res.data);
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to load summary analytics');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchActiveReport = async () => {
-    setLoading(true);
-    try {
-      const params = {
-        dateRange,
-        employeeId: selectedEmployee,
-        clientId: selectedClient,
-        status: selectedStatus,
-        search: searchQuery,
-      };
-      const res = await getReport(activeTab, params);
-      setReportData(res?.data || []);
-    } catch (err) {
-      toast.error(`Failed to load ${activeTab} report`);
-      setReportData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleRunCustomReport = async () => {
-    setCustomLoading(true);
     try {
       const config = {
         entity: customEntity,
@@ -171,13 +129,10 @@ export const Reports = () => {
         dateRange,
         status: selectedStatus,
       };
-      const res = await generateCustomReport(config);
+      const res = await generateCustomReportMutation.mutateAsync(config);
       setCustomReportData(res?.data || []);
-      toast.success('Custom report generated successfully');
-    } catch (err) {
-      toast.error('Failed to generate custom report');
-    } finally {
-      setCustomLoading(false);
+    } catch {
+      // toast error handled in useGenerateCustomReport hook
     }
   };
 
@@ -190,7 +145,7 @@ export const Reports = () => {
           dateRange,
           status: selectedStatus,
         };
-        await downloadReportCSV('custom', {}, config);
+        await downloadReportCSVMutation.mutateAsync({ reportType: 'custom', params: {}, customConfig: config });
       } else {
         const params = {
           dateRange,
@@ -198,11 +153,10 @@ export const Reports = () => {
           clientId: selectedClient,
           status: selectedStatus,
         };
-        await downloadReportCSV(activeTab, params);
+        await downloadReportCSVMutation.mutateAsync({ reportType: activeTab, params });
       }
-      toast.success('Report CSV downloaded');
-    } catch (err) {
-      toast.error('Failed to export CSV');
+    } catch {
+      // toast error handled in useDownloadReportCSV hook
     }
   };
 
@@ -216,7 +170,7 @@ export const Reports = () => {
     setSelectedClient('');
     setSelectedStatus('');
     setSearchQuery('');
-    fetchActiveReport();
+    setCurrentPage(1);
   };
 
   const reportCategories = [
@@ -468,7 +422,7 @@ export const Reports = () => {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchActiveReport()}
+                onKeyDown={(e) => e.key === 'Enter' && refetchReport()}
                 className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 text-xs placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
               {searchQuery && (
@@ -492,7 +446,7 @@ export const Reports = () => {
             </button>
 
             <button
-              onClick={fetchActiveReport}
+              onClick={() => refetchReport()}
               className="py-2 px-4 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 transition-all flex items-center gap-1.5"
             >
               <RefreshCw className="w-3.5 h-3.5"  />
