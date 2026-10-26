@@ -1,15 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Plus, Search, Filter, Video, Clock, MapPin, Users, CheckCircle, XCircle, FileText, Play } from 'lucide-react';
+import { Calendar, Plus, Search, Video, Clock, Users, CheckCircle, FileText, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
-import { useMeetings, useJoinMeeting, useUpdateMeetingStatus, useRespondInvite } from '../../queries/useMeetings';
+import { useMeetings, useJoinMeeting, useUpdateMeetingStatus } from '../../queries/useMeetings';
 import { useDebounce } from '../../hooks/useDebounce';
 import ScheduleMeetingModal from '../../components/meetings/ScheduleMeetingModal';
 import InAppVideoRoom from '../../components/meetings/InAppVideoRoom';
 import MeetingNotesEditor from '../../components/meetings/MeetingNotesEditor';
 
 export const MeetingsManagement = () => {
-  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState('');
@@ -29,7 +27,6 @@ export const MeetingsManagement = () => {
   const { meetings, isLoading } = useMeetings(filters);
   const joinMeetingMutation = useJoinMeeting();
   const updateStatusMutation = useUpdateMeetingStatus();
-  const respondInviteMutation = useRespondInvite();
 
   const handleJoinMeeting = async (meeting) => {
     try {
@@ -49,10 +46,6 @@ export const MeetingsManagement = () => {
 
   const handleCloseMeeting = (meetingId) => {
     updateStatusMutation.mutate({ id: meetingId, status: 'COMPLETED' });
-  };
-
-  const handleRespondInvite = (meetingId, status) => {
-    respondInviteMutation.mutate({ id: meetingId, status });
   };
 
   const canSchedule = true; // Allow any firm user, employee, and client to schedule meetings

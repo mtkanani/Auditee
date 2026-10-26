@@ -122,7 +122,6 @@ export const FirmTaskManagement = () => {
   };
 
   // Metrics
-  const pendingCount = tasks.filter((t) => t.status === 'PENDING').length;
   const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
   const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length;
 
@@ -485,7 +484,7 @@ export const FirmTaskManagement = () => {
       <TaskTemplatesModal
         isOpen={isTemplatesModalOpen}
         onClose={() => setIsTemplatesModalOpen(false)}
-        onSelectTemplate={(tmpl) => {
+        onSelectTemplate={() => {
           setIsTemplatesModalOpen(false);
           setIsCreateModalOpen(true);
         }}

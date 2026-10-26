@@ -101,7 +101,7 @@ export const DualPanelAssignment = ({
       setIsTaskModalOpen(false);
       setSelectedUser(null);
       setSelectedClient(null);
-    } catch (err) {
+    } catch {
       // Error handled in parent toast
     } finally {
       setIsSubmittingTask(false);

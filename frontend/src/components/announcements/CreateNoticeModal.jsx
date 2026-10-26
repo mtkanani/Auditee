@@ -37,7 +37,7 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
         priority: 'INFO',
         expiresAt: '',
       });
-    } catch (err) {
+    } catch {
       // Handled in parent
     } finally {
       setIsSubmitting(false);
