@@ -1,40 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { KanbanBoard } from '../../components/tasks/KanbanBoard';
 import { NoticeBanner } from '../../components/announcements/NoticeBanner';
 import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
 import { userService } from '../../services/userService';
+import { dashboardKeys } from '../../queries/keys';
+import { useUpdateTaskStatus } from '../../queries/useTasks';
 import { Briefcase, CircleCheckBig, Clock, SquareCheckBig } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const UserDashboard = () => {
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: dashboardRes, error } = useQuery({
+    queryKey: dashboardKeys.byRole('user'),
+    queryFn: () => userService.getDashboard(),
+  });
+  const data = dashboardRes?.data || dashboardRes;
 
-  const fetchDashboard = async () => {
-    try {
-      const res = await userService.getDashboard();
-      setData(res.data || res);
-    } catch (error) {
-      toast.error('Failed to load employee dashboard');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const updateStatusMutation = useUpdateTaskStatus({ scope: 'user' });
 
   useEffect(() => {
-    fetchDashboard();
-  }, []);
-
-  const handleStatusChange = async (taskId, newStatus) => {
-    try {
-      await userService.updateTaskStatus(taskId, newStatus);
-      toast.success('Task status updated!');
-      fetchDashboard();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update task status.');
+    if (error) {
+      toast.error('Failed to load employee dashboard');
     }
+  }, [error]);
+
+  const handleStatusChange = (taskId, newStatus) => {
+    updateStatusMutation.mutate({ taskId, status: newStatus });
   };
 
   return (

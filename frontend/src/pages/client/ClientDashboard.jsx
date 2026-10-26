@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
 import { Avatar } from '../../components/common/Avatar';
 import { clientService } from '../../services/clientService';
+import { dashboardKeys } from '../../queries/keys';
 import { NoticeBanner } from '../../components/announcements/NoticeBanner';
 import { CircleCheckBig, Clock, FileText, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -12,29 +14,29 @@ import toast from 'react-hot-toast';
 
 export const ClientDashboard = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [assignedUser, setAssignedUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const { data: dashResult, error } = useQuery({
+    queryKey: dashboardKeys.byRole('client'),
+    queryFn: async () => {
+      const [dashRes, myUserRes] = await Promise.all([
+        clientService.getDashboard(),
+        clientService.getMyUser().catch(() => null),
+      ]);
+      return {
+        dashboard: dashRes.data || dashRes,
+        assignedUser: myUserRes?.data || myUserRes?.user || null,
+      };
+    },
+  });
+
+  const data = dashResult?.dashboard;
+  const assignedUser = dashResult?.assignedUser;
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const [dashRes, myUserRes] = await Promise.all([
-          clientService.getDashboard(),
-          clientService.getMyUser().catch(() => null),
-        ]);
-        setData(dashRes.data || dashRes);
-        if (myUserRes?.data || myUserRes?.user) {
-          setAssignedUser(myUserRes.data || myUserRes.user);
-        }
-      } catch (error) {
-        toast.error('Failed to load client dashboard');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
+    if (error) {
+      toast.error('Failed to load client dashboard');
+    }
+  }, [error]);
 
   return (
     <div className="space-y-8">

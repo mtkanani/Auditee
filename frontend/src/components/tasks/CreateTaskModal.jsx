@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../common/Modal';
 import { Globe, Trash2, User, Users } from 'lucide-react';
-import { firmAdminService } from '../../services/firmAdminService';
-import { taskService } from '../../services/taskService';
+import { useFirmClients, useFirmUsers } from '../../queries/useLookups';
+import { useCreateTask } from '../../queries/useTasks';
 import toast from 'react-hot-toast';
 
 export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
-  const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
+  const { data: clients = [] } = useFirmClients({ limit: 100 }, { enabled: isOpen });
+  const { data: users = [] } = useFirmUsers({ limit: 100 }, { enabled: isOpen });
+  const createTaskMutation = useCreateTask();
 
   // Form state
   const [title, setTitle] = useState('');
@@ -20,12 +21,17 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
   const [subtasks, setSubtasks] = useState([]);
   const [subtaskInput, setSubtaskInput] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      firmAdminService.getClients({ limit: 100 }).then((res) => setClients(res.data || res.clients || []));
-      firmAdminService.getUsers({ limit: 100 }).then((res) => setUsers(res.data || res.users || []));
-    }
-  }, [isOpen]);
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setClientId('');
+    setPriority('MEDIUM');
+    setDueDate('');
+    setAssignmentScope('SINGLE');
+    setSelectedUserIds([]);
+    setSubtasks([]);
+    setSubtaskInput('');
+  };
 
   const handleAddSubtask = () => {
     if (!subtaskInput.trim()) return;
@@ -45,7 +51,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!title.trim()) {
       toast.error('Task title is required');
@@ -62,8 +68,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
       return;
     }
 
-    try {
-      await taskService.createTask({
+    createTaskMutation.mutate(
+      {
         title: title.trim(),
         description: description.trim(),
         clientId: clientId ? parseInt(clientId, 10) : null,
@@ -72,23 +78,15 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
         assignmentScope,
         assignedUserIds: selectedUserIds,
         subtasks,
-      });
-
-      toast.success('Task created and assigned successfully!');
-      onClose();
-      if (onTaskCreated) onTaskCreated();
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setClientId('');
-      setPriority('MEDIUM');
-      setDueDate('');
-      setAssignmentScope('SINGLE');
-      setSelectedUserIds([]);
-      setSubtasks([]);
-    } catch (err) {
-      toast.error(err.message || 'Failed to create task');
-    }
+      },
+      {
+        onSuccess: () => {
+          onClose();
+          if (onTaskCreated) onTaskCreated();
+          resetForm();
+        },
+      }
+    );
   };
 
   return (
@@ -291,9 +289,10 @@ export const CreateTaskModal = ({ isOpen, onClose, onTaskCreated }) => {
 
         <button
           type="submit"
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg mt-4"
+          disabled={createTaskMutation.isPending}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Create & Assign Task
+          {createTaskMutation.isPending ? 'Creating & Assigning...' : 'Create & Assign Task'}
         </button>
       </form>
     </Modal>

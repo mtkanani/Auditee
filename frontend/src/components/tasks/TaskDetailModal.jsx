@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar, CircleCheckBig, Clock, MessageSquare, Paperclip, Plus, Send, Square, SquareCheckBig, User, X } from 'lucide-react';
-import { taskService } from '../../services/taskService';
+import {
+  useTaskDetail,
+  useAddSubtask,
+  useToggleSubtask,
+  useAddComment,
+  useAddDocument,
+  useUpdateTaskStatus,
+} from '../../queries/useTasks';
 import toast from 'react-hot-toast';
 
 export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
-  const [task, setTask] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('subtasks'); // 'subtasks' | 'comments' | 'documents' | 'history'
 
   // Subtask Input
@@ -20,91 +25,87 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
   const [docName, setDocName] = useState('');
   const [docUrl, setDocUrl] = useState('');
 
-  const fetchTaskDetails = async () => {
-    if (!taskId) return;
-    setIsLoading(true);
-    try {
-      const res = await taskService.getTaskById(taskId);
-      setTask(res.data || res);
-    } catch (err) {
-      toast.error('Failed to load task details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { task, isLoading, error } = useTaskDetail(taskId, { enabled: isOpen });
+
+  const updateStatusMutation = useUpdateTaskStatus();
+  const addSubtaskMutation = useAddSubtask();
+  const toggleSubtaskMutation = useToggleSubtask();
+  const addCommentMutation = useAddComment();
+  const addDocumentMutation = useAddDocument();
 
   useEffect(() => {
-    if (isOpen && taskId) {
-      fetchTaskDetails();
+    if (error) {
+      toast.error('Failed to load task details');
     }
-  }, [isOpen, taskId]);
+  }, [error]);
 
   if (!isOpen) return null;
 
-  const handleStatusChange = async (newStatus) => {
-    try {
-      await taskService.updateTaskStatus(taskId, newStatus);
-      toast.success(`Task status updated to ${newStatus}`);
-      fetchTaskDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update task status');
-    }
+  const handleStatusChange = (newStatus) => {
+    updateStatusMutation.mutate(
+      { taskId, status: newStatus },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddSubtask = async (e) => {
+  const handleAddSubtask = (e) => {
     e.preventDefault();
     if (!newSubtaskTitle.trim()) return;
-    try {
-      await taskService.addSubtask(taskId, newSubtaskTitle);
-      toast.success('Subtask added to checklist');
-      setNewSubtaskTitle('');
-      fetchTaskDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add subtask');
-    }
+    addSubtaskMutation.mutate(
+      { taskId, title: newSubtaskTitle },
+      {
+        onSuccess: () => {
+          setNewSubtaskTitle('');
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleToggleSubtask = async (subtaskId, currentStatus) => {
-    try {
-      await taskService.toggleSubtask(taskId, subtaskId, !currentStatus);
-      fetchTaskDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update subtask');
-    }
+  const handleToggleSubtask = (subtaskId, currentStatus) => {
+    toggleSubtaskMutation.mutate(
+      { taskId, subtaskId, isCompleted: !currentStatus },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddComment = async (e) => {
+  const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    try {
-      await taskService.addComment(taskId, { comment: commentText, fileUrl: commentFileUrl });
-      toast.success('Comment posted');
-      setCommentText('');
-      setCommentFileUrl('');
-      fetchTaskDetails();
-    } catch (err) {
-      toast.error(err.message || 'Failed to post comment');
-    }
+    addCommentMutation.mutate(
+      { taskId, commentData: { comment: commentText, fileUrl: commentFileUrl } },
+      {
+        onSuccess: () => {
+          setCommentText('');
+          setCommentFileUrl('');
+        },
+      }
+    );
   };
 
-  const handleAddDocument = async (e) => {
+  const handleAddDocument = (e) => {
     e.preventDefault();
     if (!docName.trim() || !docUrl.trim()) {
       toast.error('File name and URL are required');
       return;
     }
-    try {
-      await taskService.addDocument(taskId, { fileName: docName, fileUrl: docUrl });
-      toast.success('Attachment added');
-      setDocName('');
-      setDocUrl('');
-      fetchTaskDetails();
-    } catch (err) {
-      toast.error(err.message || 'Failed to attach document');
-    }
+    addDocumentMutation.mutate(
+      { taskId, docData: { fileName: docName, fileUrl: docUrl } },
+      {
+        onSuccess: () => {
+          setDocName('');
+          setDocUrl('');
+        },
+      }
+    );
   };
 
   // Subtask Progress Calculation

@@ -1,28 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
-import { clientService } from '../../services/clientService';
+import { useClientTasks } from '../../queries/useTasks';
 import toast from 'react-hot-toast';
 
 export const ClientTasks = () => {
-  const [tasks, setTasks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { tasks, isLoading, error } = useClientTasks();
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const res = await clientService.getTasks();
-        setTasks(res.data || res.tasks || []);
-      } catch (error) {
-        toast.error('Failed to load tasks');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTasks();
-  }, []);
+    if (error) {
+      toast.error('Failed to load tasks');
+    }
+  }, [error]);
 
   const columns = [
     {
