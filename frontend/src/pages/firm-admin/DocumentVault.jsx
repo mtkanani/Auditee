@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useVaultDocuments, useDeleteDocument } from '../../queries/useDocuments';
 import { useFirmClients } from '../../queries/useLookups';
 import { useDebounce } from '../../hooks/useDebounce';
+import { Modal } from '../../components/common/Modal';
 import { UploadDocumentModal } from '../../components/documents/UploadDocumentModal';
 
 const CATEGORIES = [
@@ -357,36 +358,38 @@ export const DocumentVault = () => {
       )}
 
       {/* Delete Confirm Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-rose-400"  />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-100">Delete Document?</h3>
-                <p className="text-[11px] text-slate-400">This action cannot be undone</p>
-              </div>
+      <Modal
+        isOpen={Boolean(deleteConfirm)}
+        onClose={() => setDeleteConfirm(null)}
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-rose-400" />
             </div>
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                disabled={deleteMutation.isPending}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-colors disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-              </button>
+            <div>
+              <span className="block text-sm font-bold text-slate-100">Delete Document?</span>
+              <span className="block text-[11px] font-normal text-slate-400">This action cannot be undone</span>
             </div>
           </div>
+        }
+        maxWidth="max-w-sm"
+      >
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={() => setDeleteConfirm(null)}
+            className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => handleDelete(deleteConfirm)}
+            disabled={deleteMutation.isPending}
+            className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-colors disabled:opacity-50"
+          >
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+          </button>
         </div>
-      )}
+      </Modal>
 
       {/* Upload Modal */}
       <UploadDocumentModal

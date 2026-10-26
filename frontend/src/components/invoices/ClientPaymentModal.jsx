@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  X,
   CreditCard,
   QrCode,
   Landmark,
@@ -13,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Modal } from '../common/Modal';
 import { useBankDetails, useRecordPayment } from '../../queries/useInvoices';
 
 export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess }) => {
@@ -106,28 +106,24 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-extrabold text-slate-100">Make Online Payment</h3>
-              <p className="text-xs text-slate-400">
-                Invoice #{invoice.invoiceNumber} • Outstanding Balance: <strong className="text-rose-400">₹{Number(invoice.balanceAmount).toLocaleString('en-IN')}</strong>
-              </p>
-            </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
+            <ShieldCheck className="w-5 h-5" />
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div>
+            <span className="block text-base font-extrabold text-slate-100">Make Online Payment</span>
+            <span className="block text-xs font-normal text-slate-400">
+              Invoice #{invoice.invoiceNumber} • Outstanding Balance: <strong className="text-rose-400">₹{Number(invoice.balanceAmount).toLocaleString('en-IN')}</strong>
+            </span>
+          </div>
         </div>
+      }
+      maxWidth="max-w-xl"
+    >
 
         {/* Modal Body */}
         {paymentSuccess ? (
@@ -456,8 +452,7 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 };
 
