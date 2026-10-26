@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
@@ -6,16 +7,15 @@ import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { LeadDetailModal } from '../../components/leads/LeadDetailModal';
 import { ArrowRight, CircleCheckBig, FileText, Grid3x3, List, MessageSquare, Plus, Users } from 'lucide-react';
-import { leadService } from '../../services/leadService';
+import { useLeads, useCreateLead, useUpdateLeadStage } from '../../queries/useLeads';
 import toast from 'react-hot-toast';
 
 export const LeadManagement = () => {
-  const [leads, setLeads] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
 
   // Filters & Selected Lead
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [stageFilter, setStageFilter] = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -32,40 +32,36 @@ export const LeadManagement = () => {
   const [source, setSource] = useState('DIRECT');
   const [notes, setNotes] = useState('');
 
-  const fetchLeads = async () => {
-    setIsLoading(true);
-    try {
-      const res = await leadService.getAllLeads({ search, stage: stageFilter || undefined });
-      setLeads(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load CRM leads');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: leads = [],
+    isLoading,
+    error,
+  } = useLeads({
+    search: debouncedSearch || undefined,
+    stage: stageFilter || undefined,
+  });
 
   useEffect(() => {
-    fetchLeads();
-  }, [search, stageFilter]);
-
-  const handleStageUpdate = async (leadId, newStage) => {
-    try {
-      await leadService.updateLeadStage(leadId, newStage);
-      toast.success(`Pipeline stage updated to ${newStage}`);
-      fetchLeads();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update stage');
+    if (error) {
+      toast.error('Failed to load CRM leads');
     }
+  }, [error]);
+
+  const updateStageMutation = useUpdateLeadStage();
+  const createLeadMutation = useCreateLead();
+
+  const handleStageUpdate = (leadId, newStage) => {
+    updateStageMutation.mutate({ id: leadId, stage: newStage });
   };
 
-  const handleAddLeadSubmit = async (e) => {
+  const handleAddLeadSubmit = (e) => {
     e.preventDefault();
     if (!leadName.trim() || !email.trim()) {
       toast.error('Lead Contact Name and Email are required');
       return;
     }
-    try {
-      await leadService.createLead({
+    createLeadMutation.mutate(
+      {
         leadName: leadName.trim(),
         companyName: companyName.trim(),
         email: email.trim(),
@@ -75,20 +71,20 @@ export const LeadManagement = () => {
         estimatedValue: estimatedValue ? parseFloat(estimatedValue) : 0,
         source,
         notes: notes.trim(),
-      });
-      toast.success('New Lead added to CRM Pipeline!');
-      setIsAddModalOpen(false);
-      setLeadName('');
-      setCompanyName('');
-      setEmail('');
-      setPhone('');
-      setInterestedServices('');
-      setEstimatedValue('');
-      setNotes('');
-      fetchLeads();
-    } catch (err) {
-      toast.error(err.message || 'Failed to create lead');
-    }
+      },
+      {
+        onSuccess: () => {
+          setIsAddModalOpen(false);
+          setLeadName('');
+          setCompanyName('');
+          setEmail('');
+          setPhone('');
+          setInterestedServices('');
+          setEstimatedValue('');
+          setNotes('');
+        },
+      }
+    );
   };
 
   // Metrics calculation
@@ -313,7 +309,6 @@ export const LeadManagement = () => {
         leadId={selectedLeadId}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onRefresh={fetchLeads}
       />
 
       {/* Add New Lead Modal */}
@@ -429,9 +424,10 @@ export const LeadManagement = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={createLeadMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
           >
-            Create Lead in CRM
+            {createLeadMutation.isPending ? 'Creating Lead...' : 'Create Lead in CRM'}
           </button>
         </form>
       </Modal>

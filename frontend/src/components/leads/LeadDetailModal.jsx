@@ -1,12 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../common/Modal';
 import { Calendar, CircleCheckBig, DollarSign, FileText, Mic, Phone, Square, Trash2, User, Zap } from 'lucide-react';
-import { leadService } from '../../services/leadService';
+import {
+  useLeadDetail,
+  useUpdateLeadStage,
+  useAddCallLog,
+  useAddMeetingNote,
+  useAddProposal,
+  useConvertToClient,
+} from '../../queries/useLeads';
 import toast from 'react-hot-toast';
 
 export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
-  const [lead, setLead] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: lead, isLoading, error } = useLeadDetail(leadId, {
+    enabled: Boolean(isOpen && leadId),
+  });
+
+  const updateStageMutation = useUpdateLeadStage();
+  const addCallLogMutation = useAddCallLog();
+  const addMeetingNoteMutation = useAddMeetingNote();
+  const addProposalMutation = useAddProposal();
+  const convertToClientMutation = useConvertToClient();
+
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'calls' | 'meetings' | 'proposals'
 
   // Form states
@@ -146,37 +161,24 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const fetchLeadDetails = async () => {
-    if (!leadId) return;
-    setIsLoading(true);
-    try {
-      const res = await leadService.getLeadById(leadId);
-      setLead(res.data);
-    } catch (err) {
-      toast.error('Failed to load lead details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (isOpen && leadId) {
-      fetchLeadDetails();
+    if (error) {
+      toast.error('Failed to load lead details');
     }
-  }, [isOpen, leadId]);
+  }, [error]);
 
-  const handleStageChange = async (newStage) => {
-    try {
-      await leadService.updateLeadStage(leadId, newStage);
-      toast.success(`Pipeline stage updated to ${newStage}`);
-      fetchLeadDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update stage');
-    }
+  const handleStageChange = (newStage) => {
+    updateStageMutation.mutate(
+      { id: leadId, stage: newStage },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddCallSubmit = async (e) => {
+  const handleAddCallSubmit = (e) => {
     e.preventDefault();
     if (!callSummary.trim() && !audioBase64) {
       toast.error('Please enter call notes or record a voice note');
@@ -188,72 +190,79 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
       finalSummary = `🎙️ [Voice Note] ${finalSummary}||AUDIO:${audioBase64}`;
     }
 
-    try {
-      await leadService.addCallLog(leadId, {
-        callSummary: finalSummary,
-        durationMinutes: parseInt(callDuration, 10),
-        followUpDate: callFollowUp || null,
-      });
-      toast.success('Call log & Voice note audio saved!');
-      setCallSummary('');
-      setCallFollowUp('');
-      setAudioBase64(null);
-      setAudioBlobUrl(null);
-      fetchLeadDetails();
-    } catch (err) {
-      toast.error(err.message || 'Failed to log call');
-    }
+    addCallLogMutation.mutate(
+      {
+        id: leadId,
+        data: {
+          callSummary: finalSummary,
+          durationMinutes: parseInt(callDuration, 10),
+          followUpDate: callFollowUp || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success('Call log & Voice note audio saved!');
+          setCallSummary('');
+          setCallFollowUp('');
+          setAudioBase64(null);
+          setAudioBlobUrl(null);
+        },
+      }
+    );
   };
 
-  const handleAddMeetingSubmit = async (e) => {
+  const handleAddMeetingSubmit = (e) => {
     e.preventDefault();
     if (!meetingTitle.trim() || !meetingNotes.trim()) return;
-    try {
-      await leadService.addMeetingNote(leadId, {
-        meetingTitle: meetingTitle.trim(),
-        meetingNotes: meetingNotes.trim(),
-        attendees: meetingAttendees.trim(),
-      });
-      toast.success('Meeting notes saved!');
-      setMeetingTitle('');
-      setMeetingNotes('');
-      setMeetingAttendees('');
-      fetchLeadDetails();
-    } catch (err) {
-      toast.error(err.message || 'Failed to save meeting notes');
-    }
+    addMeetingNoteMutation.mutate(
+      {
+        id: leadId,
+        data: {
+          meetingTitle: meetingTitle.trim(),
+          meetingNotes: meetingNotes.trim(),
+          attendees: meetingAttendees.trim(),
+        },
+      },
+      {
+        onSuccess: () => {
+          setMeetingTitle('');
+          setMeetingNotes('');
+          setMeetingAttendees('');
+        },
+      }
+    );
   };
 
-  const handleAddProposalSubmit = async (e) => {
+  const handleAddProposalSubmit = (e) => {
     e.preventDefault();
     if (!proposalTitle.trim() || !proposedFee) return;
-    try {
-      await leadService.addProposal(leadId, {
-        proposalTitle: proposalTitle.trim(),
-        proposedFee: parseFloat(proposedFee),
-        billingFrequency,
-        scopeDescription: proposalScope.trim(),
-      });
-      toast.success('Proposal quotation attached!');
-      setProposalTitle('');
-      setProposedFee('');
-      setProposalScope('');
-      fetchLeadDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to attach proposal');
-    }
+    addProposalMutation.mutate(
+      {
+        id: leadId,
+        data: {
+          proposalTitle: proposalTitle.trim(),
+          proposedFee: parseFloat(proposedFee),
+          billingFrequency,
+          scopeDescription: proposalScope.trim(),
+        },
+      },
+      {
+        onSuccess: () => {
+          setProposalTitle('');
+          setProposedFee('');
+          setProposalScope('');
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleConvertToClient = async () => {
-    try {
-      const res = await leadService.convertToClient(leadId);
-      toast.success('⚡ Lead converted to Master Client successfully!');
-      fetchLeadDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to convert lead');
-    }
+  const handleConvertToClient = () => {
+    convertToClientMutation.mutate(leadId, {
+      onSuccess: () => {
+        if (onRefresh) onRefresh();
+      },
+    });
   };
 
   if (!isOpen) return null;
@@ -309,10 +318,11 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
               {lead.stage !== 'WON' ? (
                 <button
                   onClick={handleConvertToClient}
-                  className="w-full sm:w-auto py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center justify-center gap-1.5"
+                  disabled={convertToClientMutation.isPending}
+                  className="w-full sm:w-auto py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg flex items-center justify-center gap-1.5"
                 >
                   <Zap className="w-4 h-4"  />
-                  <span>Convert to Client</span>
+                  <span>{convertToClientMutation.isPending ? 'Converting...' : 'Convert to Client'}</span>
                 </button>
               ) : (
                 <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold flex items-center gap-1">
@@ -470,9 +480,10 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                   </div>
                   <button
                     type="submit"
-                    className="py-2 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 flex items-center gap-1.5"
+                    disabled={addCallLogMutation.isPending}
+                    className="py-2 px-5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-indigo-500/20 flex items-center gap-1.5"
                   >
-                    <span>Save Call Log</span>
+                    <span>{addCallLogMutation.isPending ? 'Saving Call...' : 'Save Call Log'}</span>
                   </button>
                 </div>
               </form>
@@ -566,9 +577,10 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                 />
                 <button
                   type="submit"
-                  className="py-1.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg"
+                  disabled={addMeetingNoteMutation.isPending}
+                  className="py-1.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg"
                 >
-                  Save Meeting Notes
+                  {addMeetingNoteMutation.isPending ? 'Saving Notes...' : 'Save Meeting Notes'}
                 </button>
               </form>
 
@@ -625,9 +637,10 @@ export const LeadDetailModal = ({ leadId, isOpen, onClose, onRefresh }) => {
                 />
                 <button
                   type="submit"
-                  className="py-1.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg"
+                  disabled={addProposalMutation.isPending}
+                  className="py-1.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg"
                 >
-                  Save & Update Stage to PROPOSAL SENT
+                  {addProposalMutation.isPending ? 'Saving Proposal...' : 'Save & Update Stage to PROPOSAL SENT'}
                 </button>
               </form>
 

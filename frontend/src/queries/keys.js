@@ -48,4 +48,12 @@ export const complianceKeys = {
   list: (filters) => [...complianceKeys.lists(), filters],
 };
 
+export const leadKeys = {
+  all: ['leads'],
+  lists: () => [...leadKeys.all, 'list'],
+  list: (filters) => [...leadKeys.lists(), filters],
+  detail: (id) => [...leadKeys.all, 'detail', id],
+};
+
+
 
