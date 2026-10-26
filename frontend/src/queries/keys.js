@@ -70,5 +70,13 @@ export const announcementKeys = {
   analytics: (id) => [...announcementKeys.all, 'analytics', id],
 };
 
+export const attendanceKeys = {
+  all: ['attendance'],
+  today: () => [...attendanceKeys.all, 'today'],
+  myLogs: (params) => [...attendanceKeys.all, 'my-logs', params],
+  firmReport: (params) => [...attendanceKeys.all, 'firm-report', params],
+  geofence: () => [...attendanceKeys.all, 'geofence'],
+};
+
 
 

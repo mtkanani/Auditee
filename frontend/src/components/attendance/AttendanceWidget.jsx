@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, List, Loader, LogIn, LogOut, MapPin, Wifi } from 'lucide-react';
-import { attendanceService } from '../../services/attendanceService';
-import toast from 'react-hot-toast';
+import { useTodayAttendance, useCheckIn, useCheckOut } from '../../queries/useAttendance';
 
 const getTimeString = () =>
   new Date().toLocaleTimeString('en-IN', {
@@ -35,9 +34,11 @@ const formatDuration = (hours) => {
 };
 
 export const AttendanceWidget = () => {
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const { status, isLoading: loading } = useTodayAttendance();
+  const checkInMutation = useCheckIn();
+  const checkOutMutation = useCheckOut();
+  const actionLoading = checkInMutation.isPending || checkOutMutation.isPending;
+
   const [currentTime, setCurrentTime] = useState(getTimeString());
   const [, setTick] = useState(0);
 
@@ -49,21 +50,6 @@ export const AttendanceWidget = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const fetchStatus = useCallback(async () => {
-    try {
-      const res = await attendanceService.getTodayStatus();
-      setStatus(res.data || res);
-    } catch (err) {
-      console.error('Attendance status error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStatus();
-  }, [fetchStatus]);
 
   // Calculate live running time for the open session
   const getLiveSessionTime = () => {
@@ -89,43 +75,32 @@ export const AttendanceWidget = () => {
     });
 
   const handleCheckIn = async () => {
-    setActionLoading(true);
     try {
       const coords = await getCoordinates();
-      await attendanceService.checkIn({
+      await checkInMutation.mutateAsync({
         lat: coords.lat,
         lng: coords.lng,
         location: coords.lat
           ? `GPS (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`
           : 'Web Verified Location',
       });
-      toast.success('🟢 Checked In successfully!');
-      fetchStatus();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || err?.message || 'Check-in failed');
-    } finally {
-      setActionLoading(false);
+    } catch {
+      // toast handled in mutation
     }
   };
 
   const handleCheckOut = async () => {
-    setActionLoading(true);
     try {
       const coords = await getCoordinates();
-      const res = await attendanceService.checkOut({
+      await checkOutMutation.mutateAsync({
         lat: coords.lat,
         lng: coords.lng,
         location: coords.lat
           ? `GPS (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`
           : 'Web Verified Location',
       });
-      const hrs = res?.data?.workingHours || res?.workingHours || 0;
-      toast.success(`🔴 Checked Out! Session ended.`);
-      fetchStatus();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || err?.message || 'Check-out failed');
-    } finally {
-      setActionLoading(false);
+    } catch {
+      // toast handled in mutation
     }
   };
 

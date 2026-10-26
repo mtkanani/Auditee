@@ -1,13 +1,12 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Bell, ChevronDown, CircleCheckBig, LogOut, MapPin, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Avatar } from './Avatar';
 import { formatRoleName } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
-import { attendanceService } from '../../services/attendanceService';
+import { useTodayAttendance, useCheckIn, useCheckOut } from '../../queries/useAttendance';
 import { usePendingLeaveRequests } from '../../queries/useLeave';
-import toast from 'react-hot-toast';
 
 const LeaveAdminDrawer = lazy(() => import('../leave/LeaveAdminDrawer').then((m) => ({ default: m.LeaveAdminDrawer })));
 const ApplyLeaveModal = lazy(() => import('../leave/ApplyLeaveModal').then((m) => ({ default: m.ApplyLeaveModal })));
@@ -20,10 +19,6 @@ export const Navbar = ({ onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // Attendance Widget State
-  const [attendanceStatus, setAttendanceStatus] = useState(null);
-  const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
-
   // Leave Widget State
   const [isLeaveDrawerOpen, setIsLeaveDrawerOpen] = useState(false);
   const [isApplyLeaveModalOpen, setIsApplyLeaveModalOpen] = useState(false);
@@ -33,6 +28,13 @@ export const Navbar = ({ onMenuClick }) => {
   const { data: pendingLeaveData } = usePendingLeaveRequests({ enabled: isLeaveAdmin });
   const pendingLeaveCount = pendingLeaveData?.count ?? pendingLeaveData?.pendingRequests?.length ?? 0;
 
+  // Attendance Widget Hooks
+  const isAttendanceEligible = Boolean(user && user.role !== 'SUPER_ADMIN' && user.role !== 'CLIENT');
+  const { status: attendanceStatus } = useTodayAttendance({ enabled: isAttendanceEligible });
+  const checkInMutation = useCheckIn();
+  const checkOutMutation = useCheckOut();
+  const isAttendanceLoading = checkInMutation.isPending || checkOutMutation.isPending;
+
   // Sample system notifications
   const [notifications] = useState([
     { id: 1, title: 'New Work Request', desc: 'ABC Pvt Ltd submitted GST filing request', time: '5m ago' },
@@ -40,28 +42,13 @@ export const Navbar = ({ onMenuClick }) => {
     { id: 3, title: 'Compliance Reminder', desc: 'Quarterly TDS Return due in 3 days', time: '3h ago' },
   ]);
 
-  const fetchAttendanceStatus = async () => {
-    if (!user || user.role === 'SUPER_ADMIN') return;
-    try {
-      const res = await attendanceService.getTodayStatus();
-      setAttendanceStatus(res.data);
-    } catch (err) {
-      console.log('Error fetching today attendance status:', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchAttendanceStatus();
-  }, [user]);
-
   const handleGPSCheckIn = async () => {
-    setIsAttendanceLoading(true);
     const getCoordinates = () =>
       new Promise((resolve) => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            (err) => resolve({ lat: null, lng: null })
+            () => resolve({ lat: null, lng: null })
           );
         } else {
           resolve({ lat: null, lng: null });
@@ -70,28 +57,23 @@ export const Navbar = ({ onMenuClick }) => {
 
     try {
       const coords = await getCoordinates();
-      await attendanceService.checkIn({
+      await checkInMutation.mutateAsync({
         lat: coords.lat,
         lng: coords.lng,
         location: coords.lat ? `GPS (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})` : 'Web Verified Location',
       });
-      toast.success('🟢 Checked In successfully with GPS location!');
-      fetchAttendanceStatus();
-    } catch (err) {
-      toast.error(err.message || 'Failed to Check In');
-    } finally {
-      setIsAttendanceLoading(false);
+    } catch {
+      // toast handled in mutation
     }
   };
 
   const handleGPSCheckOut = async () => {
-    setIsAttendanceLoading(true);
     const getCoordinates = () =>
       new Promise((resolve) => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            (err) => resolve({ lat: null, lng: null })
+            () => resolve({ lat: null, lng: null })
           );
         } else {
           resolve({ lat: null, lng: null });
@@ -100,17 +82,13 @@ export const Navbar = ({ onMenuClick }) => {
 
     try {
       const coords = await getCoordinates();
-      const res = await attendanceService.checkOut({
+      await checkOutMutation.mutateAsync({
         lat: coords.lat,
         lng: coords.lng,
         location: coords.lat ? `GPS (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})` : 'Web Verified Location',
       });
-      toast.success(`🔴 Checked Out! Total Working Hours: ${res.data?.workingHours || 0} hrs`);
-      fetchAttendanceStatus();
-    } catch (err) {
-      toast.error(err.message || 'Failed to Check Out');
-    } finally {
-      setIsAttendanceLoading(false);
+    } catch {
+      // toast handled in mutation
     }
   };
 
