@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, Video, Users, MapPin, AlertCircle } from 'lucide-react';
+import { X, Calendar, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { meetingApi } from '../../api/meetingApi';
+import { useScheduleMeeting } from '../../queries/useMeetings';
 
 export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
   const [formData, setFormData] = useState({
@@ -20,46 +20,39 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
     participantEmail: '',
   });
 
-  const [loading, setLoading] = useState(false);
+  const scheduleMeetingMutation = useScheduleMeeting();
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.title.trim()) {
       toast.error('Please enter a meeting title.');
       return;
     }
 
-    setLoading(true);
+    const startTimeStr = formData.startTime || '10:00';
+    const endTimeStr = formData.endTime || '11:00';
 
-    try {
-      const startTimeStr = formData.startTime || '10:00';
-      const endTimeStr = formData.endTime || '11:00';
+    const startDateTime = new Date(`${formData.meetingDate}T${startTimeStr}:00`);
+    const endDateTime = new Date(`${formData.meetingDate}T${endTimeStr}:00`);
 
-      const startDateTime = new Date(`${formData.meetingDate}T${startTimeStr}:00`);
-      const endDateTime = new Date(`${formData.meetingDate}T${endTimeStr}:00`);
+    const participants = formData.participantEmail
+      ? formData.participantEmail.split(',').map((email) => ({ email: email.trim() }))
+      : [];
 
-      const participants = formData.participantEmail
-        ? formData.participantEmail.split(',').map((email) => ({ email: email.trim() }))
-        : [];
-
-      await meetingApi.schedule({
-        ...formData,
-        meetingDate: startDateTime.toISOString(),
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
-        participants,
-      });
-
-      toast.success('Meeting scheduled successfully!');
-      onRefresh();
-      onClose();
-    } catch (err) {
-      toast.error(err.message || 'Failed to schedule meeting.');
-    } finally {
-      setLoading(false);
-    }
+    scheduleMeetingMutation.mutate({
+      ...formData,
+      meetingDate: startDateTime.toISOString(),
+      startTime: startDateTime.toISOString(),
+      endTime: endDateTime.toISOString(),
+      participants,
+    }, {
+      onSuccess: () => {
+        onRefresh?.();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -262,11 +255,11 @@ export const ScheduleMeetingModal = ({ isOpen, onClose, onRefresh }) => {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={scheduleMeetingMutation.isPending}
               className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
-              <span>{loading ? 'Scheduling...' : 'Schedule Meeting'}</span>
+              <span>{scheduleMeetingMutation.isPending ? 'Scheduling...' : 'Schedule Meeting'}</span>
             </button>
           </div>
         </form>

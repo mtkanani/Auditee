@@ -78,5 +78,12 @@ export const attendanceKeys = {
   geofence: () => [...attendanceKeys.all, 'geofence'],
 };
 
+export const meetingKeys = {
+  all: ['meetings'],
+  lists: () => [...meetingKeys.all, 'list'],
+  list: (filters) => [...meetingKeys.lists(), filters],
+  detail: (id) => [...meetingKeys.all, 'detail', id],
+};
+
 
 

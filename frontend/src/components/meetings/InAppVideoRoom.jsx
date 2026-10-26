@@ -3,10 +3,11 @@ import { Video, VideoOff, Mic, MicOff, Monitor, Hand, PhoneOff, Users, Shield, V
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import axiosInstance from '../../services/axiosInstance';
-import meetingApi from '../../api/meetingApi';
+import { useInviteParticipant } from '../../queries/useMeetings';
 
 export const InAppVideoRoom = ({ meeting, onClose }) => {
   const { user } = useAuth();
+  const inviteMutation = useInviteParticipant();
 
   // Media streams & video element references
   const localVideoRef = useRef(null);
@@ -116,10 +117,13 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
 
   const handleSendLiveInvite = async (person) => {
     try {
-      await meetingApi.inviteParticipant(meeting.id, {
-        email: person.email,
-        userId: person.type === 'USER' ? person.id : undefined,
-        clientId: person.type === 'CLIENT' ? person.id : undefined,
+      await inviteMutation.mutateAsync({
+        id: meeting.id,
+        participantData: {
+          email: person.email,
+          userId: person.type === 'USER' ? person.id : undefined,
+          clientId: person.type === 'CLIENT' ? person.id : undefined,
+        },
       });
 
       toast.success(`Live meeting invitation sent to ${person.name} (${person.email})!`, { icon: '📩' });
@@ -136,8 +140,8 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
           isMutedByHost: false,
         },
       ]);
-    } catch (err) {
-      toast.error(err.message || 'Failed to send invitation.');
+    } catch {
+      // toast handled in mutation
     }
   };
 
