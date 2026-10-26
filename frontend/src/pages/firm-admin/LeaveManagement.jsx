@@ -3,6 +3,8 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { CardSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import { ApplyLeaveModal } from '../../components/leave/ApplyLeaveModal';
 import { ConfigureLeavePolicyModal } from '../../components/leave/ConfigureLeavePolicyModal';
 import { AdjustEmployeeLeaveModal } from '../../components/leave/AdjustEmployeeLeaveModal';
@@ -428,30 +430,37 @@ export const LeaveManagement = () => {
             <span>Firm Approved Leave Calendar Grid</span>
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {calendarEvents.map((ev) => (
-              <div key={ev.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-slate-100 text-xs">
-                    {ev.user?.firstName} {ev.user?.lastName}
-                  </span>
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    APPROVED
-                  </span>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          ) : calendarEvents.length === 0 ? (
+            <EmptyState
+              title="No Approved Employee Leaves"
+              description="No approved employee leaves scheduled for this month."
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {calendarEvents.map((ev) => (
+                <div key={ev.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-slate-100 text-xs">
+                      {ev.user?.firstName} {ev.user?.lastName}
+                    </span>
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      APPROVED
+                    </span>
+                  </div>
+                  <p className="text-xs text-amber-400 font-bold">
+                    📅 {new Date(ev.startDate).toLocaleDateString()} to {new Date(ev.endDate).toLocaleDateString()}
+                  </p>
+                  <p className="text-xs text-slate-400 line-clamp-2">Reason: {ev.reason}</p>
                 </div>
-                <p className="text-xs text-amber-400 font-bold">
-                  📅 {new Date(ev.startDate).toLocaleDateString()} to {new Date(ev.endDate).toLocaleDateString()}
-                </p>
-                <p className="text-xs text-slate-400 line-clamp-2">Reason: {ev.reason}</p>
-              </div>
-            ))}
-
-            {calendarEvents.length === 0 && (
-              <div className="col-span-3 text-center py-12 text-xs text-slate-500">
-                No approved employee leaves scheduled for this month.
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

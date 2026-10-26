@@ -6,6 +6,8 @@ import { DataTable } from '../../components/common/DataTable';
 import { Pagination } from '../../components/common/Pagination';
 import { StatsCard } from '../../components/common/StatsCard';
 import { Modal } from '../../components/common/Modal';
+import { CardSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskTemplatesModal } from '../../components/tasks/TaskTemplatesModal';
@@ -342,7 +344,17 @@ export const FirmTaskManagement = () => {
 
       {/* VIEW 1: KANBAN BOARD */}
       {activeTab === 'kanban' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 min-h-[60vh]">
+                <CardSkeleton />
+                <CardSkeleton />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {['PENDING', 'IN_PROGRESS', 'UNDER_REVIEW', 'COMPLETED'].map((colStatus) => {
             const colTasks = tasksByStatus[colStatus] || [];
             return (
@@ -403,7 +415,7 @@ export const FirmTaskManagement = () => {
             );
           })}
         </div>
-      )}
+      ))}
 
       {/* VIEW 2: TABLE VIEW */}
       {activeTab === 'table' && (
@@ -467,8 +479,11 @@ export const FirmTaskManagement = () => {
             ))}
 
             {clientRequests.length === 0 && (
-              <div className="col-span-2 p-12 text-center text-sm text-slate-500 bg-slate-900/60 rounded-2xl border border-slate-800">
-                No pending client work requests. When clients submit work items from their portal, they will appear here.
+              <div className="col-span-2">
+                <EmptyState
+                  title="No Pending Work Requests"
+                  description="When clients submit work items from their portal, they will appear here."
+                />
               </div>
             )}
           </div>

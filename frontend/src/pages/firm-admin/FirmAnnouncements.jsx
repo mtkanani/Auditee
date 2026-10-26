@@ -3,6 +3,8 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { CreateNoticeModal } from '../../components/announcements/CreateNoticeModal';
 import { useAdminAnnouncements, useCreateNotice, useDeleteNotice } from '../../queries/useAnnouncements';
 import { useConfirm } from '../../components/common/ConfirmProvider';
+import { CardSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CircleCheckBig, Clock, Plus, Radio, Trash2, TriangleAlert, Users } from 'lucide-react';
 
@@ -49,15 +51,17 @@ export const FirmAnnouncements = () => {
       {/* Notice Feed List */}
       <div className="space-y-4">
         {isLoading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading firm notices...</div>
-        ) : notices.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500 space-y-2">
-            <Radio className="w-10 h-10 mx-auto text-slate-600"  />
-            <p className="font-semibold text-slate-300">No active notice broadcasts yet.</p>
-            <p className="text-xs text-slate-500">
-              Click "New Broadcast Notice" above to publish a firm-wide notice to all staff members.
-            </p>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
+        ) : notices.length === 0 ? (
+          <EmptyState
+            icon={Radio}
+            title="No active notice broadcasts yet"
+            description="Click 'New Broadcast Notice' above to publish a firm-wide notice to all staff members."
+          />
         ) : (
           notices.map((notice) => {
             const isExpanded = expandedNoticeId === notice.id;

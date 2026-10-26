@@ -3,6 +3,8 @@ import { Calendar, Plus, Search, Video, Clock, Users, CheckCircle, FileText, Pla
 import toast from 'react-hot-toast';
 import { useMeetings, useJoinMeeting, useUpdateMeetingStatus } from '../../queries/useMeetings';
 import { useDebounce } from '../../hooks/useDebounce';
+import { CardSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import ScheduleMeetingModal from '../../components/meetings/ScheduleMeetingModal';
 import InAppVideoRoom from '../../components/meetings/InAppVideoRoom';
 import MeetingNotesEditor from '../../components/meetings/MeetingNotesEditor';
@@ -132,11 +134,16 @@ export const MeetingsManagement = () => {
 
       {/* Meetings Grid Cards */}
       {isLoading ? (
-        <div className="p-12 text-center text-slate-500 text-xs">Loading meetings...</div>
-      ) : meetings.length === 0 ? (
-        <div className="p-12 text-center bg-slate-900/40 border border-slate-800/60 rounded-2xl text-slate-400 text-xs">
-          No meetings found. {canSchedule && 'Click "Schedule Meeting" to create one!'}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
+      ) : meetings.length === 0 ? (
+        <EmptyState
+          title="No meetings found"
+          description={canSchedule ? 'Click "Schedule Meeting" to create one!' : 'There are no scheduled meetings at this time.'}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {meetings.map((meeting) => {

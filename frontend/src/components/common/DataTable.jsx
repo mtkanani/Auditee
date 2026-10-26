@@ -1,12 +1,13 @@
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Skeleton } from './Skeleton';
+import { TableSkeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
 
 export const DataTable = ({
   columns = [],
   data = [],
   isLoading = false,
+  emptyState,
   sortBy,
   sortOrder,
   onSort,
@@ -14,18 +15,11 @@ export const DataTable = ({
   emptySubtext = 'Try refining your search or add a new record.',
 }) => {
   if (isLoading) {
-    return (
-      <div className="w-full p-4 space-y-3">
-        <Skeleton className="h-10 w-full rounded-xl" />
-        <Skeleton className="h-14 w-full rounded-xl" />
-        <Skeleton className="h-14 w-full rounded-xl" />
-        <Skeleton className="h-14 w-full rounded-xl" />
-      </div>
-    );
+    return <TableSkeleton rows={6} cols={columns.length || 5} />;
   }
 
   if (!data || data.length === 0) {
-    return <EmptyState title={emptyMessage} description={emptySubtext} />;
+    return emptyState ?? <EmptyState title={emptyMessage} description={emptySubtext} />;
   }
 
   return (

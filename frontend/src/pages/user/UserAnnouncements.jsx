@@ -1,6 +1,8 @@
 import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useUserAnnouncements, useAcknowledgeNotice } from '../../queries/useAnnouncements';
+import { CardSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import { motion } from 'framer-motion';
 import { CircleCheckBig, Clock, Radio, TriangleAlert } from 'lucide-react';
 
@@ -21,15 +23,17 @@ export const UserAnnouncements = () => {
 
       <div className="space-y-4">
         {isLoading ? (
-          <div className="p-8 text-center text-sm text-slate-500">Loading notices...</div>
-        ) : notices.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500 space-y-2">
-            <Radio className="w-10 h-10 mx-auto text-slate-600"  />
-            <p className="font-semibold text-slate-300">No firm notices published yet.</p>
-            <p className="text-xs text-slate-500">
-              When firm admins broadcast announcements, they will appear here.
-            </p>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
+        ) : notices.length === 0 ? (
+          <EmptyState
+            icon={Radio}
+            title="No firm notices published yet"
+            description="When firm admins broadcast announcements, they will appear here."
+          />
         ) : (
           notices.map((notice) => (
             <motion.div
