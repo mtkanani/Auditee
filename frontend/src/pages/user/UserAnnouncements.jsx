@@ -1,38 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
-import { announcementService } from '../../services/announcementService';
+import { useUserAnnouncements, useAcknowledgeNotice } from '../../queries/useAnnouncements';
 import { motion } from 'framer-motion';
 import { CircleCheckBig, Clock, Radio, TriangleAlert } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export const UserAnnouncements = () => {
-  const [notices, setNotices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { notices, isLoading } = useUserAnnouncements();
+  const acknowledgeNoticeMutation = useAcknowledgeNotice();
 
-  const fetchNotices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await announcementService.getUserNotices();
-      setNotices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load firm notices');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotices();
-  }, []);
-
-  const handleAcknowledge = async (id) => {
-    try {
-      await announcementService.acknowledgeNotice(id);
-      toast.success('Notice acknowledged successfully!');
-      fetchNotices();
-    } catch (err) {
-      toast.error(err.message || 'Failed to acknowledge notice');
-    }
+  const handleAcknowledge = (id) => {
+    acknowledgeNoticeMutation.mutate(id);
   };
 
   return (
@@ -132,7 +109,8 @@ export const UserAnnouncements = () => {
                 ) : (
                   <button
                     onClick={() => handleAcknowledge(notice.id)}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
+                    disabled={acknowledgeNoticeMutation.isPending}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all disabled:opacity-50"
                   >
                     <CircleCheckBig className="w-4 h-4"  />
                     <span>Acknowledge & Mark Read</span>

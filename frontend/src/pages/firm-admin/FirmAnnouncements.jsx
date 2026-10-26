@@ -1,53 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { CreateNoticeModal } from '../../components/announcements/CreateNoticeModal';
-import { announcementService } from '../../services/announcementService';
+import { useAdminAnnouncements, useCreateNotice, useDeleteNotice } from '../../queries/useAnnouncements';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, CircleCheckBig, Clock, Plus, Radio, Trash2, TriangleAlert, Users } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export const FirmAnnouncements = () => {
-  const [notices, setNotices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { notices, isLoading } = useAdminAnnouncements();
+  const createNoticeMutation = useCreateNotice();
+  const deleteNoticeMutation = useDeleteNotice();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedNoticeId, setExpandedNoticeId] = useState(null);
 
-  const fetchNotices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await announcementService.getAdminNotices();
-      setNotices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load firm notices');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotices();
-  }, []);
-
   const handleCreateNotice = async (noticeData) => {
-    try {
-      await announcementService.createNotice(noticeData);
-      toast.success('Notice broadcast created successfully!');
-      fetchNotices();
-    } catch (err) {
-      toast.error(err.message || 'Failed to create notice');
-      throw err;
-    }
+    await createNoticeMutation.mutateAsync(noticeData);
   };
 
-  const handleDeleteNotice = async (id) => {
+  const handleDeleteNotice = (id) => {
     if (!window.confirm('Are you sure you want to delete this notice broadcast?')) return;
-    try {
-      await announcementService.deleteNotice(id);
-      toast.success('Notice deleted!');
-      fetchNotices();
-    } catch (err) {
-      toast.error(err.message || 'Failed to delete notice');
-    }
+    deleteNoticeMutation.mutate(id);
   };
 
   return (
@@ -139,7 +110,8 @@ export const FirmAnnouncements = () => {
                     </div>
                     <button
                       onClick={() => handleDeleteNotice(notice.id)}
-                      className="p-2 rounded-xl text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition-colors"
+                      disabled={deleteNoticeMutation.isPending}
+                      className="p-2 rounded-xl text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition-colors disabled:opacity-50"
                       title="Delete Notice"
                     >
                       <Trash2 className="w-4 h-4"  />

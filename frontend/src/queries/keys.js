@@ -61,5 +61,14 @@ export const documentKeys = {
   list: (scope, filters) => [...documentKeys.lists(), scope, filters], // scope: 'firm' | 'client' | 'user'
 };
 
+export const announcementKeys = {
+  all: ['announcements'],
+  lists: () => [...announcementKeys.all, 'list'],
+  admin: () => [...announcementKeys.lists(), 'admin'],
+  user: () => [...announcementKeys.lists(), 'user'],
+  detail: (id) => [...announcementKeys.all, 'detail', id],
+  analytics: (id) => [...announcementKeys.all, 'analytics', id],
+};
+
 
 
