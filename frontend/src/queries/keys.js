@@ -31,3 +31,14 @@ export const invoiceKeys = {
   detail: (id) => [...invoiceKeys.all, 'detail', id],
   bankDetails: () => [...invoiceKeys.all, 'bank-details'],
 };
+
+export const leaveKeys = {
+  all: ['leave'],
+  my: () => [...leaveKeys.all, 'my'],
+  pending: () => [...leaveKeys.all, 'pending'],
+  firmRequests: () => [...leaveKeys.all, 'firm-requests'],
+  calendar: (params) => [...leaveKeys.all, 'calendar', params],
+  policy: () => [...leaveKeys.all, 'policy'],
+  balances: () => [...leaveKeys.all, 'balances'],
+};
+

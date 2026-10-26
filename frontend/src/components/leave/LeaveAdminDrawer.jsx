@@ -1,42 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Drawer } from '../common/Drawer';
 import { Calendar, CircleCheckBig, CircleX } from 'lucide-react';
-import { leaveService } from '../../services/leaveService';
-import toast from 'react-hot-toast';
+import { usePendingLeaveRequests, useReviewLeave } from '../../queries/useLeave';
 
 export const LeaveAdminDrawer = ({ isOpen, onClose, onRefresh }) => {
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [remarksInput, setRemarksInput] = useState({});
 
-  const fetchPending = async () => {
-    setIsLoading(true);
-    try {
-      const res = await leaveService.getPendingRequests();
-      setPendingRequests(res.data?.pendingRequests || []);
-    } catch (err) {
-      console.log('Error fetching pending leave requests:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: pendingData, isLoading } = usePendingLeaveRequests({ enabled: isOpen });
+  const pendingRequests = pendingData?.pendingRequests || [];
+  const reviewLeaveMutation = useReviewLeave();
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchPending();
-    }
-  }, [isOpen]);
-
-  const handleReview = async (id, status) => {
+  const handleReview = (id, status) => {
     const remarks = remarksInput[id] || '';
-    try {
-      await leaveService.reviewLeave(id, status, remarks);
-      toast.success(`Leave request ${status.toLowerCase()}!`);
-      fetchPending();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || `Failed to ${status.toLowerCase()} leave`);
-    }
+    reviewLeaveMutation.mutate(
+      { id, status, adminRemarks: remarks },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
   return (
@@ -103,14 +86,16 @@ export const LeaveAdminDrawer = ({ isOpen, onClose, onRefresh }) => {
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={() => handleReview(item.id, 'APPROVED')}
-                  className="py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md"
+                  disabled={reviewLeaveMutation.isPending}
+                  className="py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md"
                 >
                   <CircleCheckBig size="1em" /> Approve Leave
                 </button>
 
                 <button
                   onClick={() => handleReview(item.id, 'REJECTED')}
-                  className="py-1.5 rounded-xl bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/20 font-bold text-xs flex items-center justify-center gap-1"
+                  disabled={reviewLeaveMutation.isPending}
+                  className="py-1.5 rounded-xl bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 disabled:opacity-50 border border-rose-500/20 font-bold text-xs flex items-center justify-center gap-1"
                 >
                   <CircleX size="1em" /> Reject Leave
                 </button>

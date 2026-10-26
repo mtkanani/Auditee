@@ -6,7 +6,7 @@ import { Avatar } from './Avatar';
 import { formatRoleName } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
 import { attendanceService } from '../../services/attendanceService';
-import { leaveService } from '../../services/leaveService';
+import { usePendingLeaveRequests } from '../../queries/useLeave';
 import toast from 'react-hot-toast';
 
 const LeaveAdminDrawer = lazy(() => import('../leave/LeaveAdminDrawer').then((m) => ({ default: m.LeaveAdminDrawer })));
@@ -25,11 +25,13 @@ export const Navbar = ({ onMenuClick }) => {
   const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
 
   // Leave Widget State
-  const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
   const [isLeaveDrawerOpen, setIsLeaveDrawerOpen] = useState(false);
   const [isApplyLeaveModalOpen, setIsApplyLeaveModalOpen] = useState(false);
 
   const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
+  const isLeaveAdmin = Boolean(user && user.role !== 'SUPER_ADMIN' && user.role !== 'CLIENT' && isAdmin);
+  const { data: pendingLeaveData } = usePendingLeaveRequests({ enabled: isLeaveAdmin });
+  const pendingLeaveCount = pendingLeaveData?.count ?? pendingLeaveData?.pendingRequests?.length ?? 0;
 
   // Sample system notifications
   const [notifications] = useState([
@@ -48,21 +50,8 @@ export const Navbar = ({ onMenuClick }) => {
     }
   };
 
-  const fetchPendingLeaves = async () => {
-    if (!user || user.role === 'SUPER_ADMIN' || user.role === 'CLIENT') return;
-    if (isAdmin) {
-      try {
-        const res = await leaveService.getPendingRequests();
-        setPendingLeaveCount(res.data?.count || 0);
-      } catch (err) {
-        console.log('Error fetching pending leave count:', err);
-      }
-    }
-  };
-
   useEffect(() => {
     fetchAttendanceStatus();
-    fetchPendingLeaves();
   }, [user]);
 
   const handleGPSCheckIn = async () => {
@@ -301,7 +290,6 @@ export const Navbar = ({ onMenuClick }) => {
           <LeaveAdminDrawer
             isOpen={isLeaveDrawerOpen}
             onClose={() => setIsLeaveDrawerOpen(false)}
-            onRefresh={fetchPendingLeaves}
           />
         </Suspense>
       )}
@@ -311,7 +299,6 @@ export const Navbar = ({ onMenuClick }) => {
           <ApplyLeaveModal
             isOpen={isApplyLeaveModalOpen}
             onClose={() => setIsApplyLeaveModalOpen(false)}
-            onSuccess={fetchPendingLeaves}
           />
         </Suspense>
       )}

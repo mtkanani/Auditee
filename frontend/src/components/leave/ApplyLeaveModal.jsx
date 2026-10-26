@@ -1,22 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Clock } from 'lucide-react';
-import { leaveService } from '../../services/leaveService';
+import { useMyLeaveData, useApplyLeave } from '../../queries/useLeave';
 import toast from 'react-hot-toast';
 
 export const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
-  const [balance, setBalance] = useState(null);
   const [leaveType, setLeaveType] = useState('CASUAL_LEAVE');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+
+  const { data: myLeaveData } = useMyLeaveData({ enabled: isOpen });
+  const balance = myLeaveData?.balance;
+  const applyLeaveMutation = useApplyLeave();
 
   useEffect(() => {
     if (isOpen) {
-      leaveService.getMyLeaveData().then((res) => {
-        setBalance(res.data?.balance);
-      });
       // Default start/end date: tomorrow
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -37,7 +36,7 @@ export const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
 
   const daysCount = calculateDays();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!startDate || !endDate || !reason.trim()) {
       toast.error('Start date, end date, and reason are required');
@@ -49,23 +48,22 @@ export const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      await leaveService.applyLeave({
+    applyLeaveMutation.mutate(
+      {
         leaveType,
         startDate,
         endDate,
         totalDays: daysCount,
         reason: reason.trim(),
-      });
-      toast.success('🌴 Leave application submitted successfully!');
-      onClose();
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      toast.error(err.message || 'Failed to submit leave application');
-    } finally {
-      setIsLoading(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          toast.success('🌴 Leave application submitted successfully!');
+          onClose();
+          if (onSuccess) onSuccess();
+        },
+      }
+    );
   };
 
   if (!isOpen) return null;
@@ -161,10 +159,10 @@ export const ApplyLeaveModal = ({ isOpen, onClose, onSuccess }) => {
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs shadow-lg mt-2 transition-all flex items-center justify-center gap-2"
+          disabled={applyLeaveMutation.isPending}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-extrabold text-xs shadow-lg mt-2 transition-all flex items-center justify-center gap-2"
         >
-          <span>Submit Leave Application</span>
+          <span>{applyLeaveMutation.isPending ? 'Submitting Application...' : 'Submit Leave Application'}</span>
         </button>
       </form>
     </Modal>

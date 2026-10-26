@@ -7,7 +7,14 @@ import { ApplyLeaveModal } from '../../components/leave/ApplyLeaveModal';
 import { ConfigureLeavePolicyModal } from '../../components/leave/ConfigureLeavePolicyModal';
 import { AdjustEmployeeLeaveModal } from '../../components/leave/AdjustEmployeeLeaveModal';
 import { Calendar, CircleCheckBig, Clock, List, Plus, Settings, SlidersVertical, TriangleAlert, User } from 'lucide-react';
-import { leaveService } from '../../services/leaveService';
+import {
+  useMyLeaveData,
+  usePendingLeaveRequests,
+  useAllFirmLeaveRequests,
+  useLeaveCalendar,
+  useAllEmployeeBalances,
+  useReviewLeave,
+} from '../../queries/useLeave';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -18,13 +25,6 @@ export const LeaveManagement = () => {
 
   const userRole = (user?.role || '').toUpperCase();
   const isAdmin = userRole === 'FIRM_ADMIN' || userRole === 'ADMIN';
-
-  const [myLeaveData, setMyLeaveData] = useState({ balance: null, requests: [], policy: null });
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [allFirmRequests, setAllFirmRequests] = useState([]);
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const [employeeBalances, setEmployeeBalances] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Tab State: 'pending' | 'all_firm' | 'my_leaves' | 'calendar'
   const [activeTab, setActiveTab] = useState(isAdmin ? 'pending' : 'my_leaves');
@@ -39,50 +39,53 @@ export const LeaveManagement = () => {
   const [displayQuotaMode, setDisplayQuotaMode] = useState('YEARLY'); // 'YEARLY' | 'MONTHLY'
   const [adminRemarks, setAdminRemarks] = useState({});
 
-  const fetchLeaveData = async () => {
-    setIsLoading(true);
-    try {
-      if (isAdmin) {
-        const [myRes, pendRes, allRes, calRes, balRes] = await Promise.all([
-          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [], policy: null } })),
-          leaveService.getPendingRequests().catch(() => ({ data: { pendingRequests: [] } })),
-          leaveService.getAllFirmRequests().catch(() => ({ data: [] })),
-          leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }).catch(() => ({ data: [] })),
-          leaveService.getAllEmployeeBalances().catch(() => ({ data: [] })),
-        ]);
-        setMyLeaveData(myRes.data || { balance: null, requests: [], policy: null });
-        setPendingRequests(pendRes.data?.pendingRequests || pendRes.pendingRequests || []);
-        setAllFirmRequests(allRes.data || []);
-        setCalendarEvents(calRes.data || []);
-        setEmployeeBalances(balRes.data || []);
-      } else {
-        const [myRes, calRes] = await Promise.all([
-          leaveService.getMyLeaveData().catch(() => ({ data: { balance: null, requests: [], policy: null } })),
-          leaveService.getLeaveCalendar({ month: selectedMonth, year: selectedYear }).catch(() => ({ data: [] })),
-        ]);
-        setMyLeaveData(myRes.data || { balance: null, requests: [], policy: null });
-        setCalendarEvents(calRes.data || []);
-      }
-    } catch (err) {
-      toast.error('Failed to load leave management data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: myLeaveData = { balance: null, requests: [], policy: null },
+    isLoading: isLoadingMy,
+    error: myError,
+  } = useMyLeaveData();
+
+  const {
+    data: pendingData,
+    isLoading: isLoadingPending,
+    error: pendError,
+  } = usePendingLeaveRequests({ enabled: isAdmin });
+  const pendingRequests = pendingData?.pendingRequests || [];
+
+  const {
+    data: allFirmRequests = [],
+    isLoading: isLoadingFirm,
+    error: firmError,
+  } = useAllFirmLeaveRequests({ enabled: isAdmin });
+
+  const {
+    data: calendarEvents = [],
+    isLoading: isLoadingCal,
+    error: calError,
+  } = useLeaveCalendar({ month: selectedMonth, year: selectedYear });
+
+  const {
+    data: employeeBalances = [],
+    isLoading: isLoadingBalances,
+    error: balError,
+  } = useAllEmployeeBalances({ enabled: isAdmin });
+
+  const isLoading = isAdmin
+    ? (isLoadingMy || isLoadingPending || isLoadingFirm || isLoadingCal || isLoadingBalances)
+    : (isLoadingMy || isLoadingCal);
 
   useEffect(() => {
-    fetchLeaveData();
-  }, [selectedMonth, selectedYear]);
-
-  const handleAdminReview = async (id, status) => {
-    const remarks = adminRemarks[id] || '';
-    try {
-      await leaveService.reviewLeave(id, status, remarks);
-      toast.success(`Leave request ${status.toLowerCase()}!`);
-      fetchLeaveData();
-    } catch (err) {
-      toast.error(err.message || `Failed to review leave`);
+    const error = myError || pendError || firmError || calError || balError;
+    if (error) {
+      toast.error('Failed to load leave management data');
     }
+  }, [myError, pendError, firmError, calError, balError]);
+
+  const reviewLeaveMutation = useReviewLeave();
+
+  const handleAdminReview = (id, status) => {
+    const remarks = adminRemarks[id] || '';
+    reviewLeaveMutation.mutate({ id, status, adminRemarks: remarks });
   };
 
   const balance = myLeaveData.balance;
@@ -456,7 +459,6 @@ export const LeaveManagement = () => {
       <ApplyLeaveModal
         isOpen={isApplyModalOpen}
         onClose={() => setIsApplyModalOpen(false)}
-        onSuccess={fetchLeaveData}
       />
 
       {/* Configure Firm Leave Policy Modal */}
@@ -464,7 +466,6 @@ export const LeaveManagement = () => {
         isOpen={isPolicyModalOpen}
         onClose={() => setIsPolicyModalOpen(false)}
         currentPolicy={myLeaveData.policy}
-        onPolicyUpdated={fetchLeaveData}
       />
 
       {/* Adjust Employee Leave Balance Modal */}
@@ -472,7 +473,6 @@ export const LeaveManagement = () => {
         isOpen={isAdjustModalOpen}
         onClose={() => setIsAdjustModalOpen(false)}
         employeeBalances={employeeBalances}
-        onBalanceAdjusted={fetchLeaveData}
       />
     </div>
   );

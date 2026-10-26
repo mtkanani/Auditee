@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Calendar, Clock, Settings } from 'lucide-react';
-import { leaveService } from '../../services/leaveService';
-import toast from 'react-hot-toast';
+import { useUpdateLeavePolicy } from '../../queries/useLeave';
 
 export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPolicyUpdated }) => {
   const [accrualMode, setAccrualMode] = useState('YEARLY');
@@ -13,7 +12,8 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
   const [perMonthSick, setPerMonthSick] = useState(0.83);
   const [perMonthEarned, setPerMonthEarned] = useState(1.25);
   const [updateAllBalances, setUpdateAllBalances] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const updatePolicyMutation = useUpdateLeavePolicy();
 
   useEffect(() => {
     if (currentPolicy) {
@@ -27,30 +27,25 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
     }
   }, [currentPolicy]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        accrualMode,
-        casualLeaveQuota: parseFloat(casualLeaveQuota),
-        sickLeaveQuota: parseFloat(sickLeaveQuota),
-        earnedLeaveQuota: parseFloat(earnedLeaveQuota),
-        perMonthCasual: parseFloat(perMonthCasual),
-        perMonthSick: parseFloat(perMonthSick),
-        perMonthEarned: parseFloat(perMonthEarned),
-        updateAllBalances,
-      };
+    const payload = {
+      accrualMode,
+      casualLeaveQuota: parseFloat(casualLeaveQuota),
+      sickLeaveQuota: parseFloat(sickLeaveQuota),
+      earnedLeaveQuota: parseFloat(earnedLeaveQuota),
+      perMonthCasual: parseFloat(perMonthCasual),
+      perMonthSick: parseFloat(perMonthSick),
+      perMonthEarned: parseFloat(perMonthEarned),
+      updateAllBalances,
+    };
 
-      await leaveService.updateLeavePolicy(payload);
-      toast.success('Firm leave policy & custom quotas updated successfully!');
-      if (onPolicyUpdated) onPolicyUpdated();
-      onClose();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update leave policy');
-    } finally {
-      setIsSubmitting(false);
-    }
+    updatePolicyMutation.mutate(payload, {
+      onSuccess: () => {
+        if (onPolicyUpdated) onPolicyUpdated();
+        onClose();
+      },
+    });
   };
 
   // Auto-calculation handlers (Per Month <-> Per Year)
@@ -245,11 +240,11 @@ export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPo
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={updatePolicyMutation.isPending}
           className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
         >
           <Settings className="w-4 h-4"  />
-          <span>{isSubmitting ? 'Updating Policy...' : 'Save Firm Leave Policy'}</span>
+          <span>{updatePolicyMutation.isPending ? 'Updating Policy...' : 'Save Firm Leave Policy'}</span>
         </button>
       </form>
     </Modal>
