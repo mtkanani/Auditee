@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/common/Sidebar';
 import { Navbar } from '../components/common/Navbar';
-import { AICopilotDrawer } from '../components/common/AICopilotDrawer';
+
+const AICopilotDrawer = lazy(() => import('../components/common/AICopilotDrawer').then(m => ({ default: m.AICopilotDrawer })));
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,7 +25,9 @@ export const DashboardLayout = () => {
       </div>
 
       {/* Fixed Right-Side AI Copilot Drawer */}
-      <AICopilotDrawer />
+      <Suspense fallback={null}>
+        <AICopilotDrawer />
+      </Suspense>
     </div>
   );
 };

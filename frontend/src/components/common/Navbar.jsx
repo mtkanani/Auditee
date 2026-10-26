@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Bell, ChevronDown, CircleCheckBig, LogOut, MapPin, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -7,9 +7,10 @@ import { formatRoleName } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
 import { attendanceService } from '../../services/attendanceService';
 import { leaveService } from '../../services/leaveService';
-import { LeaveAdminDrawer } from '../leave/LeaveAdminDrawer';
-import { ApplyLeaveModal } from '../leave/ApplyLeaveModal';
 import toast from 'react-hot-toast';
+
+const LeaveAdminDrawer = lazy(() => import('../leave/LeaveAdminDrawer').then((m) => ({ default: m.LeaveAdminDrawer })));
+const ApplyLeaveModal = lazy(() => import('../leave/ApplyLeaveModal').then((m) => ({ default: m.ApplyLeaveModal })));
 
 export const Navbar = ({ onMenuClick }) => {
   const { user, logout, getRoleDashboardPath } = useAuth();
@@ -295,17 +296,25 @@ export const Navbar = ({ onMenuClick }) => {
       </div>
 
       {/* Top Bar Triggered Modals & Drawers */}
-      <LeaveAdminDrawer
-        isOpen={isLeaveDrawerOpen}
-        onClose={() => setIsLeaveDrawerOpen(false)}
-        onRefresh={fetchPendingLeaves}
-      />
+      {isLeaveDrawerOpen && (
+        <Suspense fallback={null}>
+          <LeaveAdminDrawer
+            isOpen={isLeaveDrawerOpen}
+            onClose={() => setIsLeaveDrawerOpen(false)}
+            onRefresh={fetchPendingLeaves}
+          />
+        </Suspense>
+      )}
 
-      <ApplyLeaveModal
-        isOpen={isApplyLeaveModalOpen}
-        onClose={() => setIsApplyLeaveModalOpen(false)}
-        onSuccess={fetchPendingLeaves}
-      />
+      {isApplyLeaveModalOpen && (
+        <Suspense fallback={null}>
+          <ApplyLeaveModal
+            isOpen={isApplyLeaveModalOpen}
+            onClose={() => setIsApplyLeaveModalOpen(false)}
+            onSuccess={fetchPendingLeaves}
+          />
+        </Suspense>
+      )}
     </header>
   );
 };
