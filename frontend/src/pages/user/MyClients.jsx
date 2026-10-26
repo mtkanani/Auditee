@@ -2,28 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { FiBriefcase, FiMail, FiPhone, FiMapPin, FiFileText } from 'react-icons/fi';
-import { userService } from '../../services/userService';
+import { Briefcase, FileText, Mail, MapPin, Phone } from 'lucide-react';
+import { useMyClients } from '../../queries/useClients';
 import toast from 'react-hot-toast';
 
 export const MyClients = () => {
-  const [clients, setClients] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { clients, error } = useMyClients();
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const res = await userService.getClients();
-        setClients(res.data || res.clients || []);
-      } catch (error) {
-        toast.error('Failed to load assigned clients');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchClients();
-  }, []);
+    if (error) {
+      toast.error('Failed to load assigned clients');
+    }
+  }, [error]);
 
   const filteredClients = clients.filter(
     (c) =>
@@ -51,7 +42,7 @@ export const MyClients = () => {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <FiBriefcase className="w-5 h-5" />
+                  <Briefcase className="w-5 h-5"  />
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-100">{client.clientName}</h4>
@@ -63,19 +54,19 @@ export const MyClients = () => {
 
             <div className="space-y-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
               <div className="flex items-center gap-2">
-                <FiMail className="text-slate-500" />
+                <Mail size="1em" className="text-slate-500"  />
                 <span className="truncate">{client.email}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FiPhone className="text-slate-500" />
+                <Phone size="1em" className="text-slate-500"  />
                 <span>{client.phone || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FiFileText className="text-slate-500" />
+                <FileText size="1em" className="text-slate-500"  />
                 <span>GST: {client.gstNumber || 'N/A'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <FiMapPin className="text-slate-500" />
+                <MapPin size="1em" className="text-slate-500"  />
                 <span>{client.city || 'N/A'}</span>
               </div>
             </div>

@@ -1,30 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  FiGrid,
-  FiUsers,
-  FiBriefcase,
-  FiUserCheck,
-  FiCheckSquare,
-  FiFileText,
-  FiClock,
-  FiSettings,
-  FiLayers,
-  FiShield,
-  FiLogOut,
-  FiFolder,
-  FiUser,
-  FiX,
-  FiRadio,
-  FiBell,
-  FiTrendingUp,
-  FiDollarSign,
-  FiCalendar,
-  FiHardDrive,
-  FiVideo,
-  FiSun,
-  FiMoon,
-} from 'react-icons/fi';
+import { Bell, Briefcase, Calendar, Clock, DollarSign, FileText, Grid3x3, HardDrive, Layers, LogOut, Moon, Radio, Shield, SquareCheckBig, Sun, TrendingUp, User, UserCheck, Users, Video, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatRoleName, normalizeRole } from '../../utils/helpers';
@@ -39,49 +15,49 @@ export const Sidebar = ({ isOpen, onClose }) => {
     switch (role) {
       case 'SUPER_ADMIN':
         return [
-          { path: '/super-admin/dashboard', name: 'Overview', icon: FiGrid },
-          { path: '/super-admin/firms', name: 'Firm Management', icon: FiLayers },
+          { path: '/super-admin/dashboard', name: 'Overview', icon: Grid3x3 },
+          { path: '/super-admin/firms', name: 'Firm Management', icon: Layers },
         ];
       case 'FIRM_ADMIN':
         return [
-          { path: '/firm-admin/dashboard', name: 'Dashboard', icon: FiGrid },
-          { path: '/firm-admin/billing', name: 'Billing & Invoices', icon: FiDollarSign },
-          { path: '/firm-admin/leads', name: 'Lead CRM', icon: FiTrendingUp },
-          { path: '/firm-admin/tasks', name: 'Task Workstation', icon: FiCheckSquare },
-          { path: '/firm-admin/users', name: 'User Management', icon: FiUsers },
-          { path: '/firm-admin/clients', name: 'Client Management', icon: FiBriefcase },
-          { path: '/firm-admin/assignments', name: 'Client Assignment', icon: FiUserCheck },
-          { path: '/firm-admin/announcements', name: 'Notice Board', icon: FiRadio },
-          { path: '/firm-admin/compliance', name: 'Compliance', icon: FiShield },
-          { path: '/firm-admin/attendance', name: 'Attendance Report', icon: FiClock },
-          { path: '/firm-admin/leave-management', name: 'Leave Management', icon: FiCalendar },
-          { path: '/firm-admin/document-vault', name: 'Document Vault', icon: FiHardDrive },
-          { path: '/firm-admin/meetings', name: 'Meetings & Calls', icon: FiVideo },
-          { path: '/firm-admin/reports', name: 'Reports', icon: FiFileText },
+          { path: '/firm-admin/dashboard', name: 'Dashboard', icon: Grid3x3 },
+          { path: '/firm-admin/billing', name: 'Billing & Invoices', icon: DollarSign },
+          { path: '/firm-admin/leads', name: 'Lead CRM', icon: TrendingUp },
+          { path: '/firm-admin/tasks', name: 'Task Workstation', icon: SquareCheckBig },
+          { path: '/firm-admin/users', name: 'User Management', icon: Users },
+          { path: '/firm-admin/clients', name: 'Client Management', icon: Briefcase },
+          { path: '/firm-admin/assignments', name: 'Client Assignment', icon: UserCheck },
+          { path: '/firm-admin/announcements', name: 'Notice Board', icon: Radio },
+          { path: '/firm-admin/compliance', name: 'Compliance', icon: Shield },
+          { path: '/firm-admin/attendance', name: 'Attendance Report', icon: Clock },
+          { path: '/firm-admin/leave-management', name: 'Leave Management', icon: Calendar },
+          { path: '/firm-admin/document-vault', name: 'Document Vault', icon: HardDrive },
+          { path: '/firm-admin/meetings', name: 'Meetings & Calls', icon: Video },
+          { path: '/firm-admin/reports', name: 'Reports', icon: FileText },
         ];
       case 'CLIENT':
         return [
-          { path: '/client/dashboard', name: 'Dashboard', icon: FiGrid },
-          { path: '/client/billing', name: 'Billing & Payments', icon: FiDollarSign },
-          { path: '/client/work-requests', name: 'Work Requests', icon: FiFileText },
-          { path: '/client/tasks', name: 'My Tasks', icon: FiCheckSquare },
-          { path: '/client/document-vault', name: 'Document Vault', icon: FiHardDrive },
-          { path: '/client/meetings', name: 'Meetings & Calls', icon: FiVideo },
-          { path: '/client/profile', name: 'Profile & Settings', icon: FiUser },
+          { path: '/client/dashboard', name: 'Dashboard', icon: Grid3x3 },
+          { path: '/client/billing', name: 'Billing & Payments', icon: DollarSign },
+          { path: '/client/work-requests', name: 'Work Requests', icon: FileText },
+          { path: '/client/tasks', name: 'My Tasks', icon: SquareCheckBig },
+          { path: '/client/document-vault', name: 'Document Vault', icon: HardDrive },
+          { path: '/client/meetings', name: 'Meetings & Calls', icon: Video },
+          { path: '/client/profile', name: 'Profile & Settings', icon: User },
         ];
       case 'USER':
       default:
         return [
-          { path: '/user/dashboard', name: 'Dashboard', icon: FiGrid },
-          { path: '/user/announcements', name: 'Firm Notices', icon: FiBell },
-          { path: '/user/tasks', name: 'My Tasks', icon: FiCheckSquare },
-          { path: '/user/attendance', name: 'My Attendance', icon: FiClock },
-          { path: '/user/leaves', name: 'My Leaves', icon: FiCalendar },
-          { path: '/user/clients', name: 'My Clients', icon: FiBriefcase },
-          { path: '/user/time-entries', name: 'Time Entries', icon: FiClock },
-          { path: '/user/document-vault', name: 'Document Vault', icon: FiHardDrive },
-          { path: '/user/meetings', name: 'Meetings & Calls', icon: FiVideo },
-          { path: '/user/profile', name: 'Profile & Settings', icon: FiUser },
+          { path: '/user/dashboard', name: 'Dashboard', icon: Grid3x3 },
+          { path: '/user/announcements', name: 'Firm Notices', icon: Bell },
+          { path: '/user/tasks', name: 'My Tasks', icon: SquareCheckBig },
+          { path: '/user/attendance', name: 'My Attendance', icon: Clock },
+          { path: '/user/leaves', name: 'My Leaves', icon: Calendar },
+          { path: '/user/clients', name: 'My Clients', icon: Briefcase },
+          { path: '/user/time-entries', name: 'Time Entries', icon: Clock },
+          { path: '/user/document-vault', name: 'Document Vault', icon: HardDrive },
+          { path: '/user/meetings', name: 'Meetings & Calls', icon: Video },
+          { path: '/user/profile', name: 'Profile & Settings', icon: User },
         ];
     }
   };
@@ -124,7 +100,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
               onClick={onClose}
               className="lg:hidden p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800"
             >
-              <FiX className="w-5 h-5" />
+              <X className="w-5 h-5"  />
             </button>
           </div>
 
@@ -173,7 +149,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800/80 transition-colors"
           >
             <div className="flex items-center gap-3">
-              {isDark ? <FiSun className="w-5 h-5 text-amber-400" /> : <FiMoon className="w-5 h-5 text-indigo-400" />}
+              {isDark ? <Sun className="w-5 h-5 text-amber-400"  /> : <Moon className="w-5 h-5 text-indigo-400"  />}
               <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
@@ -185,7 +161,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             onClick={logout}
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
           >
-            <FiLogOut className="w-5 h-5" />
+            <LogOut className="w-5 h-5"  />
             <span>Sign Out</span>
           </button>
         </div>

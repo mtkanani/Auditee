@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { KanbanBoard } from '../../components/tasks/KanbanBoard';
@@ -6,43 +7,29 @@ import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
-import { FiGrid, FiList, FiClock, FiCheckSquare } from 'react-icons/fi';
-import { userService } from '../../services/userService';
-import { taskService } from '../../services/taskService';
+import { Grid3x3, List } from 'lucide-react';
+import { useMyTasks, useUpdateTaskStatus } from '../../queries/useTasks';
 import toast from 'react-hot-toast';
 
 export const MyTasks = () => {
-  const [tasks, setTasks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
   const [search, setSearch] = useState('');
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  const fetchTasks = async () => {
-    setIsLoading(true);
-    try {
-      const res = await userService.getTasks({ search });
-      setTasks(res.data || res.tasks || []);
-    } catch (error) {
-      toast.error('Failed to load tasks');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const debouncedSearch = useDebounce(search, 400);
+
+  const { tasks, isLoading, error } = useMyTasks({ search: debouncedSearch || undefined });
+  const updateStatusMutation = useUpdateTaskStatus({ scope: 'user' });
 
   useEffect(() => {
-    fetchTasks();
-  }, [search]);
-
-  const handleStatusChange = async (taskId, newStatus) => {
-    try {
-      await userService.updateTaskStatus(taskId, newStatus);
-      toast.success('Task status updated!');
-      fetchTasks();
-    } catch (error) {
-      toast.error('Failed to update status');
+    if (error) {
+      toast.error('Failed to load tasks');
     }
+  }, [error]);
+
+  const handleStatusChange = (taskId, newStatus) => {
+    updateStatusMutation.mutate({ taskId, status: newStatus });
   };
 
   const columns = [
@@ -97,7 +84,7 @@ export const MyTasks = () => {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiGrid className="w-3.5 h-3.5" />
+              <Grid3x3 className="w-3.5 h-3.5"  />
               <span>Kanban</span>
             </button>
             <button
@@ -108,7 +95,7 @@ export const MyTasks = () => {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiList className="w-3.5 h-3.5" />
+              <List className="w-3.5 h-3.5"  />
               <span>Table</span>
             </button>
           </div>
@@ -139,7 +126,6 @@ export const MyTasks = () => {
         taskId={selectedTaskId}
         isOpen={isTaskModalOpen}
         onClose={() => setIsTaskModalOpen(false)}
-        onRefresh={fetchTasks}
       />
     </div>
   );

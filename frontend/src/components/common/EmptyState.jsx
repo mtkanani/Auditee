@@ -1,8 +1,8 @@
 import React from 'react';
-import { FiFolderMinus } from 'react-icons/fi';
+import { FolderMinus } from 'lucide-react';
 
 export const EmptyState = ({
-  icon: Icon = FiFolderMinus,
+  icon: Icon = FolderMinus,
   title = 'No data found',
   description = 'There are no records matching your request at this time.',
   action,

@@ -55,6 +55,17 @@ export const normalizeRole = (role) => {
   return 'USER';
 };
 
+// Retrieve normalized user role from localStorage ('userData' or 'userRole')
+export const getRole = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('userData') || 'null');
+    return normalizeRole(user?.role || localStorage.getItem('userRole'));
+  } catch {
+    return normalizeRole(localStorage.getItem('userRole'));
+  }
+};
+
+
 // Generate initials from first and last name
 export const getInitials = (firstName = '', lastName = '') => {
   const f = firstName ? firstName.charAt(0).toUpperCase() : '';

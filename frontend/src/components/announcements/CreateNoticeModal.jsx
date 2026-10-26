@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiRadio, FiX, FiSend } from 'react-icons/fi';
+import { Radio, Send, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
@@ -37,7 +37,7 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
         priority: 'INFO',
         expiresAt: '',
       });
-    } catch (err) {
+    } catch {
       // Handled in parent
     } finally {
       setIsSubmitting(false);
@@ -57,14 +57,14 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
         >
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <FiRadio className="text-indigo-400" />
+              <Radio size="1em" className="text-indigo-400"  />
               <span>Broadcast Firm Announcement</span>
             </h3>
             <button
               onClick={onClose}
               className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
             >
-              <FiX className="w-5 h-5" />
+              <X className="w-5 h-5"  />
             </button>
           </div>
 
@@ -160,7 +160,7 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
                 disabled={isSubmitting}
                 className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-lg shadow-indigo-500/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
               >
-                <FiSend className="w-3.5 h-3.5" />
+                <Send className="w-3.5 h-3.5"  />
                 <span>{isSubmitting ? 'Broadcasting...' : 'Broadcast Notice'}</span>
               </button>
             </div>

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { StatusBadge } from '../common/StatusBadge';
-import { FiPrinter, FiMail, FiDollarSign, FiZap, FiCheckCircle, FiClock, FiFileText } from 'react-icons/fi';
-import { invoiceService } from '../../services/invoiceService';
+import { DollarSign, Mail, Printer, Zap } from 'lucide-react';
+import {
+  useInvoiceDetail,
+  useRecordPayment,
+  useConvertProforma,
+  useSendInvoiceEmail,
+} from '../../queries/useInvoices';
 import toast from 'react-hot-toast';
 
 export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) => {
-  const [invoice, setInvoice] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
 
   // Payment form state
@@ -15,65 +18,63 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
   const [paymentMode, setPaymentMode] = useState('BANK_TRANSFER');
   const [refNumber, setRefNumber] = useState('');
 
-  const fetchInvoiceDetails = async () => {
-    if (!invoiceId) return;
-    setIsLoading(true);
-    try {
-      const res = await invoiceService.getInvoiceById(invoiceId);
-      setInvoice(res.data);
-      setPaymentAmount(res.data?.balanceAmount || '');
-    } catch (err) {
-      toast.error('Failed to load invoice details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { invoice, isLoading, error } = useInvoiceDetail(invoiceId, {
+    enabled: Boolean(isOpen && invoiceId),
+  });
+
+  const recordPaymentMutation = useRecordPayment();
+  const convertProformaMutation = useConvertProforma();
+  const sendEmailMutation = useSendInvoiceEmail();
 
   useEffect(() => {
-    if (isOpen && invoiceId) {
-      fetchInvoiceDetails();
+    if (invoice?.balanceAmount !== undefined) {
+      setPaymentAmount(invoice.balanceAmount || '');
     }
-  }, [isOpen, invoiceId]);
+  }, [invoice?.balanceAmount]);
 
-  const handleRecordPayment = async (e) => {
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load invoice details');
+    }
+  }, [error]);
+
+  const handleRecordPayment = (e) => {
     e.preventDefault();
     if (!paymentAmount || Number(paymentAmount) <= 0) {
       toast.error('Valid payment amount required');
       return;
     }
-    try {
-      await invoiceService.recordPayment(invoiceId, {
-        amount: parseFloat(paymentAmount),
-        paymentMode,
-        referenceNumber: refNumber,
-      });
-      toast.success('Payment recorded successfully!');
-      setIsPaymentFormOpen(false);
-      fetchInvoiceDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to record payment');
-    }
+    recordPaymentMutation.mutate(
+      {
+        invoiceId,
+        paymentData: {
+          amount: parseFloat(paymentAmount),
+          paymentMode,
+          referenceNumber: refNumber,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsPaymentFormOpen(false);
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleConvertProforma = async () => {
-    try {
-      await invoiceService.convertProforma(invoiceId);
-      toast.success('Proforma Invoice converted to Official Tax Invoice!');
-      fetchInvoiceDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to convert proforma');
-    }
+  const handleConvertProforma = () => {
+    convertProformaMutation.mutate(invoiceId, {
+      onSuccess: () => {
+        if (onRefresh) onRefresh();
+      },
+    });
   };
 
-  const handleSendEmail = async () => {
-    try {
-      await invoiceService.sendInvoiceEmail(invoiceId);
-      toast.success(`Invoice emailed to ${invoice.client?.email}!`);
-    } catch (err) {
-      toast.error(err.message || 'Failed to send email');
-    }
+  const handleSendEmail = () => {
+    sendEmailMutation.mutate({
+      invoiceId,
+      clientEmail: invoice?.client?.email,
+    });
   };
 
   const numberToWords = (num) => {
@@ -324,9 +325,10 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
               {invoice.invoiceType === 'PROFORMA' && (
                 <button
                   onClick={handleConvertProforma}
-                  className="py-1 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1 shadow-md"
+                  disabled={convertProformaMutation.isPending}
+                  className="py-1 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1 shadow-md"
                 >
-                  <FiZap /> Convert to Tax Invoice
+                  <Zap size="1em" /> {convertProformaMutation.isPending ? 'Converting...' : 'Convert to Tax Invoice'}
                 </button>
               )}
             </div>
@@ -334,16 +336,17 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSendEmail}
-                className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/20 hover:bg-purple-600/30 text-xs font-bold flex items-center gap-1.5"
+                disabled={sendEmailMutation.isPending}
+                className="py-1.5 px-3 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/20 hover:bg-purple-600/30 disabled:opacity-50 text-xs font-bold flex items-center gap-1.5"
               >
-                <FiMail /> Send Email
+                <Mail size="1em" /> {sendEmailMutation.isPending ? 'Sending...' : 'Send Email'}
               </button>
 
               <button
                 onClick={handlePrint}
                 className="py-1.5 px-3 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 text-xs font-bold flex items-center gap-1.5"
               >
-                <FiPrinter /> Print / Download PDF
+                <Printer size="1em" /> Print / Download PDF
               </button>
 
               {invoice.status !== 'PAID' && (
@@ -351,7 +354,7 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
                   onClick={() => setIsPaymentFormOpen(!isPaymentFormOpen)}
                   className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5"
                 >
-                  <FiDollarSign /> Record Payment
+                  <DollarSign size="1em" /> Record Payment
                 </button>
               )}
             </div>
@@ -361,7 +364,7 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
           {isPaymentFormOpen && (
             <form onSubmit={handleRecordPayment} className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-3 print:hidden">
               <h4 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                <FiDollarSign /> Log Payment Received
+                <DollarSign size="1em" /> Log Payment Received
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -401,9 +404,10 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
               </div>
               <button
                 type="submit"
-                className="py-1.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md"
+                disabled={recordPaymentMutation.isPending}
+                className="py-1.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md"
               >
-                Confirm Payment Entry
+                {recordPaymentMutation.isPending ? 'Recording...' : 'Confirm Payment Entry'}
               </button>
             </form>
           )}

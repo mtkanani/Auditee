@@ -1,17 +1,10 @@
 import axiosInstance from './axiosInstance';
+import { getRole } from '../utils/helpers';
 
 const getBaseUrl = () => {
-  try {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const user = JSON.parse(userStr);
-      if (user?.role?.toUpperCase() === 'CLIENT') {
-        return '/client/invoices';
-      }
-    }
-  } catch (e) {}
-  return '/firm-admin/invoices';
+  return getRole() === 'CLIENT' ? '/client/invoices' : '/firm-admin/invoices';
 };
+
 
 export const invoiceService = {
   getAllInvoices: async (params = {}) => {

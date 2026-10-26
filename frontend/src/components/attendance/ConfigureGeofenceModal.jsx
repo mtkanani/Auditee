@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiMapPin, FiNavigation, FiShield, FiSave, FiAlertCircle } from 'react-icons/fi';
-import { attendanceService } from '../../services/attendanceService';
+import { CircleAlert, Navigation, Save, Shield } from 'lucide-react';
+import { useGeofenceSettings, useUpdateGeofenceSettings } from '../../queries/useAttendance';
 import toast from 'react-hot-toast';
 
 export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
@@ -11,33 +11,20 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
   const [officeAddress, setOfficeAddress] = useState('');
   const [geofenceRadiusMeters, setGeofenceRadiusMeters] = useState(100);
 
-  const [isLoading, setIsLoading] = useState(false);
   const [isDetectingGps, setIsDetectingGps] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { settings, isLoading } = useGeofenceSettings({ enabled: isOpen });
+  const updateMutation = useUpdateGeofenceSettings();
 
   useEffect(() => {
-    if (isOpen) {
-      fetchGeofenceSettings();
+    if (settings) {
+      setGeofenceEnabled(Boolean(settings.geofenceEnabled));
+      setOfficeLat(settings.officeLat !== null && settings.officeLat !== undefined ? settings.officeLat : '');
+      setOfficeLng(settings.officeLng !== null && settings.officeLng !== undefined ? settings.officeLng : '');
+      setOfficeAddress(settings.officeAddress || '');
+      setGeofenceRadiusMeters(settings.geofenceRadiusMeters || 100);
     }
-  }, [isOpen]);
-
-  const fetchGeofenceSettings = async () => {
-    setIsLoading(true);
-    try {
-      const res = await attendanceService.getGeofenceSettings();
-      if (res.data) {
-        setGeofenceEnabled(Boolean(res.data.geofenceEnabled));
-        setOfficeLat(res.data.officeLat !== null && res.data.officeLat !== undefined ? res.data.officeLat : '');
-        setOfficeLng(res.data.officeLng !== null && res.data.officeLng !== undefined ? res.data.officeLng : '');
-        setOfficeAddress(res.data.officeAddress || '');
-        setGeofenceRadiusMeters(res.data.geofenceRadiusMeters || 100);
-      }
-    } catch (err) {
-      toast.error('Failed to load geofence settings');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [settings]);
 
   const handleDetectCurrentGPS = () => {
     if (!navigator.geolocation) {
@@ -65,7 +52,7 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
     );
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (geofenceEnabled) {
@@ -75,25 +62,20 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
       }
     }
 
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        geofenceEnabled,
-        officeLat: officeLat ? parseFloat(officeLat) : null,
-        officeLng: officeLng ? parseFloat(officeLng) : null,
-        officeAddress: officeAddress || null,
-        geofenceRadiusMeters: parseInt(geofenceRadiusMeters, 10) || 100,
-      };
+    const payload = {
+      geofenceEnabled,
+      officeLat: officeLat ? parseFloat(officeLat) : null,
+      officeLng: officeLng ? parseFloat(officeLng) : null,
+      officeAddress: officeAddress || null,
+      geofenceRadiusMeters: parseInt(geofenceRadiusMeters, 10) || 100,
+    };
 
-      await attendanceService.updateGeofenceSettings(payload);
-      toast.success('Office GPS Geofence settings saved successfully!');
-      if (onSaved) onSaved();
-      onClose();
-    } catch (err) {
-      toast.error(err.message || 'Failed to save geofence settings');
-    } finally {
-      setIsSubmitting(false);
-    }
+    updateMutation.mutate(payload, {
+      onSuccess: () => {
+        if (onSaved) onSaved();
+        onClose();
+      },
+    });
   };
 
   return (
@@ -104,7 +86,7 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1">
             <p className="font-bold text-indigo-400 flex items-center gap-1.5">
-              <FiShield className="w-4 h-4" />
+              <Shield className="w-4 h-4"  />
               <span>Geofenced Attendance Boundary</span>
             </p>
             <p className="text-slate-400">
@@ -145,7 +127,7 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
               disabled={isDetectingGps}
               className="py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all whitespace-nowrap disabled:opacity-50"
             >
-              <FiNavigation className={`w-3.5 h-3.5 ${isDetectingGps ? 'animate-spin' : ''}`} />
+              <Navigation className={`w-3.5 h-3.5 ${isDetectingGps ? 'animate-spin' : ''}`}  />
               <span>{isDetectingGps ? 'Detecting...' : 'Use My GPS'}</span>
             </button>
           </div>
@@ -210,7 +192,7 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
 
           {/* Geofence Status Note */}
           <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
-            <FiAlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <CircleAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5"  />
             <span>
               If geofencing is active, employees outside the {geofenceRadiusMeters}m boundary will receive an access error when attempting to check in or out.
             </span>
@@ -218,11 +200,11 @@ export const ConfigureGeofenceModal = ({ isOpen, onClose, onSaved }) => {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={updateMutation.isPending}
             className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <FiSave className="w-4 h-4" />
-            <span>{isSubmitting ? 'Saving Geofence...' : 'Save Geofence Settings'}</span>
+            <Save className="w-4 h-4"  />
+            <span>{updateMutation.isPending ? 'Saving Geofence...' : 'Save Geofence Settings'}</span>
           </button>
         </form>
       )}

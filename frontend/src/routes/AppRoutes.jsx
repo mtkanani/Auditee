@@ -9,12 +9,12 @@ import { DashboardLayout } from '../layouts/DashboardLayout';
 // Protected Route Guard
 import { ProtectedRoute } from './ProtectedRoute';
 
-// Auth Pages (eager or fast)
+// Auth Pages (eager login, lazy secondary)
 import { Login } from '../pages/auth/Login';
-import Register from '../pages/Register';
-import { ForgotPassword } from '../pages/auth/ForgotPassword';
-import { ResetPassword } from '../pages/auth/ResetPassword';
-import { VerifyOTP } from '../pages/auth/VerifyOTP';
+const Register = lazy(() => import('../pages/Register'));
+const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/auth/ResetPassword').then((m) => ({ default: m.ResetPassword })));
+const VerifyOTP = lazy(() => import('../pages/auth/VerifyOTP').then((m) => ({ default: m.VerifyOTP })));
 
 // Lazy-loaded Super Admin Pages
 const SuperAdminDashboard = lazy(() => import('../pages/super-admin/SuperAdminDashboard').then((m) => ({ default: m.SuperAdminDashboard })));
@@ -43,6 +43,7 @@ const MyTasks = lazy(() => import('../pages/user/MyTasks').then((m) => ({ defaul
 const MyClients = lazy(() => import('../pages/user/MyClients').then((m) => ({ default: m.MyClients })));
 const TimeEntries = lazy(() => import('../pages/user/TimeEntries').then((m) => ({ default: m.TimeEntries })));
 const UserProfile = lazy(() => import('../pages/user/UserProfile').then((m) => ({ default: m.UserProfile })));
+const DeleteAccount = lazy(() => import('../pages/DeleteAccount'));
 const CalendarPage = lazy(() => import('../pages/user/Calendar'));
 
 // Lazy-loaded Client Pages
@@ -79,10 +80,10 @@ export const AppRoutes = () => {
         />
 
         {/* Public Auth Routes */}
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
         </Route>
@@ -125,6 +126,7 @@ export const AppRoutes = () => {
             <Route path="/user/document-vault" element={<DocumentVault />} />
             <Route path="/user/meetings" element={<MeetingsManagement />} />
             <Route path="/user/profile" element={<UserProfile />} />
+            <Route path="/user/delete-account" element={<DeleteAccount />} />
             <Route path="/calendar" element={<CalendarPage />} />
           </Route>
 

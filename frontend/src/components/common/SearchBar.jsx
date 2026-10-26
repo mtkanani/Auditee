@@ -1,10 +1,10 @@
 import React from 'react';
-import { FiSearch, FiX } from 'react-icons/fi';
+import { Search, X } from 'lucide-react';
 
 export const SearchBar = ({ value, onChange, placeholder = 'Search...', className = '' }) => {
   return (
     <div className={`relative flex items-center ${className}`}>
-      <FiSearch className="absolute left-3.5 text-slate-400 w-4 h-4" />
+      <Search className="absolute left-3.5 text-slate-400 w-4 h-4"  />
       <input
         type="text"
         value={value}
@@ -17,7 +17,7 @@ export const SearchBar = ({ value, onChange, placeholder = 'Search...', classNam
           onClick={() => onChange('')}
           className="absolute right-3 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-slate-800"
         >
-          <FiX className="w-4 h-4" />
+          <X className="w-4 h-4"  />
         </button>
       )}
     </div>

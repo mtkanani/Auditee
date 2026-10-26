@@ -1,40 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBell, FiCheckCircle, FiAlertTriangle, FiInfo, FiX } from 'react-icons/fi';
-import { announcementService } from '../../services/announcementService';
-import toast from 'react-hot-toast';
+import { Bell, CircleCheckBig, Info, TriangleAlert } from 'lucide-react';
+import { useUserAnnouncements, useAcknowledgeNotice } from '../../queries/useAnnouncements';
 
 export const NoticeBanner = () => {
-  const [notices, setNotices] = useState([]);
+  const { notices: allNotices = [] } = useUserAnnouncements();
+  const acknowledgeNoticeMutation = useAcknowledgeNotice();
   const [dismissedIds, setDismissedIds] = useState([]);
 
-  const fetchNotices = async () => {
-    try {
-      const res = await announcementService.getUserNotices();
-      const list = res.data || [];
-      // Filter unacknowledged urgent or warning notices
-      const unack = list.filter((n) => !n.isAcknowledged);
-      setNotices(unack);
-    } catch (err) {
-      // Quiet fail for banner
-    }
+  const unackNotices = useMemo(
+    () => allNotices.filter((n) => !n.isAcknowledged),
+    [allNotices]
+  );
+  const activeNotices = useMemo(
+    () => unackNotices.filter((n) => !dismissedIds.includes(n.id)),
+    [unackNotices, dismissedIds]
+  );
+
+  const handleAcknowledge = (id) => {
+    acknowledgeNoticeMutation.mutate(id, {
+      onSuccess: () => {
+        setDismissedIds((prev) => [...prev, id]);
+      },
+    });
   };
-
-  useEffect(() => {
-    fetchNotices();
-  }, []);
-
-  const handleAcknowledge = async (id) => {
-    try {
-      await announcementService.acknowledgeNotice(id);
-      toast.success('Notice acknowledged successfully!');
-      setDismissedIds((prev) => [...prev, id]);
-    } catch (err) {
-      toast.error('Failed to acknowledge notice');
-    }
-  };
-
-  const activeNotices = notices.filter((n) => !dismissedIds.includes(n.id));
 
   if (activeNotices.length === 0) return null;
 
@@ -56,11 +45,11 @@ export const NoticeBanner = () => {
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 shrink-0">
             {currentNotice.priority === 'URGENT' ? (
-              <FiAlertTriangle className="w-5 h-5 text-rose-400" />
+              <TriangleAlert className="w-5 h-5 text-rose-400"  />
             ) : currentNotice.priority === 'WARNING' ? (
-              <FiBell className="w-5 h-5 text-amber-400" />
+              <Bell className="w-5 h-5 text-amber-400"  />
             ) : (
-              <FiInfo className="w-5 h-5 text-indigo-400" />
+              <Info className="w-5 h-5 text-indigo-400"  />
             )}
           </div>
           <div>
@@ -80,9 +69,10 @@ export const NoticeBanner = () => {
         <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
           <button
             onClick={() => handleAcknowledge(currentNotice.id)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
+            disabled={acknowledgeNoticeMutation.isPending}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all disabled:opacity-50"
           >
-            <FiCheckCircle className="w-4 h-4" />
+            <CircleCheckBig className="w-4 h-4"  />
             <span>Acknowledge & Mark Read</span>
           </button>
 

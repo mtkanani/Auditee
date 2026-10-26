@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FiChevronRight, FiHome } from 'react-icons/fi';
+import { ChevronRight, House } from 'lucide-react';
 import { capitalize } from '../../utils/helpers';
 
 export const Breadcrumb = () => {
@@ -10,7 +10,7 @@ export const Breadcrumb = () => {
   return (
     <nav className="flex items-center text-xs text-slate-400 mb-3 space-x-2">
       <Link to="/" className="hover:text-indigo-400 transition-colors flex items-center gap-1">
-        <FiHome className="w-3.5 h-3.5" />
+        <House className="w-3.5 h-3.5"  />
         <span>Home</span>
       </Link>
       {pathnames.map((name, index) => {
@@ -20,7 +20,7 @@ export const Breadcrumb = () => {
 
         return (
           <React.Fragment key={name}>
-            <FiChevronRight className="w-3 h-3 text-slate-600" />
+            <ChevronRight className="w-3 h-3 text-slate-600"  />
             {isLast ? (
               <span className="font-semibold text-indigo-400">{displayName}</span>
             ) : (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
+import { ArrowRight, Lock, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
@@ -41,7 +41,7 @@ export const Login = () => {
         <div>
           <label className="block text-xs font-semibold text-slate-300 mb-1.5">Email Address</label>
           <div className="relative">
-            <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"  />
             <input
               type="email"
               autoComplete="username"
@@ -68,7 +68,7 @@ export const Login = () => {
             </Link>
           </div>
           <div className="relative">
-            <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"  />
             <input
               type="password"
               autoComplete="current-password"
@@ -91,7 +91,7 @@ export const Login = () => {
           ) : (
             <>
               <span>Sign In</span>
-              <FiArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4"  />
             </>
           )}
         </button>

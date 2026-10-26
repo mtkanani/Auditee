@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
@@ -6,27 +7,15 @@ import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CreateInvoiceModal } from '../../components/invoices/CreateInvoiceModal';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
-import {
-  FiDollarSign,
-  FiFileText,
-  FiCheckCircle,
-  FiAlertTriangle,
-  FiPlus,
-  FiPrinter,
-  FiMail,
-  FiClock,
-  FiEye,
-} from 'react-icons/fi';
+import { CircleCheckBig, Clock, DollarSign, Eye, FileText, Plus, TriangleAlert } from 'lucide-react';
 import { FirmBankDetailsModal } from '../../components/invoices/FirmBankDetailsModal';
-import { invoiceService } from '../../services/invoiceService';
+import { useFirmInvoices } from '../../queries/useInvoices';
 import toast from 'react-hot-toast';
 
 export const BillingManagement = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -36,25 +25,17 @@ export const BillingManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
-  const fetchInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await invoiceService.getAllInvoices({
-        search,
-        invoiceType: typeFilter || undefined,
-        status: statusFilter || undefined,
-      });
-      setInvoices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load billing & invoices');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { invoices, isLoading, error: invoicesError } = useFirmInvoices({
+    search: debouncedSearch || undefined,
+    invoiceType: typeFilter || undefined,
+    status: statusFilter || undefined,
+  });
 
   useEffect(() => {
-    fetchInvoices();
-  }, [search, typeFilter, statusFilter]);
+    if (invoicesError) {
+      toast.error('Failed to load billing & invoices');
+    }
+  }, [invoicesError]);
 
   // Metrics
   const totalRevenue = invoices.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
@@ -98,7 +79,7 @@ export const BillingManagement = () => {
       key: 'dueDate',
       render: (r) => (
         <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-          <FiClock /> {new Date(r.dueDate).toLocaleDateString()}
+          <Clock size="1em" /> {new Date(r.dueDate).toLocaleDateString()}
         </span>
       ),
     },
@@ -133,7 +114,7 @@ export const BillingManagement = () => {
             }}
             className="px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1"
           >
-            <FiEye /> View PDF
+            <Eye size="1em" /> View PDF
           </button>
         </div>
       ),
@@ -151,7 +132,7 @@ export const BillingManagement = () => {
               onClick={() => setIsBankModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 border border-slate-700 transition-all cursor-pointer"
             >
-              <FiDollarSign className="w-4 h-4 text-emerald-400" />
+              <DollarSign className="w-4 h-4 text-emerald-400"  />
               <span>Bank & Payment Settings</span>
             </button>
 
@@ -159,7 +140,7 @@ export const BillingManagement = () => {
               onClick={() => setIsCreateModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2 cursor-pointer"
             >
-              <FiPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4"  />
               <span>Create Invoice</span>
             </button>
           </div>
@@ -168,10 +149,10 @@ export const BillingManagement = () => {
 
       {/* Top Billing Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Revenue Billed" value={`₹${totalRevenue.toLocaleString('en-IN')}`} icon={FiFileText} color="indigo" />
-        <StatsCard title="Received Payments" value={`₹${totalReceived.toLocaleString('en-IN')}`} icon={FiCheckCircle} color="emerald" />
-        <StatsCard title="Outstanding Receivables" value={`₹${totalOutstanding.toLocaleString('en-IN')}`} icon={FiDollarSign} color="rose" />
-        <StatsCard title="Overdue Invoices" value={overdueCount} icon={FiAlertTriangle} color="amber" />
+        <StatsCard title="Total Revenue Billed" value={`₹${totalRevenue.toLocaleString('en-IN')}`} icon={FileText} color="indigo" />
+        <StatsCard title="Received Payments" value={`₹${totalReceived.toLocaleString('en-IN')}`} icon={CircleCheckBig} color="emerald" />
+        <StatsCard title="Outstanding Receivables" value={`₹${totalOutstanding.toLocaleString('en-IN')}`} icon={DollarSign} color="rose" />
+        <StatsCard title="Overdue Invoices" value={overdueCount} icon={TriangleAlert} color="amber" />
       </div>
 
       {/* Control Bar & Filters */}
@@ -218,7 +199,6 @@ export const BillingManagement = () => {
       <CreateInvoiceModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={fetchInvoices}
       />
 
       {/* Invoice Detail / PDF Preview Modal */}
@@ -226,7 +206,6 @@ export const BillingManagement = () => {
         invoiceId={selectedInvoiceId}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onRefresh={fetchInvoices}
       />
     </div>
   );

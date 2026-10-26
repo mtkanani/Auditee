@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { FiDollarSign, FiClock, FiCheckCircle, FiAlertCircle, FiCreditCard, FiPrinter, FiSearch, FiFileText } from 'react-icons/fi';
-import { invoiceService } from '../../services/invoiceService';
+import { CircleAlert, CircleCheckBig, Clock, CreditCard, FileText, Printer, Search } from 'lucide-react';
+import { useClientInvoices } from '../../queries/useInvoices';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
 import { ClientPaymentModal } from '../../components/invoices/ClientPaymentModal';
 import toast from 'react-hot-toast';
 
 export const ClientBilling = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState('');
 
   // Selected modals state
@@ -20,24 +20,16 @@ export const ClientBilling = () => {
   const [selectedPayInvoice, setSelectedPayInvoice] = useState(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
 
-  const fetchClientInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await invoiceService.getAllInvoices({
-        search,
-        status: statusFilter,
-      });
-      setInvoices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load billing invoices.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { invoices, isLoading, error: invoicesError } = useClientInvoices({
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+  });
 
   useEffect(() => {
-    fetchClientInvoices();
-  }, [search, statusFilter]);
+    if (invoicesError) {
+      toast.error('Failed to load billing invoices.');
+    }
+  }, [invoicesError]);
 
   // Compute billing summary metrics
   const totalBilled = invoices.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
@@ -68,25 +60,25 @@ export const ClientBilling = () => {
         <StatsCard
           title="Total Billed"
           value={`₹${totalBilled.toLocaleString('en-IN')}`}
-          icon={FiFileText}
+          icon={FileText}
           color="indigo"
         />
         <StatsCard
           title="Total Paid"
           value={`₹${totalPaid.toLocaleString('en-IN')}`}
-          icon={FiCheckCircle}
+          icon={CircleCheckBig}
           color="emerald"
         />
         <StatsCard
           title="Outstanding Balance"
           value={`₹${totalOutstanding.toLocaleString('en-IN')}`}
-          icon={FiAlertCircle}
+          icon={CircleAlert}
           color="rose"
         />
         <StatsCard
           title="Pending Invoices"
           value={`${pendingCount} Pending`}
-          icon={FiClock}
+          icon={Clock}
           color="amber"
         />
       </div>
@@ -94,7 +86,7 @@ export const ClientBilling = () => {
       {/* Filter & Search Toolbar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-900/60 p-4 border border-slate-800/80 rounded-2xl">
         <div className="relative col-span-2">
-          <FiSearch className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500"  />
           <input
             type="text"
             placeholder="Search by invoice number..."
@@ -164,7 +156,7 @@ export const ClientBilling = () => {
                             onClick={() => handleOpenPayModal(inv)}
                             className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1 cursor-pointer transition-all hover:scale-105"
                           >
-                            <FiCreditCard className="w-3.5 h-3.5" />
+                            <CreditCard className="w-3.5 h-3.5"  />
                             <span>Pay Now</span>
                           </button>
                         )}
@@ -174,7 +166,7 @@ export const ClientBilling = () => {
                           className="py-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                           title="View / Print Tax Invoice PDF"
                         >
-                          <FiPrinter className="w-3.5 h-3.5" />
+                          <Printer className="w-3.5 h-3.5"  />
                           <span>PDF</span>
                         </button>
                       </div>
@@ -193,7 +185,6 @@ export const ClientBilling = () => {
           invoiceId={selectedDetailInvoiceId}
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
-          onRefresh={fetchClientInvoices}
         />
       )}
 
@@ -203,9 +194,6 @@ export const ClientBilling = () => {
           invoice={selectedPayInvoice}
           isOpen={isPayModalOpen}
           onClose={() => setIsPayModalOpen(false)}
-          onPaymentSuccess={() => {
-            fetchClientInvoices();
-          }}
         />
       )}
     </div>

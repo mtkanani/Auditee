@@ -2,15 +2,14 @@ import React, { useState } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { FileUpload } from '../../components/common/FileUpload';
 import { useForm } from 'react-hook-form';
-import { FiSend, FiFileText } from 'react-icons/fi';
-import toast from 'react-hot-toast';
-import { clientService } from '../../services/clientService';
+import { Send } from 'lucide-react';
+import { useClientCreateTask } from '../../queries/useTasks';
 import { useNavigate } from 'react-router-dom';
 
 export const WorkRequests = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const clientCreateTaskMutation = useClientCreateTask();
 
   const {
     register,
@@ -19,24 +18,19 @@ export const WorkRequests = () => {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const payload = {
-        ...data,
-        dueDate: data.dueDate ? data.dueDate : undefined,
-        attachment: selectedFile ? selectedFile.name : undefined,
-      };
-      await clientService.createTask(payload);
-      toast.success('Work request submitted successfully to your CA firm!');
-      reset();
-      setSelectedFile(null);
-      navigate('/client/tasks');
-    } catch (error) {
-      toast.error(error.message || 'Failed to submit work request.');
-    } finally {
-      setIsLoading(false);
-    }
+  const onSubmit = (data) => {
+    const payload = {
+      ...data,
+      dueDate: data.dueDate ? data.dueDate : undefined,
+      attachment: selectedFile ? selectedFile.name : undefined,
+    };
+    clientCreateTaskMutation.mutate(payload, {
+      onSuccess: () => {
+        reset();
+        setSelectedFile(null);
+        navigate('/client/tasks');
+      },
+    });
   };
 
   return (
@@ -101,11 +95,11 @@ export const WorkRequests = () => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={clientCreateTaskMutation.isPending}
             className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50"
           >
-            <FiSend className="w-4 h-4" />
-            <span>{isLoading ? 'Submitting Request...' : 'Submit Work Request'}</span>
+            <Send className="w-4 h-4"  />
+            <span>{clientCreateTaskMutation.isPending ? 'Submitting Request...' : 'Submit Work Request'}</span>
           </button>
         </form>
       </div>

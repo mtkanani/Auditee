@@ -1,27 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Calendar, CircleCheckBig, Clock, MessageSquare, Paperclip, Plus, Send, Square, SquareCheckBig, User, X } from 'lucide-react';
 import {
-  FiX,
-  FiCheckSquare,
-  FiSquare,
-  FiMessageSquare,
-  FiPaperclip,
-  FiClock,
-  FiUser,
-  FiAlertCircle,
-  FiPlus,
-  FiSend,
-  FiBriefcase,
-  FiTag,
-  FiCalendar,
-  FiCheckCircle,
-} from 'react-icons/fi';
-import { taskService } from '../../services/taskService';
+  useTaskDetail,
+  useAddSubtask,
+  useToggleSubtask,
+  useAddComment,
+  useAddDocument,
+  useUpdateTaskStatus,
+} from '../../queries/useTasks';
 import toast from 'react-hot-toast';
 
 export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
-  const [task, setTask] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('subtasks'); // 'subtasks' | 'comments' | 'documents' | 'history'
 
   // Subtask Input
@@ -35,91 +25,87 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
   const [docName, setDocName] = useState('');
   const [docUrl, setDocUrl] = useState('');
 
-  const fetchTaskDetails = async () => {
-    if (!taskId) return;
-    setIsLoading(true);
-    try {
-      const res = await taskService.getTaskById(taskId);
-      setTask(res.data || res);
-    } catch (err) {
-      toast.error('Failed to load task details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { task, isLoading, error } = useTaskDetail(taskId, { enabled: isOpen });
+
+  const updateStatusMutation = useUpdateTaskStatus();
+  const addSubtaskMutation = useAddSubtask();
+  const toggleSubtaskMutation = useToggleSubtask();
+  const addCommentMutation = useAddComment();
+  const addDocumentMutation = useAddDocument();
 
   useEffect(() => {
-    if (isOpen && taskId) {
-      fetchTaskDetails();
+    if (error) {
+      toast.error('Failed to load task details');
     }
-  }, [isOpen, taskId]);
+  }, [error]);
 
   if (!isOpen) return null;
 
-  const handleStatusChange = async (newStatus) => {
-    try {
-      await taskService.updateTaskStatus(taskId, newStatus);
-      toast.success(`Task status updated to ${newStatus}`);
-      fetchTaskDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update task status');
-    }
+  const handleStatusChange = (newStatus) => {
+    updateStatusMutation.mutate(
+      { taskId, status: newStatus },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddSubtask = async (e) => {
+  const handleAddSubtask = (e) => {
     e.preventDefault();
     if (!newSubtaskTitle.trim()) return;
-    try {
-      await taskService.addSubtask(taskId, newSubtaskTitle);
-      toast.success('Subtask added to checklist');
-      setNewSubtaskTitle('');
-      fetchTaskDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add subtask');
-    }
+    addSubtaskMutation.mutate(
+      { taskId, title: newSubtaskTitle },
+      {
+        onSuccess: () => {
+          setNewSubtaskTitle('');
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleToggleSubtask = async (subtaskId, currentStatus) => {
-    try {
-      await taskService.toggleSubtask(taskId, subtaskId, !currentStatus);
-      fetchTaskDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update subtask');
-    }
+  const handleToggleSubtask = (subtaskId, currentStatus) => {
+    toggleSubtaskMutation.mutate(
+      { taskId, subtaskId, isCompleted: !currentStatus },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddComment = async (e) => {
+  const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    try {
-      await taskService.addComment(taskId, { comment: commentText, fileUrl: commentFileUrl });
-      toast.success('Comment posted');
-      setCommentText('');
-      setCommentFileUrl('');
-      fetchTaskDetails();
-    } catch (err) {
-      toast.error(err.message || 'Failed to post comment');
-    }
+    addCommentMutation.mutate(
+      { taskId, commentData: { comment: commentText, fileUrl: commentFileUrl } },
+      {
+        onSuccess: () => {
+          setCommentText('');
+          setCommentFileUrl('');
+        },
+      }
+    );
   };
 
-  const handleAddDocument = async (e) => {
+  const handleAddDocument = (e) => {
     e.preventDefault();
     if (!docName.trim() || !docUrl.trim()) {
       toast.error('File name and URL are required');
       return;
     }
-    try {
-      await taskService.addDocument(taskId, { fileName: docName, fileUrl: docUrl });
-      toast.success('Attachment added');
-      setDocName('');
-      setDocUrl('');
-      fetchTaskDetails();
-    } catch (err) {
-      toast.error(err.message || 'Failed to attach document');
-    }
+    addDocumentMutation.mutate(
+      { taskId, docData: { fileName: docName, fileUrl: docUrl } },
+      {
+        onSuccess: () => {
+          setDocName('');
+          setDocUrl('');
+        },
+      }
+    );
   };
 
   // Subtask Progress Calculation
@@ -162,7 +148,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                   <>
                     <span>•</span>
                     <span className="flex items-center gap-1 text-amber-400">
-                      <FiCalendar /> Due: {new Date(task.dueDate).toLocaleDateString()}
+                      <Calendar size="1em" /> Due: {new Date(task.dueDate).toLocaleDateString()}
                     </span>
                   </>
                 )}
@@ -187,7 +173,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                 onClick={onClose}
                 className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               >
-                <FiX className="w-6 h-6" />
+                <X className="w-6 h-6"  />
               </button>
             </div>
           </div>
@@ -199,7 +185,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {task?.assignees?.map((a) => (
                   <span key={a.id} className="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 border border-slate-700/60 flex items-center gap-1.5">
-                    <FiUser className="text-indigo-400" />
+                    <User size="1em" className="text-indigo-400"  />
                     <span>{a.user?.firstName} {a.user?.lastName}</span>
                   </span>
                 ))}
@@ -222,7 +208,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
           {totalSubtasks > 0 && (
             <div className="px-6 py-2.5 bg-slate-950/60 border-b border-slate-800 flex items-center gap-4">
               <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <FiCheckCircle className="text-indigo-400" />
+                <CircleCheckBig size="1em" className="text-indigo-400"  />
                 <span>Checklist Progress ({completedSubtasks}/{totalSubtasks})</span>
               </span>
               <div className="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden">
@@ -243,7 +229,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                 activeTab === 'subtasks' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiCheckSquare className="w-4 h-4" />
+              <SquareCheckBig className="w-4 h-4"  />
               <span>Subtasks Checklist ({totalSubtasks})</span>
             </button>
 
@@ -253,7 +239,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                 activeTab === 'comments' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiMessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4"  />
               <span>Discussion Thread ({task?.comments?.length || 0})</span>
             </button>
 
@@ -263,7 +249,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                 activeTab === 'documents' ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiPaperclip className="w-4 h-4" />
+              <Paperclip className="w-4 h-4"  />
               <span>Attachments ({task?.documents?.length || 0})</span>
             </button>
 
@@ -273,7 +259,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                 activeTab === 'history' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiClock className="w-4 h-4" />
+              <Clock className="w-4 h-4"  />
               <span>Audit History ({task?.history?.length || 0})</span>
             </button>
           </div>
@@ -299,7 +285,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                         type="submit"
                         className="py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1.5"
                       >
-                        <FiPlus />
+                        <Plus size="1em" />
                         <span>Add Item</span>
                       </button>
                     </form>
@@ -317,9 +303,9 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                         >
                           <div className="flex items-center gap-3">
                             {s.isCompleted ? (
-                              <FiCheckSquare className="w-5 h-5 text-emerald-400" />
+                              <SquareCheckBig className="w-5 h-5 text-emerald-400"  />
                             ) : (
-                              <FiSquare className="w-5 h-5 text-slate-500" />
+                              <Square className="w-5 h-5 text-slate-500"  />
                             )}
                             <span className={`text-xs font-semibold ${s.isCompleted ? 'line-through text-slate-500' : 'text-slate-100'}`}>
                               {s.title}
@@ -354,7 +340,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                           <p className="text-xs text-slate-200">{c.comment}</p>
                           {c.fileUrl && (
                             <a href={c.fileUrl} target="_blank" rel="noreferrer" className="text-[10px] text-purple-400 hover:underline flex items-center gap-1 mt-1">
-                              <FiPaperclip /> View Attached File
+                              <Paperclip size="1em" /> View Attached File
                             </a>
                           )}
                         </div>
@@ -386,7 +372,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                           type="submit"
                           className="py-1.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5"
                         >
-                          <FiSend />
+                          <Send size="1em" />
                           <span>Post Comment</span>
                         </button>
                       </div>
@@ -432,7 +418,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
                             <p className="text-[10px] text-slate-500">Uploaded by {doc.uploadedRole || 'User'}</p>
                           </div>
                           <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="p-2 rounded-xl bg-slate-900 text-amber-400">
-                            <FiPaperclip />
+                            <Paperclip size="1em" />
                           </a>
                         </div>
                       ))}

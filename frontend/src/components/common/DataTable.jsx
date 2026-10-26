@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Skeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
 
@@ -46,9 +46,9 @@ export const DataTable = ({
                   {col.sortable && sortBy === col.key && (
                     <span>
                       {sortOrder === 'asc' ? (
-                        <FiChevronUp className="w-3.5 h-3.5 text-indigo-400" />
+                        <ChevronUp className="w-3.5 h-3.5 text-indigo-400"  />
                       ) : (
-                        <FiChevronDown className="w-3.5 h-3.5 text-indigo-400" />
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-400"  />
                       )}
                     </span>
                   )}

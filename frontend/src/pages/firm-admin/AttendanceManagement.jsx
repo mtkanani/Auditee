@@ -1,80 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import {
-  FiClock,
-  FiMapPin,
-  FiCheckCircle,
-  FiAlertTriangle,
-  FiUserCheck,
-  FiCalendar,
-  FiZap,
-} from 'react-icons/fi';
-import { attendanceService } from '../../services/attendanceService';
-import { firmAdminService } from '../../services/firmAdminService';
+import { Calendar, CircleCheckBig, Clock, MapPin, TriangleAlert, UserCheck } from 'lucide-react';
+import { useAttendanceLogs } from '../../queries/useAttendance';
+import { useFirmUsers } from '../../queries/useLookups';
+import { useDebounce } from '../../hooks/useDebounce';
 import { useAuth } from '../../context/AuthContext';
 import { ConfigureGeofenceModal } from '../../components/attendance/ConfigureGeofenceModal';
-import toast from 'react-hot-toast';
 
 export const AttendanceManagement = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
 
-  const [logs, setLogs] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [selectedUser, setSelectedUser] = useState('');
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  useEffect(() => {
-    if (isAdmin) {
-      firmAdminService
-        .getUsers({ limit: 100 })
-        .then((res) => setUsers(res.data || res.users || []))
-        .catch(() => {});
-    }
-  }, [isAdmin]);
-
-  const fetchAttendance = async () => {
-    setIsLoading(true);
-    try {
-      if (isAdmin) {
-        const res = await attendanceService.getFirmReport({
-          month: selectedMonth,
-          year: selectedYear,
-          search,
-          userId: selectedUser || undefined,
-        });
-        setLogs(res.data || []);
-      } else {
-        const myRes = await attendanceService.getMyLogs({ month: selectedMonth, year: selectedYear });
-        setLogs(myRes.data || []);
-      }
-    } catch (err) {
-      toast.error('Failed to load attendance logs');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAttendance();
-  }, [selectedMonth, selectedYear, search, selectedUser, isAdmin]);
+  const { data: users = [] } = useFirmUsers({ limit: 100 }, { enabled: isAdmin });
+  const { logs, isLoading, refetch } = useAttendanceLogs({
+    month: selectedMonth,
+    year: selectedYear,
+    search: debouncedSearch,
+    userId: selectedUser || undefined,
+    isAdmin,
+  });
 
   // Stats calculation
-  const totalPresent = logs.filter((l) => l.status === 'PRESENT').length;
-  const halfDays = logs.filter((l) => l.status === 'HALF_DAY').length;
-  const totalHoursWorked = logs.reduce((acc, curr) => acc + (curr.workingHours || 0), 0);
-  const avgHoursPerDay = logs.length > 0 ? (totalHoursWorked / logs.length).toFixed(1) : '0.0';
+  const totalPresent = useMemo(() => logs.filter((l) => l.status === 'PRESENT').length, [logs]);
+  const halfDays = useMemo(() => logs.filter((l) => l.status === 'HALF_DAY').length, [logs]);
+  const totalHoursWorked = useMemo(() => logs.reduce((acc, curr) => acc + (curr.workingHours || 0), 0), [logs]);
+  const avgHoursPerDay = useMemo(() => (logs.length > 0 ? (totalHoursWorked / logs.length).toFixed(1) : '0.0'), [logs, totalHoursWorked]);
 
   const columns = [
     ...(isAdmin
@@ -96,7 +60,7 @@ export const AttendanceManagement = () => {
       key: 'date',
       render: (r) => (
         <span className="font-bold text-slate-200 flex items-center gap-1.5">
-          <FiCalendar className="text-indigo-400" /> {new Date(r.date).toLocaleDateString()}
+          <Calendar size="1em" className="text-indigo-400"  /> {new Date(r.date).toLocaleDateString()}
         </span>
       ),
     },
@@ -109,7 +73,7 @@ export const AttendanceManagement = () => {
             {r.checkInTime ? new Date(r.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
           </p>
           <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-            <FiMapPin className="text-emerald-400" /> {r.checkInLocation || 'Verified Location'}
+            <MapPin size="1em" className="text-emerald-400"  /> {r.checkInLocation || 'Verified Location'}
           </p>
         </div>
       ),
@@ -124,7 +88,7 @@ export const AttendanceManagement = () => {
           </p>
           {r.checkOutLocation && (
             <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-              <FiMapPin className="text-rose-400" /> {r.checkOutLocation}
+              <MapPin size="1em" className="text-rose-400"  /> {r.checkOutLocation}
             </p>
           )}
         </div>
@@ -157,7 +121,7 @@ export const AttendanceManagement = () => {
               onClick={() => setIsGeofenceModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2 transition-all cursor-pointer"
             >
-              <FiMapPin className="w-4 h-4 text-emerald-300" />
+              <MapPin className="w-4 h-4 text-emerald-300"  />
               <span>Configure Geofence Location 📍</span>
             </button>
           )
@@ -166,10 +130,10 @@ export const AttendanceManagement = () => {
 
       {/* Top Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Present Days" value={totalPresent} icon={FiCheckCircle} color="emerald" />
-        <StatsCard title="Half Days / Short Hours" value={halfDays} icon={FiAlertTriangle} color="amber" />
-        <StatsCard title="Total Hours Worked" value={`${totalHoursWorked.toFixed(1)} Hrs`} icon={FiClock} color="indigo" />
-        <StatsCard title="Avg Working Hours / Day" value={`${avgHoursPerDay} Hrs`} icon={FiUserCheck} color="purple" />
+        <StatsCard title="Present Days" value={totalPresent} icon={CircleCheckBig} color="emerald" />
+        <StatsCard title="Half Days / Short Hours" value={halfDays} icon={TriangleAlert} color="amber" />
+        <StatsCard title="Total Hours Worked" value={`${totalHoursWorked.toFixed(1)} Hrs`} icon={Clock} color="indigo" />
+        <StatsCard title="Avg Working Hours / Day" value={`${avgHoursPerDay} Hrs`} icon={UserCheck} color="purple" />
       </div>
 
       {/* Control Bar & Filters */}
@@ -229,7 +193,7 @@ export const AttendanceManagement = () => {
       <ConfigureGeofenceModal
         isOpen={isGeofenceModalOpen}
         onClose={() => setIsGeofenceModalOpen(false)}
-        onSaved={fetchAttendance}
+        onSaved={refetch}
       />
     </div>
   );

@@ -1,36 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
+import { Bell, Calendar, CircleCheckBig, Clock, List, Plus, Shield, TriangleAlert, Zap } from 'lucide-react';
 import {
-  FiShield,
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-  FiZap,
-  FiBell,
-  FiPlus,
-  FiCalendar,
-  FiList,
-  FiFileText,
-  FiUserCheck,
-  FiAlertCircle,
-} from 'react-icons/fi';
-import { complianceService } from '../../services/complianceService';
-import { firmAdminService } from '../../services/firmAdminService';
+  useComplianceItems,
+  useGenerateIndianPresets,
+  useUpdateComplianceStatus,
+  useConvertComplianceToTask,
+  useSendComplianceReminder,
+  useCreateComplianceItem,
+} from '../../queries/useCompliance';
+import { useFirmClients, useFirmUsers } from '../../queries/useLookups';
 import toast from 'react-hot-toast';
 
 export const Compliance = () => {
-  const [items, setItems] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'table'
 
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -53,97 +45,87 @@ export const Compliance = () => {
   const [newClientId, setNewClientId] = useState('');
   const [newPenalty, setNewPenalty] = useState('');
 
-  const fetchCompliance = async () => {
-    setIsLoading(true);
-    try {
-      const [compRes, clientRes, userRes] = await Promise.all([
-        complianceService.getAllComplianceItems({ search, category: categoryFilter || undefined, status: statusFilter || undefined }),
-        firmAdminService.getClients({ limit: 100 }),
-        firmAdminService.getUsers({ limit: 100 }),
-      ]);
-      setItems(compRes.data || []);
-      setClients(clientRes.data || clientRes.clients || []);
-      setUsers(userRes.data || userRes.users || []);
-    } catch (err) {
-      toast.error('Failed to load compliance tracker data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: items = [],
+    isLoading,
+    error,
+  } = useComplianceItems({
+    search: debouncedSearch || undefined,
+    category: categoryFilter || undefined,
+    status: statusFilter || undefined,
+  });
+
+  const { data: clients = [] } = useFirmClients({ limit: 100 });
+  const { data: users = [] } = useFirmUsers({ limit: 100 });
 
   useEffect(() => {
-    fetchCompliance();
-  }, [search, categoryFilter, statusFilter]);
-
-  const handleGeneratePresets = async () => {
-    try {
-      await complianceService.generateIndianPresets(selectedYear, selectedMonth);
-      toast.success(`Indian Statutory Calendar generated for Month ${selectedMonth}/${selectedYear}!`);
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to generate statutory presets');
+    if (error) {
+      toast.error('Failed to load compliance tracker data');
     }
+  }, [error]);
+
+  const generatePresetsMutation = useGenerateIndianPresets();
+  const updateStatusMutation = useUpdateComplianceStatus();
+  const convertToTaskMutation = useConvertComplianceToTask();
+  const sendReminderMutation = useSendComplianceReminder();
+  const createComplianceItemMutation = useCreateComplianceItem();
+
+  const handleGeneratePresets = () => {
+    generatePresetsMutation.mutate({ year: selectedYear, month: selectedMonth });
   };
 
-  const handleStatusChange = async (id, newStatus) => {
-    try {
-      await complianceService.updateComplianceStatus(id, newStatus);
-      toast.success(`Status updated to ${newStatus}`);
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update status');
-    }
+  const handleStatusChange = (id, newStatus) => {
+    updateStatusMutation.mutate({ id, status: newStatus });
   };
 
-  const handleConvertToTaskSubmit = async (e) => {
+  const handleConvertToTaskSubmit = (e) => {
     e.preventDefault();
     if (!selectedItem) return;
-    try {
-      await complianceService.convertToTask(selectedItem.id, { assignedUserIds });
-      toast.success(`Compliance item converted to an active Task!`);
-      setIsTaskModalOpen(false);
-      setSelectedItem(null);
-      setAssignedUserIds([]);
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to convert to task');
-    }
+    convertToTaskMutation.mutate(
+      { id: selectedItem.id, taskOptions: { assignedUserIds } },
+      {
+        onSuccess: () => {
+          setIsTaskModalOpen(false);
+          setSelectedItem(null);
+          setAssignedUserIds([]);
+        },
+      }
+    );
   };
 
-  const handleSendReminder = async (item) => {
-    try {
-      await complianceService.sendReminder(item.id);
-      toast.success(`Deadline reminder broadcasted on Notice Board for ${item.title}!`);
-    } catch (err) {
-      toast.error(err.message || 'Failed to broadcast reminder');
-    }
+  const handleSendReminder = (item) => {
+    sendReminderMutation.mutate(item.id, {
+      onSuccess: () => {
+        toast.success(`Deadline reminder broadcasted on Notice Board for ${item.title}!`);
+      },
+    });
   };
 
-  const handleAddCustomSubmit = async (e) => {
+  const handleAddCustomSubmit = (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newDueDate) {
       toast.error('Title and Due Date are required');
       return;
     }
-    try {
-      await complianceService.createComplianceItem({
+    createComplianceItemMutation.mutate(
+      {
         title: newTitle.trim(),
         category: newCategory,
         dueDate: newDueDate,
         period: newPeriod.trim(),
         clientId: newClientId ? parseInt(newClientId, 10) : null,
         penaltyDetails: newPenalty.trim(),
-      });
-      toast.success('Custom compliance item added!');
-      setIsAddModalOpen(false);
-      setNewTitle('');
-      setNewDueDate('');
-      setNewPeriod('');
-      setNewPenalty('');
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add item');
-    }
+      },
+      {
+        onSuccess: () => {
+          setIsAddModalOpen(false);
+          setNewTitle('');
+          setNewDueDate('');
+          setNewPeriod('');
+          setNewPenalty('');
+        },
+      }
+    );
   };
 
   // Metrics
@@ -180,7 +162,7 @@ export const Compliance = () => {
       key: 'dueDate',
       render: (r) => (
         <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-          <FiCalendar /> {new Date(r.dueDate).toLocaleDateString()}
+          <Calendar size="1em" /> {new Date(r.dueDate).toLocaleDateString()}
         </span>
       ),
     },
@@ -214,7 +196,7 @@ export const Compliance = () => {
             className="px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1"
             title="Convert to Task"
           >
-            <FiZap />
+            <Zap size="1em" />
             <span>Task</span>
           </button>
 
@@ -223,7 +205,7 @@ export const Compliance = () => {
             className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
             title="Broadcast Notice Reminder"
           >
-            <FiBell className="w-4 h-4" />
+            <Bell className="w-4 h-4"  />
           </button>
         </div>
       ),
@@ -241,7 +223,7 @@ export const Compliance = () => {
               onClick={() => setIsAddModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
             >
-              <FiPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4"  />
               <span>Add Custom Filing</span>
             </button>
           </div>
@@ -250,17 +232,17 @@ export const Compliance = () => {
 
       {/* Top Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Compliance Items" value={totalItems} icon={FiShield} color="indigo" />
-        <StatsCard title="Pending Statutory Filings" value={pendingCount} icon={FiClock} color="amber" />
-        <StatsCard title="Overdue Deadlines" value={overdueCount} icon={FiAlertTriangle} color="rose" />
-        <StatsCard title="Filed This Period" value={filedCount} icon={FiCheckCircle} color="emerald" />
+        <StatsCard title="Total Compliance Items" value={totalItems} icon={Shield} color="indigo" />
+        <StatsCard title="Pending Statutory Filings" value={pendingCount} icon={Clock} color="amber" />
+        <StatsCard title="Overdue Deadlines" value={overdueCount} icon={TriangleAlert} color="rose" />
+        <StatsCard title="Filed This Period" value={filedCount} icon={CircleCheckBig} color="emerald" />
       </div>
 
       {/* Statutory Presets Generator Bar */}
       <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-slate-900 border border-indigo-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            <FiZap className="w-6 h-6" />
+            <Zap className="w-6 h-6"  />
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider">Indian Statutory Deadlines Generator</h4>
@@ -297,9 +279,10 @@ export const Compliance = () => {
 
           <button
             onClick={handleGeneratePresets}
-            className="py-2 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg whitespace-nowrap"
+            disabled={generatePresetsMutation.isPending}
+            className="py-2 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg whitespace-nowrap"
           >
-            Generate Deadlines
+            {generatePresetsMutation.isPending ? 'Generating...' : 'Generate Deadlines'}
           </button>
         </div>
       </div>
@@ -313,7 +296,7 @@ export const Compliance = () => {
               viewMode === 'calendar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiCalendar />
+            <Calendar size="1em" />
             <span>Compliance Calendar</span>
           </button>
 
@@ -323,7 +306,7 @@ export const Compliance = () => {
               viewMode === 'table' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiList />
+            <List size="1em" />
             <span>Master List View</span>
           </button>
         </div>
@@ -363,7 +346,7 @@ export const Compliance = () => {
       {viewMode === 'calendar' && (
         <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 shadow-xl">
           <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-            <FiCalendar className="text-indigo-400" />
+            <Calendar size="1em" className="text-indigo-400"  />
             <span>Statutory Compliance Calendar Grid</span>
           </h3>
 
@@ -378,7 +361,7 @@ export const Compliance = () => {
                     {item.category}
                   </span>
                   <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                    <FiClock /> {new Date(item.dueDate).toLocaleDateString()}
+                    <Clock size="1em" /> {new Date(item.dueDate).toLocaleDateString()}
                   </span>
                 </div>
 
@@ -415,7 +398,7 @@ export const Compliance = () => {
                       }}
                       className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] flex items-center gap-1"
                     >
-                      <FiZap />
+                      <Zap size="1em" />
                       <span>Convert Task</span>
                     </button>
 
@@ -424,7 +407,7 @@ export const Compliance = () => {
                       className="p-1 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
                       title="Send Reminder"
                     >
-                      <FiBell className="w-3.5 h-3.5" />
+                      <Bell className="w-3.5 h-3.5"  />
                     </button>
                   </div>
                 </div>
@@ -481,9 +464,10 @@ export const Compliance = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={convertToTaskMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
           >
-            Create Task & Assign Auditors
+            {convertToTaskMutation.isPending ? 'Converting...' : 'Create Task & Assign Auditors'}
           </button>
         </form>
       </Modal>
@@ -574,9 +558,10 @@ export const Compliance = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={createComplianceItemMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
           >
-            Create Compliance Item
+            {createComplianceItemMutation.isPending ? 'Creating...' : 'Create Compliance Item'}
           </button>
         </form>
       </Modal>

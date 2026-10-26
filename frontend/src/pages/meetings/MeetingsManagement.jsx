@@ -1,47 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Search, Filter, Video, Clock, MapPin, Users, CheckCircle, XCircle, FileText, Play } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Calendar, Plus, Search, Video, Clock, Users, CheckCircle, FileText, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
-import { normalizeRole } from '../../utils/helpers';
-import { meetingApi } from '../../api/meetingApi';
+import { useMeetings, useJoinMeeting, useUpdateMeetingStatus } from '../../queries/useMeetings';
+import { useDebounce } from '../../hooks/useDebounce';
 import ScheduleMeetingModal from '../../components/meetings/ScheduleMeetingModal';
 import InAppVideoRoom from '../../components/meetings/InAppVideoRoom';
 import MeetingNotesEditor from '../../components/meetings/MeetingNotesEditor';
 
 export const MeetingsManagement = () => {
-  const { user } = useAuth();
-  const [meetings, setMeetings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [activeVideoMeeting, setActiveVideoMeeting] = useState(null);
   const [activeNotesMeeting, setActiveNotesMeeting] = useState(null);
 
-  const fetchMeetings = async () => {
-    setLoading(true);
-    try {
-      const response = await meetingApi.getAll({
-        search,
-        status: statusFilter,
-        type: typeFilter,
-      });
-      setMeetings(response.data || []);
-    } catch (err) {
-      toast.error('Failed to load meetings.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const filters = useMemo(() => {
+    const params = {};
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (statusFilter) params.status = statusFilter;
+    if (typeFilter) params.type = typeFilter;
+    return params;
+  }, [debouncedSearch, statusFilter, typeFilter]);
 
-  useEffect(() => {
-    fetchMeetings();
-  }, [search, statusFilter, typeFilter]);
+  const { meetings, isLoading } = useMeetings(filters);
+  const joinMeetingMutation = useJoinMeeting();
+  const updateStatusMutation = useUpdateMeetingStatus();
 
   const handleJoinMeeting = async (meeting) => {
     try {
-      await meetingApi.joinMeeting(meeting.id);
+      await joinMeetingMutation.mutateAsync(meeting.id);
       if (meeting.meetingMode === 'IN_APP_VIDEO') {
         setActiveVideoMeeting(meeting);
       } else if (meeting.meetingLink) {
@@ -50,32 +39,15 @@ export const MeetingsManagement = () => {
       } else {
         toast.success(`Meeting location: ${meeting.location || 'In-Person'}`);
       }
-    } catch (err) {
-      toast.error('Could not join meeting.');
+    } catch {
+      // toast handled in mutation
     }
   };
 
-  const handleCloseMeeting = async (meetingId) => {
-    try {
-      await meetingApi.updateStatus(meetingId, 'COMPLETED');
-      toast.success('Meeting marked as completed!');
-      fetchMeetings();
-    } catch (err) {
-      toast.error('Failed to close meeting.');
-    }
+  const handleCloseMeeting = (meetingId) => {
+    updateStatusMutation.mutate({ id: meetingId, status: 'COMPLETED' });
   };
 
-  const handleRespondInvite = async (meetingId, status) => {
-    try {
-      await meetingApi.respondInvite(meetingId, status);
-      toast.success(`Invitation ${status.toLowerCase()}!`);
-      fetchMeetings();
-    } catch (err) {
-      toast.error('Failed to update invitation status.');
-    }
-  };
-
-  const role = normalizeRole(user?.role);
   const canSchedule = true; // Allow any firm user, employee, and client to schedule meetings
 
   return (
@@ -154,12 +126,12 @@ export const MeetingsManagement = () => {
           >
             Close Notes
           </button>
-          <MeetingNotesEditor meeting={activeNotesMeeting} onRefresh={fetchMeetings} />
+          <MeetingNotesEditor meeting={activeNotesMeeting} onRefresh={() => {}} />
         </div>
       )}
 
       {/* Meetings Grid Cards */}
-      {loading ? (
+      {isLoading ? (
         <div className="p-12 text-center text-slate-500 text-xs">Loading meetings...</div>
       ) : meetings.length === 0 ? (
         <div className="p-12 text-center bg-slate-900/40 border border-slate-800/60 rounded-2xl text-slate-400 text-xs">
@@ -268,7 +240,6 @@ export const MeetingsManagement = () => {
       <ScheduleMeetingModal
         isOpen={isScheduleOpen}
         onClose={() => setIsScheduleOpen(false)}
-        onRefresh={fetchMeetings}
       />
 
       {/* In-App WebRTC Video Call Room Modal */}

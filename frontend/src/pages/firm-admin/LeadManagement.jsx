@@ -1,33 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { LeadDetailModal } from '../../components/leads/LeadDetailModal';
-import {
-  FiUsers,
-  FiMessageSquare,
-  FiFileText,
-  FiCheckCircle,
-  FiPlus,
-  FiGrid,
-  FiList,
-  FiPhone,
-  FiZap,
-  FiDollarSign,
-  FiArrowRight,
-} from 'react-icons/fi';
-import { leadService } from '../../services/leadService';
+import { ArrowRight, CircleCheckBig, FileText, Grid3x3, List, MessageSquare, Plus, Users } from 'lucide-react';
+import { useLeads, useCreateLead, useUpdateLeadStage } from '../../queries/useLeads';
 import toast from 'react-hot-toast';
 
 export const LeadManagement = () => {
-  const [leads, setLeads] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
 
   // Filters & Selected Lead
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [stageFilter, setStageFilter] = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -44,40 +32,36 @@ export const LeadManagement = () => {
   const [source, setSource] = useState('DIRECT');
   const [notes, setNotes] = useState('');
 
-  const fetchLeads = async () => {
-    setIsLoading(true);
-    try {
-      const res = await leadService.getAllLeads({ search, stage: stageFilter || undefined });
-      setLeads(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load CRM leads');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: leads = [],
+    isLoading,
+    error,
+  } = useLeads({
+    search: debouncedSearch || undefined,
+    stage: stageFilter || undefined,
+  });
 
   useEffect(() => {
-    fetchLeads();
-  }, [search, stageFilter]);
-
-  const handleStageUpdate = async (leadId, newStage) => {
-    try {
-      await leadService.updateLeadStage(leadId, newStage);
-      toast.success(`Pipeline stage updated to ${newStage}`);
-      fetchLeads();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update stage');
+    if (error) {
+      toast.error('Failed to load CRM leads');
     }
+  }, [error]);
+
+  const updateStageMutation = useUpdateLeadStage();
+  const createLeadMutation = useCreateLead();
+
+  const handleStageUpdate = (leadId, newStage) => {
+    updateStageMutation.mutate({ id: leadId, stage: newStage });
   };
 
-  const handleAddLeadSubmit = async (e) => {
+  const handleAddLeadSubmit = (e) => {
     e.preventDefault();
     if (!leadName.trim() || !email.trim()) {
       toast.error('Lead Contact Name and Email are required');
       return;
     }
-    try {
-      await leadService.createLead({
+    createLeadMutation.mutate(
+      {
         leadName: leadName.trim(),
         companyName: companyName.trim(),
         email: email.trim(),
@@ -87,20 +71,20 @@ export const LeadManagement = () => {
         estimatedValue: estimatedValue ? parseFloat(estimatedValue) : 0,
         source,
         notes: notes.trim(),
-      });
-      toast.success('New Lead added to CRM Pipeline!');
-      setIsAddModalOpen(false);
-      setLeadName('');
-      setCompanyName('');
-      setEmail('');
-      setPhone('');
-      setInterestedServices('');
-      setEstimatedValue('');
-      setNotes('');
-      fetchLeads();
-    } catch (err) {
-      toast.error(err.message || 'Failed to create lead');
-    }
+      },
+      {
+        onSuccess: () => {
+          setIsAddModalOpen(false);
+          setLeadName('');
+          setCompanyName('');
+          setEmail('');
+          setPhone('');
+          setInterestedServices('');
+          setEstimatedValue('');
+          setNotes('');
+        },
+      }
+    );
   };
 
   // Metrics calculation
@@ -187,7 +171,7 @@ export const LeadManagement = () => {
             onClick={() => setIsAddModalOpen(true)}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Add New Lead</span>
           </button>
         }
@@ -195,13 +179,13 @@ export const LeadManagement = () => {
 
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Active Leads" value={totalLeads} icon={FiUsers} color="indigo" />
-        <StatsCard title="Leads in Discussion" value={inDiscussionCount} icon={FiMessageSquare} color="purple" />
-        <StatsCard title="Proposals Sent" value={proposalSentCount} icon={FiFileText} color="amber" />
+        <StatsCard title="Total Active Leads" value={totalLeads} icon={Users} color="indigo" />
+        <StatsCard title="Leads in Discussion" value={inDiscussionCount} icon={MessageSquare} color="purple" />
+        <StatsCard title="Proposals Sent" value={proposalSentCount} icon={FileText} color="amber" />
         <StatsCard
           title="Converted Won Value"
           value={`₹${wonValueTotal.toLocaleString('en-IN')}`}
-          icon={FiCheckCircle}
+          icon={CircleCheckBig}
           color="emerald"
         />
       </div>
@@ -215,7 +199,7 @@ export const LeadManagement = () => {
               viewMode === 'kanban' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiGrid />
+            <Grid3x3 size="1em" />
             <span>Visual Pipeline Board</span>
           </button>
           <button
@@ -224,7 +208,7 @@ export const LeadManagement = () => {
               viewMode === 'table' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiList />
+            <List size="1em" />
             <span>Lead Master Table</span>
           </button>
         </div>
@@ -294,7 +278,7 @@ export const LeadManagement = () => {
                           <span className="text-emerald-400 font-bold">Converted</span>
                         ) : (
                           <span className="text-slate-500 group-hover:text-indigo-400 flex items-center gap-0.5">
-                            Manage <FiArrowRight />
+                            Manage <ArrowRight size="1em" />
                           </span>
                         )}
                       </div>
@@ -325,7 +309,6 @@ export const LeadManagement = () => {
         leadId={selectedLeadId}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onRefresh={fetchLeads}
       />
 
       {/* Add New Lead Modal */}
@@ -441,9 +424,10 @@ export const LeadManagement = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={createLeadMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
           >
-            Create Lead in CRM
+            {createLeadMutation.isPending ? 'Creating Lead...' : 'Create Lead in CRM'}
           </button>
         </form>
       </Modal>

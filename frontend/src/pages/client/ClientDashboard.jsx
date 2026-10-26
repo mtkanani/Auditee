@@ -1,40 +1,42 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
 import { Avatar } from '../../components/common/Avatar';
 import { clientService } from '../../services/clientService';
+import { dashboardKeys } from '../../queries/keys';
 import { NoticeBanner } from '../../components/announcements/NoticeBanner';
-import { FiFileText, FiClock, FiCheckCircle, FiUser, FiPlus, FiArrowRight } from 'react-icons/fi';
+import { CircleCheckBig, Clock, FileText, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export const ClientDashboard = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [assignedUser, setAssignedUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const { data: dashResult, error } = useQuery({
+    queryKey: dashboardKeys.byRole('client'),
+    queryFn: async () => {
+      const [dashRes, myUserRes] = await Promise.all([
+        clientService.getDashboard(),
+        clientService.getMyUser().catch(() => null),
+      ]);
+      return {
+        dashboard: dashRes.data || dashRes,
+        assignedUser: myUserRes?.data || myUserRes?.user || null,
+      };
+    },
+  });
+
+  const data = dashResult?.dashboard;
+  const assignedUser = dashResult?.assignedUser;
 
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const [dashRes, myUserRes] = await Promise.all([
-          clientService.getDashboard(),
-          clientService.getMyUser().catch(() => null),
-        ]);
-        setData(dashRes.data || dashRes);
-        if (myUserRes?.data || myUserRes?.user) {
-          setAssignedUser(myUserRes.data || myUserRes.user);
-        }
-      } catch (error) {
-        toast.error('Failed to load client dashboard');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
+    if (error) {
+      toast.error('Failed to load client dashboard');
+    }
+  }, [error]);
 
   return (
     <div className="space-y-8">
@@ -46,7 +48,7 @@ export const ClientDashboard = () => {
             onClick={() => navigate('/client/work-requests')}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 flex items-center gap-2"
           >
-            <FiPlus className="w-4 h-4" />
+            <Plus className="w-4 h-4"  />
             <span>Create Work Request</span>
           </button>
         }
@@ -57,10 +59,10 @@ export const ClientDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Requests" value={data?.metrics?.totalRequests || 12} icon={FiFileText} color="indigo" />
-        <StatsCard title="Pending Requests" value={data?.metrics?.pendingRequests || 3} icon={FiClock} color="amber" />
-        <StatsCard title="Completed Items" value={data?.metrics?.completedRequests || 9} icon={FiCheckCircle} color="emerald" />
-        <StatsCard title="Active Services" value="Tax & Audit" icon={FiCheckCircle} color="blue" />
+        <StatsCard title="Total Requests" value={data?.metrics?.totalRequests || 12} icon={FileText} color="indigo" />
+        <StatsCard title="Pending Requests" value={data?.metrics?.pendingRequests || 3} icon={Clock} color="amber" />
+        <StatsCard title="Completed Items" value={data?.metrics?.completedRequests || 9} icon={CircleCheckBig} color="emerald" />
+        <StatsCard title="Active Services" value="Tax & Audit" icon={CircleCheckBig} color="blue" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

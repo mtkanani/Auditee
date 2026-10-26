@@ -6,13 +6,6 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    screens: {
-      'sm-mobile': '320px',
-      'mobile': '425px',
-      'tablet': '768px',
-      'laptop': '1024px',
-      'desktop': '1440px',
-    },
     extend: {
       colors: {
         brand: {
@@ -42,7 +35,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter', 'Outfit', 'sans-serif'],
+        sans: ['"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'glass-sm': '0 2px 8px 0 rgba(0, 0, 0, 0.3)',

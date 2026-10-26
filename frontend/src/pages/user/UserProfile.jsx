@@ -1,22 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Avatar } from '../../components/common/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { FiUser, FiLock, FiSave } from 'react-icons/fi';
-import toast from 'react-hot-toast';
-import { userService } from '../../services/userService';
-import { authService } from '../../services/authService';
+import { Lock, Save, TriangleAlert, User } from 'lucide-react';
+import { useUpdateUserProfile, useChangePassword } from '../../queries/useUsers';
 
 export const UserProfile = () => {
   const { user, updateUserState } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   const { register: regProfile, handleSubmit: handleSubmitProfile, reset: resetProfile } = useForm();
-  const { register: regPass, handleSubmit: handleSubmitPass, reset: resetPass, watch } = useForm();
+  const { register: regPass, handleSubmit: handleSubmitPass, reset: resetPass } = useForm();
 
-  const newPassword = watch('newPassword');
+  const updateProfileMutation = useUpdateUserProfile();
+  const changePasswordMutation = useChangePassword();
+
+  const isLoading = updateProfileMutation.isPending;
+  const isPasswordLoading = changePasswordMutation.isPending;
 
   useEffect(() => {
     if (user) {
@@ -31,28 +32,24 @@ export const UserProfile = () => {
   }, [user, resetProfile]);
 
   const onUpdateProfile = async (data) => {
-    setIsLoading(true);
     try {
-      const res = await userService.updateProfile(data);
+      await updateProfileMutation.mutateAsync(data);
       updateUserState(data);
-      toast.success('Profile updated successfully!');
-    } catch (error) {
-      toast.error(error.message || 'Failed to update profile.');
-    } finally {
-      setIsLoading(false);
+    } catch {
+      // toast error handled in hook
     }
   };
 
   const onChangePassword = async (data) => {
-    setIsPasswordLoading(true);
     try {
-      await authService.changePassword(user.email, data.currentPassword, data.newPassword);
-      toast.success('Password changed successfully!');
+      await changePasswordMutation.mutateAsync({
+        email: user.email,
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
       resetPass();
-    } catch (error) {
-      toast.error(error.message || 'Failed to change password.');
-    } finally {
-      setIsPasswordLoading(false);
+    } catch {
+      // toast error handled in hook
     }
   };
 
@@ -80,7 +77,7 @@ export const UserProfile = () => {
       {/* Edit Profile Form */}
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
         <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <FiUser className="text-indigo-400" />
+          <User size="1em" className="text-indigo-400"  />
           <span>Personal Information</span>
         </h3>
 
@@ -128,7 +125,7 @@ export const UserProfile = () => {
             disabled={isLoading}
             className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
           >
-            <FiSave className="w-4 h-4" />
+            <Save className="w-4 h-4"  />
             <span>{isLoading ? 'Saving...' : 'Save Profile Changes'}</span>
           </button>
         </form>
@@ -137,7 +134,7 @@ export const UserProfile = () => {
       {/* Security & Change Password */}
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
         <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <FiLock className="text-purple-400" />
+          <Lock size="1em" className="text-purple-400"  />
           <span>Security & Change Password</span>
         </h3>
 
@@ -170,6 +167,25 @@ export const UserProfile = () => {
             {isPasswordLoading ? 'Updating Password...' : 'Update Password'}
           </button>
         </form>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
+            <TriangleAlert size="1em" className="text-rose-400"  />
+            <span>Danger Zone</span>
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Permanently delete your account and personal user data.
+          </p>
+        </div>
+        <Link
+          to="/user/delete-account"
+          className="inline-flex items-center justify-center py-2 px-4 rounded-xl bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 hover:border-rose-500 text-rose-300 hover:text-white font-semibold text-xs transition-all w-fit"
+        >
+          Delete Account
+        </Link>
       </div>
     </div>
   );

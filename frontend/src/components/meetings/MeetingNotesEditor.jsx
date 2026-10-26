@@ -1,50 +1,46 @@
 import React, { useState } from 'react';
-import { FileText, Sparkles, Save, CheckCircle2 } from 'lucide-react';
+import { FileText, Sparkles, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { meetingApi } from '../../api/meetingApi';
+import { useAddMeetingNote, useConvertMoMToTasks } from '../../queries/useMeetings';
 
 export const MeetingNotesEditor = ({ meeting, onRefresh }) => {
   const [notesText, setNotesText] = useState(
     meeting?.notes?.[0]?.description || meeting?.agenda || ''
   );
-  const [saving, setSaving] = useState(false);
-  const [aiConverting, setAiConverting] = useState(false);
+  const addNoteMutation = useAddMeetingNote();
+  const convertMoMMutation = useConvertMoMToTasks();
 
-  const handleSaveNote = async () => {
+  const handleSaveNote = () => {
     if (!notesText.trim()) {
       toast.error('Please enter notes content.');
       return;
     }
-    setSaving(true);
-    try {
-      await meetingApi.addNote(meeting.id, {
+    addNoteMutation.mutate({
+      id: meeting.id,
+      noteData: {
         title: `MoM Notes: ${meeting.title}`,
         description: notesText,
-      });
-      toast.success('Meeting notes saved successfully!');
-      onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to save notes.');
-    } finally {
-      setSaving(false);
-    }
+      },
+    }, {
+      onSuccess: () => {
+        onRefresh?.();
+      },
+    });
   };
 
-  const handleAIConvertToTasks = async () => {
+  const handleAIConvertToTasks = () => {
     if (!notesText.trim()) {
       toast.error('Please enter notes content first before converting to tasks.');
       return;
     }
-    setAiConverting(true);
-    try {
-      const response = await meetingApi.convertMoMToTasks(meeting.id, notesText);
-      toast.success(response.message || 'Successfully created tasks from Meeting Notes!');
-      onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'AI Task conversion failed.');
-    } finally {
-      setAiConverting(false);
-    }
+    convertMoMMutation.mutate({
+      id: meeting.id,
+      notesText,
+    }, {
+      onSuccess: () => {
+        onRefresh?.();
+      },
+    });
   };
 
   return (
@@ -64,11 +60,11 @@ export const MeetingNotesEditor = ({ meeting, onRefresh }) => {
         {/* ✨ AI Task Generator Button */}
         <button
           onClick={handleAIConvertToTasks}
-          disabled={aiConverting || !notesText.trim()}
+          disabled={convertMoMMutation.isPending || !notesText.trim()}
           className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-          <span>{aiConverting ? 'AI Parsing...' : '✨ AI Convert to Tasks'}</span>
+          <span>{convertMoMMutation.isPending ? 'AI Parsing...' : '✨ AI Convert to Tasks'}</span>
         </button>
       </div>
 
@@ -88,11 +84,11 @@ export const MeetingNotesEditor = ({ meeting, onRefresh }) => {
         </span>
         <button
           onClick={handleSaveNote}
-          disabled={saving}
-          className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+          disabled={addNoteMutation.isPending}
+          className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
         >
           <Save className="w-3.5 h-3.5" />
-          <span>{saving ? 'Saving...' : 'Save MoM Notes'}</span>
+          <span>{addNoteMutation.isPending ? 'Saving...' : 'Save MoM Notes'}</span>
         </button>
       </div>
     </div>

@@ -9,31 +9,18 @@ import { Modal } from '../../components/common/Modal';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
 import { CreateTaskModal } from '../../components/tasks/CreateTaskModal';
 import { TaskTemplatesModal } from '../../components/tasks/TaskTemplatesModal';
+import { Check, CircleCheckBig, CircleX, Clock, Eye, Inbox, Layers, Plus, Zap } from 'lucide-react';
 import {
-  FiPlus,
-  FiZap,
-  FiInbox,
-  FiCheckCircle,
-  FiClock,
-  FiUserCheck,
-  FiBriefcase,
-  FiEye,
-  FiEdit2,
-  FiCalendar,
-  FiUser,
-  FiGlobe,
-  FiCheck,
-  FiXCircle,
-  FiLayers,
-} from 'react-icons/fi';
-import { taskService } from '../../services/taskService';
-import { firmAdminService } from '../../services/firmAdminService';
+  useFirmTasks,
+  useClientRequests,
+  useUpdateTaskStatus,
+  useApproveClientRequest,
+  useRejectClientRequest,
+} from '../../queries/useTasks';
+import { useFirmUsers } from '../../queries/useLookups';
 import toast from 'react-hot-toast';
 
 export const FirmTaskManagement = () => {
-  const [tasks, setTasks] = useState([]);
-  const [clientRequests, setClientRequests] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('kanban'); // 'kanban' | 'table' | 'requests'
 
   // Filter state
@@ -41,8 +28,6 @@ export const FirmTaskManagement = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -55,54 +40,39 @@ export const FirmTaskManagement = () => {
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [requestAssignmentScope, setRequestAssignmentScope] = useState('SINGLE');
   const [requestSelectedUserIds, setRequestSelectedUserIds] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [actionLoadingId, setActionLoadingId] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const debouncedSearch = useDebounce(search, 400);
 
-  // Fetch users and client requests once on mount (avoids re-fetching 100 users on every search keystroke)
-  const fetchAuxiliaryData = async () => {
-    try {
-      const [reqRes, usersRes] = await Promise.all([
-        taskService.getClientRequests(),
-        firmAdminService.getUsers({ limit: 100 }),
-      ]);
-      setClientRequests(reqRes.data || []);
-      setUsers(usersRes.data || usersRes.users || []);
-    } catch (err) {
-      // silent catch for background lists
-    }
-  };
+  // Queries
+  const {
+    tasks,
+    pagination,
+    isLoading,
+    error: tasksError,
+  } = useFirmTasks({
+    page,
+    limit: 20,
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+    priority: priorityFilter || undefined,
+  });
+
+  const { requests: clientRequests = [] } = useClientRequests();
+  const { data: users = [] } = useFirmUsers({ limit: 100 });
+
+  // Mutations
+  const updateTaskStatusMutation = useUpdateTaskStatus();
+  const approveRequestMutation = useApproveClientRequest();
+  const rejectRequestMutation = useRejectClientRequest();
+
+  const totalPages = pagination?.totalPages || 1;
+  const totalRecords = pagination?.totalRecords || 0;
 
   useEffect(() => {
-    fetchAuxiliaryData();
-  }, []);
-
-  const fetchTasks = async () => {
-    setIsLoading(true);
-    try {
-      const taskRes = await taskService.getAllTasks({
-        page,
-        limit: 20,
-        search: debouncedSearch || undefined,
-        status: statusFilter || undefined,
-        priority: priorityFilter || undefined,
-      });
-
-      setTasks(taskRes.data || []);
-      setTotalPages(taskRes.pagination?.totalPages || 1);
-      setTotalRecords(taskRes.pagination?.totalRecords || 0);
-    } catch (err) {
+    if (tasksError) {
       toast.error('Failed to load firm tasks');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, [page, debouncedSearch, statusFilter, priorityFilter]);
+  }, [tasksError]);
 
   // Memoize Kanban task grouping to avoid O(columns * tasks) filter loops on each render
   const tasksByStatus = useMemo(() => {
@@ -117,17 +87,11 @@ export const FirmTaskManagement = () => {
     return map;
   }, [tasks]);
 
-  const handleStatusChange = async (taskId, newStatus) => {
-    try {
-      await taskService.updateTaskStatus(taskId, newStatus);
-      toast.success(`Task status updated to ${newStatus}`);
-      fetchTasks();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update task status');
-    }
+  const handleStatusChange = (taskId, newStatus) => {
+    updateTaskStatusMutation.mutate({ taskId, status: newStatus });
   };
 
-  const handleApproveRequestSubmit = async (e) => {
+  const handleApproveRequestSubmit = (e) => {
     e.preventDefault();
     if (!selectedRequest) return;
     if (requestAssignmentScope === 'SINGLE' && requestSelectedUserIds.length === 0) {
@@ -135,40 +99,29 @@ export const FirmTaskManagement = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await taskService.approveClientRequest(selectedRequest.id, {
-        assignmentScope: requestAssignmentScope,
-        assignedUserIds: requestSelectedUserIds,
-      });
-
-      toast.success('Client Work Request approved and assigned!');
-      setIsApproveModalOpen(false);
-      setSelectedRequest(null);
-      await fetchTasks();
-    } catch (err) {
-      toast.error(err.message || 'Failed to approve request');
-    } finally {
-      setIsSubmitting(false);
-    }
+    approveRequestMutation.mutate(
+      {
+        taskId: selectedRequest.id,
+        approvalData: {
+          assignmentScope: requestAssignmentScope,
+          assignedUserIds: requestSelectedUserIds,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsApproveModalOpen(false);
+          setSelectedRequest(null);
+        },
+      }
+    );
   };
 
-  const handleRejectRequest = async (taskId) => {
+  const handleRejectRequest = (taskId) => {
     if (!window.confirm('Are you sure you want to reject this client work request?')) return;
-    setActionLoadingId(taskId);
-    try {
-      await taskService.rejectClientRequest(taskId);
-      toast.success('Client Work Request rejected');
-      await fetchTasks();
-    } catch (err) {
-      toast.error(err.message || 'Failed to reject client request');
-    } finally {
-      setActionLoadingId(null);
-    }
+    rejectRequestMutation.mutate(taskId);
   };
 
   // Metrics
-  const pendingCount = tasks.filter((t) => t.status === 'PENDING').length;
   const inProgressCount = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
   const completedCount = tasks.filter((t) => t.status === 'COMPLETED').length;
 
@@ -273,7 +226,7 @@ export const FirmTaskManagement = () => {
           className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
           title="Open Task Hub"
         >
-          <FiEye className="w-4 h-4" />
+          <Eye className="w-4 h-4"  />
         </button>
       ),
     },
@@ -290,7 +243,7 @@ export const FirmTaskManagement = () => {
               onClick={() => setIsTemplatesModalOpen(true)}
               className="py-2.5 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5"
             >
-              <FiZap />
+              <Zap size="1em" />
               <span>Use Template</span>
             </button>
 
@@ -298,7 +251,7 @@ export const FirmTaskManagement = () => {
               onClick={() => setIsCreateModalOpen(true)}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 flex items-center gap-2"
             >
-              <FiPlus className="w-4 h-4" />
+              <Plus className="w-4 h-4"  />
               <span>Create & Assign Task</span>
             </button>
           </div>
@@ -307,13 +260,13 @@ export const FirmTaskManagement = () => {
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Tasks" value={totalRecords} icon={FiLayers} color="indigo" />
-        <StatsCard title="In Progress Tasks" value={inProgressCount} icon={FiClock} color="purple" />
-        <StatsCard title="Completed Tasks" value={completedCount} icon={FiCheckCircle} color="emerald" />
+        <StatsCard title="Total Tasks" value={totalRecords} icon={Layers} color="indigo" />
+        <StatsCard title="In Progress Tasks" value={inProgressCount} icon={Clock} color="purple" />
+        <StatsCard title="Completed Tasks" value={completedCount} icon={CircleCheckBig} color="emerald" />
         <StatsCard
           title="Client Work Requests"
           value={clientRequests.length}
-          icon={FiInbox}
+          icon={Inbox}
           color="rose"
         />
       </div>
@@ -351,7 +304,7 @@ export const FirmTaskManagement = () => {
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FiInbox />
+            <Inbox size="1em" />
             <span>Client Work Requests ({clientRequests.length})</span>
           </button>
         </div>
@@ -480,16 +433,16 @@ export const FirmTaskManagement = () => {
                 <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
                   <button
                     type="button"
-                    disabled={actionLoadingId === req.id || isSubmitting}
+                    disabled={rejectRequestMutation.isPending || approveRequestMutation.isPending}
                     onClick={() => handleRejectRequest(req.id)}
                     className="py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-950/40 text-rose-400 border border-slate-700 hover:border-rose-800 font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FiXCircle className="w-3.5 h-3.5" />
-                    <span>{actionLoadingId === req.id ? 'Rejecting...' : 'Reject Request'}</span>
+                    <CircleX className="w-3.5 h-3.5"  />
+                    <span>{rejectRequestMutation.isPending && rejectRequestMutation.variables === req.id ? 'Rejecting...' : 'Reject Request'}</span>
                   </button>
                   <button
                     type="button"
-                    disabled={actionLoadingId === req.id || isSubmitting}
+                    disabled={rejectRequestMutation.isPending || approveRequestMutation.isPending}
                     onClick={() => {
                       setSelectedRequest(req);
                       setRequestAssignmentScope('SINGLE');
@@ -498,7 +451,7 @@ export const FirmTaskManagement = () => {
                     }}
                     className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <FiCheck className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5"  />
                     <span>Accept & Assign Auditor</span>
                   </button>
                 </div>
@@ -519,21 +472,19 @@ export const FirmTaskManagement = () => {
         taskId={selectedTaskId}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onRefresh={fetchTasks}
       />
 
       {/* Create Task Modal */}
       <CreateTaskModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onTaskCreated={fetchTasks}
       />
 
       {/* Templates Modal */}
       <TaskTemplatesModal
         isOpen={isTemplatesModalOpen}
         onClose={() => setIsTemplatesModalOpen(false)}
-        onSelectTemplate={(tmpl) => {
+        onSelectTemplate={() => {
           setIsTemplatesModalOpen(false);
           setIsCreateModalOpen(true);
         }}
@@ -621,10 +572,10 @@ export const FirmTaskManagement = () => {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={approveRequestMutation.isPending}
             className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Accepting & Assigning...' : 'Confirm & Assign Task'}
+            {approveRequestMutation.isPending ? 'Accepting & Assigning...' : 'Confirm & Assign Task'}
           </button>
         </form>
       </Modal>

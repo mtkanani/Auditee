@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { FiBriefcase, FiSave } from 'react-icons/fi';
-import toast from 'react-hot-toast';
-import { clientService } from '../../services/clientService';
+import { Briefcase, Save } from 'lucide-react';
+import { useUpdateClientProfile } from '../../queries/useClients';
 
 export const ClientProfile = () => {
   const { user, updateUserState } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const updateProfileMutation = useUpdateClientProfile();
 
   const { register, handleSubmit, reset } = useForm();
 
@@ -25,17 +24,12 @@ export const ClientProfile = () => {
     }
   }, [user, reset]);
 
-  const onUpdateProfile = async (data) => {
-    setIsLoading(true);
-    try {
-      await clientService.updateProfile(data);
-      updateUserState(data);
-      toast.success('Client profile updated successfully!');
-    } catch (error) {
-      toast.error(error.message || 'Failed to update profile.');
-    } finally {
-      setIsLoading(false);
-    }
+  const onUpdateProfile = (data) => {
+    updateProfileMutation.mutate(data, {
+      onSuccess: () => {
+        updateUserState(data);
+      },
+    });
   };
 
   return (
@@ -47,7 +41,7 @@ export const ClientProfile = () => {
 
       <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
         <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <FiBriefcase className="text-indigo-400" />
+          <Briefcase size="1em" className="text-indigo-400"  />
           <span>Company Profile Details</span>
         </h3>
 
@@ -111,11 +105,11 @@ export const ClientProfile = () => {
 
           <button
             type="submit"
-            disabled={isLoading}
-            className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
+            disabled={updateProfileMutation.isPending}
+            className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2 disabled:opacity-50"
           >
-            <FiSave className="w-4 h-4" />
-            <span>{isLoading ? 'Saving...' : 'Save Profile Changes'}</span>
+            <Save className="w-4 h-4"  />
+            <span>{updateProfileMutation.isPending ? 'Saving...' : 'Save Profile Changes'}</span>
           </button>
         </form>
       </div>

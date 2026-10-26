@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { FiLock, FiKey, FiMail } from 'react-icons/fi';
+
 import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
 

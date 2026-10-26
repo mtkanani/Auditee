@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX } from 'react-icons/fi';
+import { X } from 'lucide-react';
 
 export const Drawer = ({ isOpen, onClose, title, children, width = 'max-w-md' }) => {
   useEffect(() => {
@@ -40,7 +40,7 @@ export const Drawer = ({ isOpen, onClose, title, children, width = 'max-w-md' })
                   onClick={onClose}
                   className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <X className="w-5 h-5"  />
                 </button>
               </div>
 

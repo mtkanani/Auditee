@@ -1,38 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
-import { announcementService } from '../../services/announcementService';
+import { useUserAnnouncements, useAcknowledgeNotice } from '../../queries/useAnnouncements';
 import { motion } from 'framer-motion';
-import { FiRadio, FiCheckCircle, FiClock, FiAlertTriangle, FiInfo } from 'react-icons/fi';
-import toast from 'react-hot-toast';
+import { CircleCheckBig, Clock, Radio, TriangleAlert } from 'lucide-react';
 
 export const UserAnnouncements = () => {
-  const [notices, setNotices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { notices, isLoading } = useUserAnnouncements();
+  const acknowledgeNoticeMutation = useAcknowledgeNotice();
 
-  const fetchNotices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await announcementService.getUserNotices();
-      setNotices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load firm notices');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotices();
-  }, []);
-
-  const handleAcknowledge = async (id) => {
-    try {
-      await announcementService.acknowledgeNotice(id);
-      toast.success('Notice acknowledged successfully!');
-      fetchNotices();
-    } catch (err) {
-      toast.error(err.message || 'Failed to acknowledge notice');
-    }
+  const handleAcknowledge = (id) => {
+    acknowledgeNoticeMutation.mutate(id);
   };
 
   return (
@@ -47,7 +24,7 @@ export const UserAnnouncements = () => {
           <div className="p-8 text-center text-sm text-slate-500">Loading notices...</div>
         ) : notices.length === 0 ? (
           <div className="p-12 text-center rounded-2xl bg-slate-900/60 border border-slate-800 text-slate-500 space-y-2">
-            <FiRadio className="w-10 h-10 mx-auto text-slate-600" />
+            <Radio className="w-10 h-10 mx-auto text-slate-600"  />
             <p className="font-semibold text-slate-300">No firm notices published yet.</p>
             <p className="text-xs text-slate-500">
               When firm admins broadcast announcements, they will appear here.
@@ -78,9 +55,9 @@ export const UserAnnouncements = () => {
                     }`}
                   >
                     {notice.priority === 'URGENT' ? (
-                      <FiAlertTriangle className="w-5 h-5" />
+                      <TriangleAlert className="w-5 h-5"  />
                     ) : (
-                      <FiRadio className="w-5 h-5" />
+                      <Radio className="w-5 h-5"  />
                     )}
                   </div>
 
@@ -106,7 +83,7 @@ export const UserAnnouncements = () => {
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-slate-400 self-end sm:self-center">
-                  <FiClock className="w-3.5 h-3.5" />
+                  <Clock className="w-3.5 h-3.5"  />
                   <span>{new Date(notice.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
@@ -124,7 +101,7 @@ export const UserAnnouncements = () => {
 
                 {notice.isAcknowledged ? (
                   <span className="px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold flex items-center gap-1.5">
-                    <FiCheckCircle className="w-4 h-4" />
+                    <CircleCheckBig className="w-4 h-4"  />
                     <span>
                       Acknowledged {notice.acknowledgedAt ? `on ${new Date(notice.acknowledgedAt).toLocaleDateString()}` : ''}
                     </span>
@@ -132,9 +109,10 @@ export const UserAnnouncements = () => {
                 ) : (
                   <button
                     onClick={() => handleAcknowledge(notice.id)}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all"
+                    disabled={acknowledgeNoticeMutation.isPending}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all disabled:opacity-50"
                   >
-                    <FiCheckCircle className="w-4 h-4" />
+                    <CircleCheckBig className="w-4 h-4"  />
                     <span>Acknowledge & Mark Read</span>
                   </button>
                 )}

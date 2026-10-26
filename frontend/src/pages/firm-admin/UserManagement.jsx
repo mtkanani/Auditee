@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
@@ -8,21 +8,25 @@ import { Modal } from '../../components/common/Modal';
 import { Drawer } from '../../components/common/Drawer';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 import { Avatar } from '../../components/common/Avatar';
-import { FiUserPlus, FiEdit2, FiTrash2, FiKey, FiEye, FiDownload, FiCheckCircle } from 'react-icons/fi';
+import { Download, Eye, Key, Pen, Trash2, UserPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
-import { firmAdminService } from '../../services/firmAdminService';
+import { useDebounce } from '../../hooks/useDebounce';
 import { exportToCsv } from '../../utils/exportToCsv';
+import {
+  useFirmUsersList,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+  useUpdateUserStatus,
+  useResetUserPassword,
+} from '../../queries/useUsers';
 
 export const UserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
 
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -36,85 +40,68 @@ export const UserManagement = () => {
   const { register: regEdit, handleSubmit: handleSubmitEdit, reset: resetEdit } = useForm();
   const { register: regReset, handleSubmit: handleSubmitReset, reset: resetReset } = useForm();
 
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const res = await firmAdminService.getUsers({
-        page,
-        limit: 10,
-        search,
-        role: roleFilter || undefined,
-        status: statusFilter || undefined,
-      });
-      setUsers(res.data || res.users || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotalRecords(res.pagination?.totalRecords || (res.data ? res.data.length : 0));
-    } catch (error) {
-      toast.error('Failed to fetch employee users');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const queryParams = useMemo(() => ({
+    page,
+    limit: 10,
+    search: debouncedSearch || undefined,
+    role: roleFilter || undefined,
+    status: statusFilter || undefined,
+  }), [page, debouncedSearch, roleFilter, statusFilter]);
+
+  const { users, totalPages, totalRecords, isLoading } = useFirmUsersList(queryParams);
+
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
+  const updateUserStatusMutation = useUpdateUserStatus();
+  const resetUserPasswordMutation = useResetUserPassword();
 
   useEffect(() => {
-    fetchUsers();
-  }, [page, search, roleFilter, statusFilter]);
+    setPage(1);
+  }, [debouncedSearch, roleFilter, statusFilter]);
 
   const handleCreateUser = async (data) => {
     try {
-      await firmAdminService.createUser(data);
-      toast.success('Employee User created successfully!');
+      await createUserMutation.mutateAsync(data);
       setIsCreateModalOpen(false);
       resetCreate();
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to create user.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
   const handleEditUser = async (data) => {
     if (!selectedUser) return;
     try {
-      await firmAdminService.updateUser(selectedUser.id, data);
-      toast.success('User details updated successfully!');
+      await updateUserMutation.mutateAsync({ id: selectedUser.id, data });
       setIsEditModalOpen(false);
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update user.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
-  const handleStatusChange = async (userId, newStatus) => {
-    try {
-      await firmAdminService.updateUserStatus(userId, newStatus);
-      toast.success(`User status changed to ${newStatus}`);
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update status.');
-    }
+  const handleStatusChange = (userId, newStatus) => {
+    updateUserStatusMutation.mutate({ id: userId, status: newStatus });
   };
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     try {
-      await firmAdminService.deleteUser(selectedUser.id);
-      toast.success('Employee User deleted successfully!');
+      await deleteUserMutation.mutateAsync(selectedUser.id);
       setIsDeleteModalOpen(false);
-      fetchUsers();
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete user.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
   const handleResetPassword = async (data) => {
     if (!selectedUser) return;
     try {
-      await firmAdminService.resetUserPassword(selectedUser.id, data.newPassword);
-      toast.success('Password reset successfully!');
+      await resetUserPasswordMutation.mutateAsync({ id: selectedUser.id, newPassword: data.newPassword });
       setIsResetPasswordOpen(false);
       resetReset();
-    } catch (error) {
-      toast.error(error.message || 'Failed to reset password.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
@@ -175,7 +162,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
             title="View Details"
           >
-            <FiEye className="w-4 h-4" />
+            <Eye className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -186,7 +173,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-indigo-400 hover:bg-indigo-500/10 transition-colors"
             title="Edit User"
           >
-            <FiEdit2 className="w-4 h-4" />
+            <Pen className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -196,7 +183,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/10 transition-colors"
             title="Reset Password"
           >
-            <FiKey className="w-4 h-4" />
+            <Key className="w-4 h-4"  />
           </button>
           <button
             onClick={() => {
@@ -206,7 +193,7 @@ export const UserManagement = () => {
             className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
             title="Delete User"
           >
-            <FiTrash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4"  />
           </button>
         </div>
       ),
@@ -224,7 +211,7 @@ export const UserManagement = () => {
               onClick={handleExport}
               className="py-2.5 px-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-2"
             >
-              <FiDownload className="w-4 h-4" />
+              <Download className="w-4 h-4"  />
               <span>Export CSV</span>
             </button>
             <button
@@ -234,7 +221,7 @@ export const UserManagement = () => {
               }}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
             >
-              <FiUserPlus className="w-4 h-4" />
+              <UserPlus className="w-4 h-4"  />
               <span>Add New Employee</span>
             </button>
           </div>

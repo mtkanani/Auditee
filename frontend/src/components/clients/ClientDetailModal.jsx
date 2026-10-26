@@ -1,32 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Briefcase, Clock, DollarSign, ExternalLink, Folder, Layers, MapPin, Plus, Shield, Trash2, User, X } from 'lucide-react';
 import {
-  FiX,
-  FiBriefcase,
-  FiFileText,
-  FiDollarSign,
-  FiFolder,
-  FiClock,
-  FiPlus,
-  FiTrash2,
-  FiCheckCircle,
-  FiUser,
-  FiMail,
-  FiPhone,
-  FiGlobe,
-  FiMapPin,
-  FiShield,
-  FiLayers,
-  FiExternalLink,
-  FiAlertCircle,
-} from 'react-icons/fi';
-import { firmAdminService } from '../../services/firmAdminService';
+  useClientDetail,
+  useAddClientService,
+  useRemoveClientService,
+  useAddClientDocument,
+  useDeleteClientDocument,
+} from '../../queries/useClients';
 import toast from 'react-hot-toast';
 
 export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'services' | 'billing' | 'documents' | 'history'
-  const [client, setClient] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // New Service Form State
   const [isAddingService, setIsAddingService] = useState(false);
@@ -45,85 +30,79 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
     fileUrl: '',
   });
 
-  const fetchClientDetails = async () => {
-    if (!clientId) return;
-    setIsLoading(true);
-    try {
-      const res = await firmAdminService.getClientById(clientId);
-      setClient(res.data || res);
-    } catch (err) {
-      toast.error('Failed to load client master details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { client, isLoading, error } = useClientDetail(clientId, { enabled: isOpen });
+
+  const addServiceMutation = useAddClientService();
+  const removeServiceMutation = useRemoveClientService();
+  const addDocMutation = useAddClientDocument();
+  const deleteDocMutation = useDeleteClientDocument();
 
   useEffect(() => {
-    if (isOpen && clientId) {
-      fetchClientDetails();
+    if (error) {
+      toast.error('Failed to load client master details');
     }
-  }, [isOpen, clientId]);
+  }, [error]);
 
   if (!isOpen) return null;
 
-  const handleAddService = async (e) => {
+  const handleAddService = (e) => {
     e.preventDefault();
     if (!serviceForm.serviceName.trim()) {
       toast.error('Please enter a service name');
       return;
     }
-    try {
-      await firmAdminService.addClientService(clientId, serviceForm);
-      toast.success('Service added to client subscription!');
-      setIsAddingService(false);
-      setServiceForm({ serviceName: '', serviceCategory: 'TAXATION', billingFrequency: 'MONTHLY', feeAmount: '' });
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add service');
-    }
+    addServiceMutation.mutate(
+      { clientId, serviceData: serviceForm },
+      {
+        onSuccess: () => {
+          setIsAddingService(false);
+          setServiceForm({ serviceName: '', serviceCategory: 'TAXATION', billingFrequency: 'MONTHLY', feeAmount: '' });
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleRemoveService = async (serviceId) => {
+  const handleRemoveService = (serviceId) => {
     if (!window.confirm('Remove this subscribed service from client?')) return;
-    try {
-      await firmAdminService.removeClientService(clientId, serviceId);
-      toast.success('Subscribed service removed');
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to remove service');
-    }
+    removeServiceMutation.mutate(
+      { clientId, serviceId },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddDocument = async (e) => {
+  const handleAddDocument = (e) => {
     e.preventDefault();
     if (!docForm.documentName.trim() || !docForm.fileUrl.trim()) {
       toast.error('Document name and file URL are required');
       return;
     }
-    try {
-      await firmAdminService.addClientDocument(clientId, docForm);
-      toast.success('Master document added!');
-      setIsAddingDoc(false);
-      setDocForm({ documentName: '', documentType: 'GST_CERTIFICATE', fileUrl: '' });
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add document');
-    }
+    addDocMutation.mutate(
+      { clientId, docData: docForm },
+      {
+        onSuccess: () => {
+          setIsAddingDoc(false);
+          setDocForm({ documentName: '', documentType: 'GST_CERTIFICATE', fileUrl: '' });
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleDeleteDocument = async (docId) => {
+  const handleDeleteDocument = (docId) => {
     if (!window.confirm('Delete this master document?')) return;
-    try {
-      await firmAdminService.deleteClientDocument(clientId, docId);
-      toast.success('Document deleted');
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to delete document');
-    }
+    deleteDocMutation.mutate(
+      { clientId, documentId: docId },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
   return (
@@ -178,7 +157,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
             >
-              <FiX className="w-6 h-6" />
+              <X className="w-6 h-6"  />
             </button>
           </div>
 
@@ -192,7 +171,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiBriefcase className="w-4 h-4" />
+              <Briefcase className="w-4 h-4"  />
               <span>Profile & Tax Info</span>
             </button>
 
@@ -204,7 +183,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiLayers className="w-4 h-4" />
+              <Layers className="w-4 h-4"  />
               <span>Services Subscribed ({client?.services?.length || 0})</span>
             </button>
 
@@ -216,7 +195,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiDollarSign className="w-4 h-4" />
+              <DollarSign className="w-4 h-4"  />
               <span>Billing & Financials</span>
             </button>
 
@@ -228,7 +207,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiFolder className="w-4 h-4" />
+              <Folder className="w-4 h-4"  />
               <span>Master Documents ({client?.documents?.length || 0})</span>
             </button>
 
@@ -240,7 +219,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FiClock className="w-4 h-4" />
+              <Clock className="w-4 h-4"  />
               <span>Activity History ({client?.activityLogs?.length || 0})</span>
             </button>
           </div>
@@ -300,7 +279,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                       {/* Left: Company Details */}
                       <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-4">
                         <h4 className="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center gap-2">
-                          <FiBriefcase className="text-indigo-400" />
+                          <Briefcase size="1em" className="text-indigo-400"  />
                           <span>Company & Organization Details</span>
                         </h4>
 
@@ -334,7 +313,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                             <p className="font-semibold text-indigo-400 truncate">
                               {client.website ? (
                                 <a href={client.website} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1">
-                                  {client.website} <FiExternalLink />
+                                  {client.website} <ExternalLink size="1em" />
                                 </a>
                               ) : (
                                 'N/A'
@@ -347,7 +326,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                       {/* Right: Primary Contact Person */}
                       <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-4">
                         <h4 className="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center gap-2">
-                          <FiUser className="text-purple-400" />
+                          <User size="1em" className="text-purple-400"  />
                           <span>Primary Contact Person</span>
                         </h4>
 
@@ -375,7 +354,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                         {/* Registered Address */}
                         <div className="pt-3 border-t border-slate-800 space-y-1 text-xs">
                           <span className="text-slate-400 flex items-center gap-1">
-                            <FiMapPin className="text-rose-400" />
+                            <MapPin size="1em" className="text-rose-400"  />
                             <span>Registered Office Address:</span>
                           </span>
                           <p className="font-semibold text-slate-200">
@@ -391,7 +370,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                     {/* Assigned Auditors Card */}
                     <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
                       <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                        <FiShield className="text-emerald-400" />
+                        <Shield size="1em" className="text-emerald-400"  />
                         <span>Dedicated Staff Accountants & Auditors</span>
                       </h4>
 
@@ -425,7 +404,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                         onClick={() => setIsAddingService(true)}
                         className="py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
                       >
-                        <FiPlus />
+                        <Plus size="1em" />
                         <span>Add Subscribed Service</span>
                       </button>
                     </div>
@@ -528,7 +507,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                                   onClick={() => handleRemoveService(s.id)}
                                   className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-colors"
                                 >
-                                  <FiTrash2 />
+                                  <Trash2 size="1em" />
                                 </button>
                               </td>
                             </tr>
@@ -600,7 +579,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                         onClick={() => setIsAddingDoc(true)}
                         className="py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
                       >
-                        <FiPlus />
+                        <Plus size="1em" />
                         <span>Add Document Record</span>
                       </button>
                     </div>
@@ -666,7 +645,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                         <div key={doc.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                              <FiFolder className="w-5 h-5" />
+                              <Folder className="w-5 h-5"  />
                             </div>
                             <div>
                               <h5 className="text-xs font-bold text-slate-100">{doc.documentName}</h5>
@@ -683,14 +662,14 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
                               className="p-2 rounded-xl bg-slate-900 text-indigo-400 hover:text-indigo-300"
                               title="View Document"
                             >
-                              <FiExternalLink />
+                              <ExternalLink size="1em" />
                             </a>
                             <button
                               onClick={() => handleDeleteDocument(doc.id)}
                               className="p-2 rounded-xl bg-slate-900 text-rose-400 hover:text-rose-300"
                               title="Delete"
                             >
-                              <FiTrash2 />
+                              <Trash2 size="1em" />
                             </button>
                           </div>
                         </div>

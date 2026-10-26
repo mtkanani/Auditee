@@ -1,71 +1,40 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DualPanelAssignment } from '../../components/assignments/DualPanelAssignment';
-import { assignmentService } from '../../services/assignmentService';
-import { firmAdminService } from '../../services/firmAdminService';
-import toast from 'react-hot-toast';
+import { useFirmUsers, useFirmClients } from '../../queries/useLookups';
+import { useFirmTasks, useCreateTask } from '../../queries/useTasks';
+import { useAllAssignments, useAssignClient, useRemoveAssignment } from '../../queries/useUsers';
 
 export const ClientAssignments = () => {
-  const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [assignments, setAssignments] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: clients = [], isLoading: isClientsLoading } = useFirmClients({ limit: 100 });
+  const { data: users = [], isLoading: isUsersLoading } = useFirmUsers({ limit: 100 });
+  const { assignments, isLoading: isAssignmentsLoading } = useAllAssignments();
+  const { tasks, isLoading: isTasksLoading } = useFirmTasks();
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const [clientsRes, usersRes, assignRes, tasksRes] = await Promise.all([
-        firmAdminService.getClients({ limit: 100 }),
-        firmAdminService.getUsers({ limit: 100 }),
-        assignmentService.getAllAssignments(),
-        assignmentService.getFirmTasks(),
-      ]);
+  const assignClientMutation = useAssignClient();
+  const removeAssignmentMutation = useRemoveAssignment();
+  const createTaskMutation = useCreateTask();
 
-      setClients(clientsRes.data || clientsRes.clients || []);
-      setUsers(usersRes.data || usersRes.users || []);
-      setAssignments(assignRes.data || assignRes.assignments || []);
-      setTasks(tasksRes.data || tasksRes.tasks || []);
-    } catch (error) {
-      toast.error('Failed to load assignment workstation data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const isLoading = isClientsLoading || isUsersLoading || isAssignmentsLoading || isTasksLoading;
 
   const handleAssign = async (userId, clientId) => {
     try {
-      await assignmentService.assignClient(userId, clientId);
-      toast.success('Client assigned to employee successfully!');
-      fetchData();
-    } catch (error) {
-      toast.error(error.message || 'Failed to assign client.');
+      await assignClientMutation.mutateAsync({ userId, clientId });
+    } catch {
+      // toast handled in mutation hook
     }
   };
 
   const handleUnassign = async (userId, clientId) => {
     try {
-      await assignmentService.removeAssignment(userId, clientId);
-      toast.success('Assignment removed!');
-      fetchData();
-    } catch (error) {
-      toast.error(error.message || 'Failed to remove assignment.');
+      await removeAssignmentMutation.mutateAsync({ userId, clientId });
+    } catch {
+      // toast handled in mutation hook
     }
   };
 
-  const handleCreateTask = async (taskData) => {
-    try {
-      await assignmentService.createTask(taskData);
-      toast.success('Task created and assigned successfully!');
-      fetchData();
-    } catch (error) {
-      toast.error(error.message || 'Failed to create task.');
-      throw error;
-    }
+  const handleCreateTask = (taskData) => {
+    return createTaskMutation.mutateAsync(taskData);
   };
 
   return (

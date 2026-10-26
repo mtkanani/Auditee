@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiUser, FiUserCheck, FiSave } from 'react-icons/fi';
-import { leaveService } from '../../services/leaveService';
+import { Save } from 'lucide-react';
+import { useUpdateEmployeeLeaveBalance } from '../../queries/useLeave';
 import toast from 'react-hot-toast';
 
 export const AdjustEmployeeLeaveModal = ({ isOpen, onClose, employeeBalances, onBalanceAdjusted }) => {
@@ -9,7 +9,8 @@ export const AdjustEmployeeLeaveModal = ({ isOpen, onClose, employeeBalances, on
   const [casualLeave, setCasualLeave] = useState(12);
   const [sickLeave, setSickLeave] = useState(10);
   const [earnedLeave, setEarnedLeave] = useState(15);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const updateBalanceMutation = useUpdateEmployeeLeaveBalance();
 
   const selectedBalance = employeeBalances.find((b) => b.userId === parseInt(selectedUserId, 10));
 
@@ -21,30 +22,28 @@ export const AdjustEmployeeLeaveModal = ({ isOpen, onClose, employeeBalances, on
     }
   }, [selectedUserId]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!selectedUserId) {
       toast.error('Please select an employee');
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        casualLeave: parseFloat(casualLeave),
-        sickLeave: parseFloat(sickLeave),
-        earnedLeave: parseFloat(earnedLeave),
-      };
+    const payload = {
+      casualLeave: parseFloat(casualLeave),
+      sickLeave: parseFloat(sickLeave),
+      earnedLeave: parseFloat(earnedLeave),
+    };
 
-      await leaveService.updateEmployeeLeaveBalance(selectedUserId, payload);
-      toast.success('Employee custom leave quota adjusted successfully!');
-      if (onBalanceAdjusted) onBalanceAdjusted();
-      onClose();
-    } catch (err) {
-      toast.error(err.message || 'Failed to adjust employee leave quota');
-    } finally {
-      setIsSubmitting(false);
-    }
+    updateBalanceMutation.mutate(
+      { userId: selectedUserId, balanceData: payload },
+      {
+        onSuccess: () => {
+          if (onBalanceAdjusted) onBalanceAdjusted();
+          onClose();
+        },
+      }
+    );
   };
 
   return (
@@ -124,11 +123,11 @@ export const AdjustEmployeeLeaveModal = ({ isOpen, onClose, employeeBalances, on
 
         <button
           type="submit"
-          disabled={isSubmitting || !selectedUserId}
+          disabled={updateBalanceMutation.isPending || !selectedUserId}
           className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
         >
-          <FiSave className="w-4 h-4" />
-          <span>{isSubmitting ? 'Saving Adjustments...' : 'Apply Custom Quota Adjustments'}</span>
+          <Save className="w-4 h-4"  />
+          <span>{updateBalanceMutation.isPending ? 'Saving Adjustments...' : 'Apply Custom Quota Adjustments'}</span>
         </button>
       </form>
     </Modal>

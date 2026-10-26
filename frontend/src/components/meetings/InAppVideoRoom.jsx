@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Video, VideoOff, Mic, MicOff, Monitor, Hand, PhoneOff, Users, Shield, VolumeX, CheckCircle, UserPlus, Search, X } from 'lucide-react';
+import { Video, VideoOff, Mic, MicOff, Monitor, Hand, PhoneOff, Users, VolumeX, CheckCircle, UserPlus, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import axiosInstance from '../../services/axiosInstance';
-import meetingApi from '../../api/meetingApi';
+import { useInviteParticipant } from '../../queries/useMeetings';
 
 export const InAppVideoRoom = ({ meeting, onClose }) => {
   const { user } = useAuth();
+  const inviteMutation = useInviteParticipant();
 
   // Media streams & video element references
   const localVideoRef = useRef(null);
@@ -18,7 +19,7 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
   const [camOn, setCamOn] = useState(true);
   const [screenSharing, setScreenSharing] = useState(false);
   const [raisedHand, setRaisedHand] = useState(false);
-  const [mutedByHostLocal, setMutedByHostLocal] = useState(false);
+  const [mutedByHostLocal] = useState(false);
 
   // In-Call Live Participant Invitation Drawer State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -80,30 +81,59 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
     };
   }, []);
 
-  // Fetch Firm Users & Clients for Live Call Invitation
+  // Fetch Role-Appropriate Users & Clients for Live Call Invitation
   const fetchInviteOptions = async () => {
     setLoadingInvitees(true);
     try {
-      const [usersRes, clientsRes] = await Promise.all([
-        axiosInstance.get('/firm-admin/users').catch(() => ({ data: { data: [] } })),
-        axiosInstance.get('/firm-admin/clients').catch(() => ({ data: { data: [] } })),
-      ]);
+      let uList = [];
+      let cList = [];
 
-      const uList = (usersRes.data?.data || usersRes.data?.users || []).map((u) => ({
-        id: u.id,
-        name: `${u.firstName} ${u.lastName}`,
-        email: u.email,
-        role: u.role || 'EMPLOYEE',
-        type: 'USER',
-      }));
+      const role = user?.role;
+      if (role === 'SUPER_ADMIN' || role === 'FIRM_ADMIN' || role === 'ADMIN') {
+        const [usersRes, clientsRes] = await Promise.all([
+          axiosInstance.get('/firm-admin/users').catch(() => ({ data: { data: [] } })),
+          axiosInstance.get('/firm-admin/clients').catch(() => ({ data: { data: [] } })),
+        ]);
 
-      const cList = (clientsRes.data?.data || clientsRes.data?.clients || []).map((c) => ({
-        id: c.id,
-        name: c.clientName || c.companyName || 'Client',
-        email: c.email,
-        role: 'CLIENT',
-        type: 'CLIENT',
-      }));
+        uList = (usersRes.data?.data || usersRes.data?.users || []).map((u) => ({
+          id: u.id,
+          name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+          email: u.email,
+          role: u.role || 'EMPLOYEE',
+          type: 'USER',
+        }));
+
+        cList = (clientsRes.data?.data || clientsRes.data?.clients || []).map((c) => ({
+          id: c.id,
+          name: c.clientName || c.companyName || 'Client',
+          email: c.email,
+          role: 'CLIENT',
+          type: 'CLIENT',
+        }));
+      } else if (role === 'CLIENT') {
+        // Clients can invite their assigned firm auditors
+        const res = await axiosInstance.get('/client/my-user').catch(() => ({ data: { user: null } }));
+        const assigned = res.data?.data || res.data?.user || res.data?.users || [];
+        const arr = Array.isArray(assigned) ? assigned : (assigned ? [assigned] : []);
+        uList = arr.map((u) => ({
+          id: u.id,
+          name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+          email: u.email,
+          role: u.role || 'AUDITOR',
+          type: 'USER',
+        }));
+      } else {
+        // Employees / staff can invite their assigned clients
+        const res = await axiosInstance.get('/user/clients').catch(() => ({ data: { data: [] } }));
+        const clients = res.data?.data || res.data?.clients || (Array.isArray(res.data) ? res.data : []);
+        cList = clients.map((c) => ({
+          id: c.id,
+          name: c.clientName || c.companyName || 'Client',
+          email: c.email,
+          role: 'CLIENT',
+          type: 'CLIENT',
+        }));
+      }
 
       setAvailableUsers(uList);
       setAvailableClients(cList);
@@ -116,10 +146,13 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
 
   const handleSendLiveInvite = async (person) => {
     try {
-      await meetingApi.inviteParticipant(meeting.id, {
-        email: person.email,
-        userId: person.type === 'USER' ? person.id : undefined,
-        clientId: person.type === 'CLIENT' ? person.id : undefined,
+      await inviteMutation.mutateAsync({
+        id: meeting.id,
+        participantData: {
+          email: person.email,
+          userId: person.type === 'USER' ? person.id : undefined,
+          clientId: person.type === 'CLIENT' ? person.id : undefined,
+        },
       });
 
       toast.success(`Live meeting invitation sent to ${person.name} (${person.email})!`, { icon: '📩' });
@@ -136,8 +169,8 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
           isMutedByHost: false,
         },
       ]);
-    } catch (err) {
-      toast.error(err.message || 'Failed to send invitation.');
+    } catch {
+      // toast handled in mutation
     }
   };
 
@@ -520,6 +553,22 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
                 <p className="text-center py-6 text-xs text-slate-400">Loading directory...</p>
               ) : (
                 <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                  {inviteSearch && inviteSearch.includes('@') && ![...availableUsers, ...availableClients].some((p) => p.email.toLowerCase() === inviteSearch.trim().toLowerCase()) && (
+                    <div className="p-3 rounded-xl bg-indigo-950/50 border border-indigo-500/40 flex items-center justify-between shadow-sm">
+                      <div>
+                        <p className="text-xs font-bold text-slate-100">{inviteSearch.trim()}</p>
+                        <p className="text-[10px] text-indigo-400 font-medium">Invite by email address</p>
+                      </div>
+                      <button
+                        onClick={() => handleSendLiveInvite({ name: inviteSearch.trim(), email: inviteSearch.trim(), type: 'EMAIL' })}
+                        className="py-1.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        <span>Invite</span>
+                      </button>
+                    </div>
+                  )}
+
                   {[...availableUsers, ...availableClients]
                     .filter((p) =>
                       !inviteSearch ||

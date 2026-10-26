@@ -1,28 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import {
-  FiMenu,
-  FiBell,
-  FiSun,
-  FiMoon,
-  FiSearch,
-  FiChevronDown,
-  FiUser,
-  FiLogOut,
-  FiCheckCircle,
-  FiClock,
-  FiMapPin,
-  FiCalendar,
-} from 'react-icons/fi';
+import React, { useState, lazy, Suspense } from 'react';
+import { Bell, ChevronDown, CircleCheckBig, LogOut, MapPin, Menu, Moon, Search, Sun, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Avatar } from './Avatar';
 import { formatRoleName } from '../../utils/helpers';
 import { useNavigate } from 'react-router-dom';
-import { attendanceService } from '../../services/attendanceService';
-import { leaveService } from '../../services/leaveService';
-import { LeaveAdminDrawer } from '../leave/LeaveAdminDrawer';
-import { ApplyLeaveModal } from '../leave/ApplyLeaveModal';
-import toast from 'react-hot-toast';
+import { useTodayAttendance, useCheckIn, useCheckOut } from '../../queries/useAttendance';
+import { usePendingLeaveRequests } from '../../queries/useLeave';
+
+const LeaveAdminDrawer = lazy(() => import('../leave/LeaveAdminDrawer').then((m) => ({ default: m.LeaveAdminDrawer })));
+const ApplyLeaveModal = lazy(() => import('../leave/ApplyLeaveModal').then((m) => ({ default: m.ApplyLeaveModal })));
 
 export const Navbar = ({ onMenuClick }) => {
   const { user, logout, getRoleDashboardPath } = useAuth();
@@ -32,16 +19,21 @@ export const Navbar = ({ onMenuClick }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // Attendance Widget State
-  const [attendanceStatus, setAttendanceStatus] = useState(null);
-  const [isAttendanceLoading, setIsAttendanceLoading] = useState(false);
-
   // Leave Widget State
-  const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
   const [isLeaveDrawerOpen, setIsLeaveDrawerOpen] = useState(false);
   const [isApplyLeaveModalOpen, setIsApplyLeaveModalOpen] = useState(false);
 
   const isAdmin = user?.role === 'FIRM_ADMIN' || user?.role === 'ADMIN';
+  const isLeaveAdmin = Boolean(user && user.role !== 'SUPER_ADMIN' && user.role !== 'CLIENT' && isAdmin);
+  const { data: pendingLeaveData } = usePendingLeaveRequests({ enabled: isLeaveAdmin });
+  const pendingLeaveCount = pendingLeaveData?.count ?? pendingLeaveData?.pendingRequests?.length ?? 0;
+
+  // Attendance Widget Hooks
+  const isAttendanceEligible = Boolean(user && user.role !== 'SUPER_ADMIN' && user.role !== 'CLIENT');
+  const { status: attendanceStatus } = useTodayAttendance({ enabled: isAttendanceEligible });
+  const checkInMutation = useCheckIn();
+  const checkOutMutation = useCheckOut();
+  const isAttendanceLoading = checkInMutation.isPending || checkOutMutation.isPending;
 
   // Sample system notifications
   const [notifications] = useState([
@@ -50,41 +42,13 @@ export const Navbar = ({ onMenuClick }) => {
     { id: 3, title: 'Compliance Reminder', desc: 'Quarterly TDS Return due in 3 days', time: '3h ago' },
   ]);
 
-  const fetchAttendanceStatus = async () => {
-    if (!user || user.role === 'SUPER_ADMIN') return;
-    try {
-      const res = await attendanceService.getTodayStatus();
-      setAttendanceStatus(res.data);
-    } catch (err) {
-      console.log('Error fetching today attendance status:', err);
-    }
-  };
-
-  const fetchPendingLeaves = async () => {
-    if (!user || user.role === 'SUPER_ADMIN' || user.role === 'CLIENT') return;
-    if (isAdmin) {
-      try {
-        const res = await leaveService.getPendingRequests();
-        setPendingLeaveCount(res.data?.count || 0);
-      } catch (err) {
-        console.log('Error fetching pending leave count:', err);
-      }
-    }
-  };
-
-  useEffect(() => {
-    fetchAttendanceStatus();
-    fetchPendingLeaves();
-  }, [user]);
-
   const handleGPSCheckIn = async () => {
-    setIsAttendanceLoading(true);
     const getCoordinates = () =>
       new Promise((resolve) => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            (err) => resolve({ lat: null, lng: null })
+            () => resolve({ lat: null, lng: null })
           );
         } else {
           resolve({ lat: null, lng: null });
@@ -93,28 +57,23 @@ export const Navbar = ({ onMenuClick }) => {
 
     try {
       const coords = await getCoordinates();
-      await attendanceService.checkIn({
+      await checkInMutation.mutateAsync({
         lat: coords.lat,
         lng: coords.lng,
         location: coords.lat ? `GPS (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})` : 'Web Verified Location',
       });
-      toast.success('🟢 Checked In successfully with GPS location!');
-      fetchAttendanceStatus();
-    } catch (err) {
-      toast.error(err.message || 'Failed to Check In');
-    } finally {
-      setIsAttendanceLoading(false);
+    } catch {
+      // toast handled in mutation
     }
   };
 
   const handleGPSCheckOut = async () => {
-    setIsAttendanceLoading(true);
     const getCoordinates = () =>
       new Promise((resolve) => {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            (err) => resolve({ lat: null, lng: null })
+            () => resolve({ lat: null, lng: null })
           );
         } else {
           resolve({ lat: null, lng: null });
@@ -123,17 +82,13 @@ export const Navbar = ({ onMenuClick }) => {
 
     try {
       const coords = await getCoordinates();
-      const res = await attendanceService.checkOut({
+      await checkOutMutation.mutateAsync({
         lat: coords.lat,
         lng: coords.lng,
         location: coords.lat ? `GPS (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})` : 'Web Verified Location',
       });
-      toast.success(`🔴 Checked Out! Total Working Hours: ${res.data?.workingHours || 0} hrs`);
-      fetchAttendanceStatus();
-    } catch (err) {
-      toast.error(err.message || 'Failed to Check Out');
-    } finally {
-      setIsAttendanceLoading(false);
+    } catch {
+      // toast handled in mutation
     }
   };
 
@@ -156,11 +111,11 @@ export const Navbar = ({ onMenuClick }) => {
           onClick={onMenuClick}
           className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800"
         >
-          <FiMenu className="w-5 h-5" />
+          <Menu className="w-5 h-5"  />
         </button>
 
         <div className="relative max-w-xs sm:max-w-sm w-full hidden sm:block">
-          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"  />
           <input
             type="text"
             placeholder="Search clients, tasks, documents..."
@@ -182,7 +137,7 @@ export const Navbar = ({ onMenuClick }) => {
                 title="Click to Clock In with GPS Verification"
               >
                 <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                <FiMapPin className="w-3.5 h-3.5" />
+                <MapPin className="w-3.5 h-3.5"  />
                 <span>Check In (GPS)</span>
               </button>
             ) : !attendanceStatus?.isCheckedOut ? (
@@ -202,7 +157,7 @@ export const Navbar = ({ onMenuClick }) => {
               </div>
             ) : (
               <div className="flex items-center gap-1 px-3 py-1 text-xs font-bold text-slate-300">
-                <FiCheckCircle className="text-emerald-400" />
+                <CircleCheckBig size="1em" className="text-emerald-400"  />
                 <span>Checked Out ({attendanceStatus.workingHours || 0} hrs)</span>
               </div>
             )}
@@ -218,7 +173,7 @@ export const Navbar = ({ onMenuClick }) => {
           className="p-2.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
           title="Toggle Dark/Light Mode"
         >
-          {isDark ? <FiSun className="w-4 h-4 text-amber-400" /> : <FiMoon className="w-4 h-4 text-indigo-400" />}
+          {isDark ? <Sun className="w-4 h-4 text-amber-400"  /> : <Moon className="w-4 h-4 text-indigo-400"  />}
         </button>
 
         {/* Notifications Dropdown */}
@@ -230,7 +185,7 @@ export const Navbar = ({ onMenuClick }) => {
             }}
             className="p-2.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors relative"
           >
-            <FiBell className="w-4 h-4" />
+            <Bell className="w-4 h-4"  />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
           </button>
@@ -277,7 +232,7 @@ export const Navbar = ({ onMenuClick }) => {
                 {formatRoleName(user?.role)}
               </p>
             </div>
-            <FiChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400"  />
           </button>
 
           {showProfileMenu && (
@@ -291,7 +246,7 @@ export const Navbar = ({ onMenuClick }) => {
                 onClick={handleProfileClick}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-slate-100 hover:bg-slate-800 transition-colors"
               >
-                <FiUser className="w-4 h-4 text-indigo-400" />
+                <User className="w-4 h-4 text-indigo-400"  />
                 <span>My Profile</span>
               </button>
 
@@ -299,7 +254,7 @@ export const Navbar = ({ onMenuClick }) => {
                 onClick={logout}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors mt-1"
               >
-                <FiLogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4"  />
                 <span>Sign Out</span>
               </button>
             </div>
@@ -308,17 +263,23 @@ export const Navbar = ({ onMenuClick }) => {
       </div>
 
       {/* Top Bar Triggered Modals & Drawers */}
-      <LeaveAdminDrawer
-        isOpen={isLeaveDrawerOpen}
-        onClose={() => setIsLeaveDrawerOpen(false)}
-        onRefresh={fetchPendingLeaves}
-      />
+      {isLeaveDrawerOpen && (
+        <Suspense fallback={null}>
+          <LeaveAdminDrawer
+            isOpen={isLeaveDrawerOpen}
+            onClose={() => setIsLeaveDrawerOpen(false)}
+          />
+        </Suspense>
+      )}
 
-      <ApplyLeaveModal
-        isOpen={isApplyLeaveModalOpen}
-        onClose={() => setIsApplyLeaveModalOpen(false)}
-        onSuccess={fetchPendingLeaves}
-      />
+      {isApplyLeaveModalOpen && (
+        <Suspense fallback={null}>
+          <ApplyLeaveModal
+            isOpen={isApplyLeaveModalOpen}
+            onClose={() => setIsApplyLeaveModalOpen(false)}
+          />
+        </Suspense>
+      )}
     </header>
   );
 };

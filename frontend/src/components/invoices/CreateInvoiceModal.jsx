@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
-import { FiPlus, FiTrash2, FiDollarSign, FiFileText, FiCalendar, FiBriefcase } from 'react-icons/fi';
-import { firmAdminService } from '../../services/firmAdminService';
-import { invoiceService } from '../../services/invoiceService';
+import { Plus, Trash2 } from 'lucide-react';
+import { useFirmClients } from '../../queries/useLookups';
+import { useCreateInvoice } from '../../queries/useInvoices';
 import toast from 'react-hot-toast';
 
 export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
-  const [clients, setClients] = useState([]);
   const [clientId, setClientId] = useState('');
   const [invoiceType, setInvoiceType] = useState('TAX_INVOICE');
   const [dueDate, setDueDate] = useState('');
@@ -15,6 +14,9 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   const [notes, setNotes] = useState('Thank you for your business.');
   const [terms, setTerms] = useState('Payment due within 15 days of invoice issue.');
 
+  const { data: clients = [] } = useFirmClients({ limit: 100 }, { enabled: isOpen });
+  const createInvoiceMutation = useCreateInvoice();
+
   // Line items state
   const [items, setItems] = useState([
     { description: 'Statutory Tax Audit & Form 3CD Filing Services', sacCode: '998231', quantity: 1, unitPrice: '15000', gstRate: 18 },
@@ -22,9 +24,6 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
 
   useEffect(() => {
     if (isOpen) {
-      firmAdminService.getClients({ limit: 100 }).then((res) => {
-        setClients(res.data || res.clients || []);
-      });
       // Default due date: 15 days from today
       const target = new Date();
       target.setDate(target.getDate() + 15);
@@ -57,7 +56,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   const igstAmount = isInterState ? subTotal * 0.18 : 0;
   const totalAmount = subTotal + cgstAmount + sgstAmount + igstAmount;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!clientId) {
       toast.error('Please select a client');
@@ -68,25 +67,23 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    try {
-      const payload = {
-        clientId: parseInt(clientId, 10),
-        invoiceType,
-        dueDate,
-        placeOfSupply,
-        isInterState,
-        items,
-        notes,
-        terms,
-      };
+    const payload = {
+      clientId: parseInt(clientId, 10),
+      invoiceType,
+      dueDate,
+      placeOfSupply,
+      isInterState,
+      items,
+      notes,
+      terms,
+    };
 
-      await invoiceService.createInvoice(payload);
-      toast.success(`${invoiceType === 'PROFORMA' ? 'Proforma' : 'Tax'} Invoice generated successfully!`);
-      onClose();
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      toast.error(err.message || 'Failed to generate invoice');
-    }
+    createInvoiceMutation.mutate(payload, {
+      onSuccess: () => {
+        onClose();
+        if (onSuccess) onSuccess();
+      },
+    });
   };
 
   if (!isOpen) return null;
@@ -180,7 +177,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               onClick={handleAddItem}
               className="py-1 px-3 rounded-lg bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30 text-xs font-bold flex items-center gap-1"
             >
-              <FiPlus /> Add Line Item
+              <Plus size="1em" /> Add Line Item
             </button>
           </div>
 
@@ -241,7 +238,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                         onClick={() => handleRemoveItem(idx)}
                         className="text-rose-400 hover:text-rose-300 p-1"
                       >
-                        <FiTrash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5"  />
                       </button>
                     )}
                   </div>
@@ -284,9 +281,10 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
 
         <button
           type="submit"
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold text-xs shadow-xl"
+          disabled={createInvoiceMutation.isPending}
+          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-extrabold text-xs shadow-xl"
         >
-          Confirm & Generate Invoice
+          {createInvoiceMutation.isPending ? 'Generating Invoice...' : 'Confirm & Generate Invoice'}
         </button>
       </form>
     </Modal>
