@@ -4,6 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useVaultDocuments, useDeleteDocument } from '../../queries/useDocuments';
 import { useFirmClients } from '../../queries/useLookups';
 import { useDebounce } from '../../hooks/useDebounce';
+import { Modal } from '../../components/common/Modal';
+import { TableSkeleton, CardSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import { UploadDocumentModal } from '../../components/documents/UploadDocumentModal';
 
 const CATEGORIES = [
@@ -201,28 +204,28 @@ export const DocumentVault = () => {
 
       {/* Documents Grid / List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-400 font-semibold">Loading vault...</p>
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
-        </div>
+        ) : (
+          <TableSkeleton rows={6} cols={5} />
+        )
       ) : docs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <div className="w-20 h-20 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center">
-            <Folder className="w-10 h-10 text-slate-600"  />
-          </div>
-          <div className="text-center">
-            <p className="text-base font-bold text-slate-300">Document Vault is empty</p>
-            <p className="text-sm text-slate-500 mt-1">Upload your first document to get started</p>
-          </div>
-          <button
-            onClick={() => setIsUploadModalOpen(true)}
-            className="py-2 px-5 rounded-xl bg-indigo-600 text-white font-bold text-sm"
-          >
-            <CloudUpload className="inline w-4 h-4 mr-1.5"  />Upload Document
-          </button>
-        </div>
+        <EmptyState
+          title="Document Vault is empty"
+          description="Upload your first document to get started"
+          action={
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="py-2 px-5 rounded-xl bg-indigo-600 text-white font-bold text-sm cursor-pointer"
+            >
+              <CloudUpload className="inline w-4 h-4 mr-1.5" />Upload Document
+            </button>
+          }
+        />
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {docs.map((doc) => {
@@ -357,36 +360,38 @@ export const DocumentVault = () => {
       )}
 
       {/* Delete Confirm Modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-rose-400"  />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-100">Delete Document?</h3>
-                <p className="text-[11px] text-slate-400">This action cannot be undone</p>
-              </div>
+      <Modal
+        isOpen={Boolean(deleteConfirm)}
+        onClose={() => setDeleteConfirm(null)}
+        title={
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-rose-400" />
             </div>
-            <div className="flex gap-3 mt-4">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                disabled={deleteMutation.isPending}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-colors disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-              </button>
+            <div>
+              <span className="block text-sm font-bold text-slate-100">Delete Document?</span>
+              <span className="block text-[11px] font-normal text-slate-400">This action cannot be undone</span>
             </div>
           </div>
+        }
+        maxWidth="max-w-sm"
+      >
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={() => setDeleteConfirm(null)}
+            className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => handleDelete(deleteConfirm)}
+            disabled={deleteMutation.isPending}
+            className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-bold transition-colors disabled:opacity-50"
+          >
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+          </button>
         </div>
-      )}
+      </Modal>
 
       {/* Upload Modal */}
       <UploadDocumentModal

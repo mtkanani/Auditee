@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CircleCheckBig, Clock, MessageSquare, Paperclip, Plus, Send, Square, SquareCheckBig, User, X } from 'lucide-react';
+import { Calendar, CircleCheckBig, Clock, MessageSquare, Paperclip, Plus, Send, Square, SquareCheckBig, User } from 'lucide-react';
+import { Modal } from '../common/Modal';
 import {
   useTaskDetail,
   useAddSubtask,
@@ -114,71 +114,58 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
   const progressPercent = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-4xl h-[85vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-        >
-          {/* Header */}
-          <div className="p-6 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
-                  Task #{task?.id}
-                </span>
-                <span
-                  className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded ${
-                    task?.priority === 'URGENT'
-                      ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                      : task?.priority === 'HIGH'
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  }`}
-                >
-                  {task?.priority || 'MEDIUM'} PRIORITY
-                </span>
-              </div>
-              <h2 className="text-xl font-extrabold text-slate-100 tracking-tight">{task?.title}</h2>
-              <p className="text-xs text-slate-400 flex items-center gap-3">
-                <span>Client: {task?.client?.companyName || task?.client?.clientName || 'Firm Internal'}</span>
-                {task?.dueDate && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1 text-amber-400">
-                      <Calendar size="1em" /> Due: {new Date(task.dueDate).toLocaleDateString()}
-                    </span>
-                  </>
-                )}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Status Selector */}
-              <select
-                value={task?.status || 'PENDING'}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-100 focus:outline-none focus:border-indigo-500"
-              >
-                <option value="PENDING">PENDING</option>
-                <option value="IN_PROGRESS">IN PROGRESS</option>
-                <option value="UNDER_REVIEW">UNDER REVIEW</option>
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="CANCELLED">CANCELLED</option>
-              </select>
-
-              <button
-                onClick={onClose}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
-              >
-                <X className="w-6 h-6"  />
-              </button>
-            </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
+              Task #{task?.id}
+            </span>
+            <span
+              className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded ${
+                task?.priority === 'URGENT'
+                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                  : task?.priority === 'HIGH'
+                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+              }`}
+            >
+              {task?.priority || 'MEDIUM'} PRIORITY
+            </span>
           </div>
-
-          {/* Assignees & Description Header */}
+          <span className="block text-xl font-extrabold text-slate-100 tracking-tight">{task?.title}</span>
+          <span className="text-xs font-normal text-slate-400 flex items-center gap-3">
+            <span>Client: {task?.client?.companyName || task?.client?.clientName || 'Firm Internal'}</span>
+            {task?.dueDate && (
+              <>
+                <span>•</span>
+                <span className="flex items-center gap-1 text-amber-400">
+                  <Calendar size="1em" /> Due: {new Date(task.dueDate).toLocaleDateString()}
+                </span>
+              </>
+            )}
+          </span>
+        </div>
+      }
+      headerActions={
+        <select
+          value={task?.status || 'PENDING'}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-100 focus:outline-none focus:border-indigo-500"
+        >
+          <option value="PENDING">PENDING</option>
+          <option value="IN_PROGRESS">IN PROGRESS</option>
+          <option value="UNDER_REVIEW">UNDER REVIEW</option>
+          <option value="COMPLETED">COMPLETED</option>
+          <option value="CANCELLED">CANCELLED</option>
+        </select>
+      }
+      maxWidth="max-w-4xl"
+    >
+      <div className="-m-6 flex flex-col min-h-0">
+        {/* Assignees & Description Header */}
           <div className="p-4 bg-slate-950/40 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Assigned Auditor(s)</span>
@@ -454,8 +441,7 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
               </>
             )}
           </div>
-        </motion.div>
       </div>
-    </AnimatePresence>
+    </Modal>
   );
 };

@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import { queryClient } from './lib/queryClient';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { ConfirmProvider } from './components/common/ConfirmProvider';
 import { AppRoutes } from './routes/AppRoutes';
 
 export default function App() {
@@ -14,7 +15,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
-            <AppRoutes />
+            <ConfirmProvider>
+              <AppRoutes />
+            </ConfirmProvider>
             <Toaster
               position="top-right"
               toastOptions={{

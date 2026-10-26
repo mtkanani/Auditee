@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, Send, X } from 'lucide-react';
+import { Radio, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Modal } from '../common/Modal';
 
 export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
   const [form, setForm] = useState({
@@ -44,31 +44,19 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="w-full max-w-lg p-6 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl space-y-4"
-        >
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <Radio size="1em" className="text-indigo-400"  />
-              <span>Broadcast Firm Announcement</span>
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5"  />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={
+        <span className="flex items-center gap-2">
+          <Radio size="1em" className="text-indigo-400" />
+          <span>Broadcast Firm Announcement</span>
+        </span>
+      }
+      maxWidth="max-w-lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
             {/* Title */}
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1">
@@ -165,8 +153,6 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
               </button>
             </div>
           </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </Modal>
   );
 };

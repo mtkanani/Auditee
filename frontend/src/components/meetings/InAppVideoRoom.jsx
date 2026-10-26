@@ -2,12 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Video, VideoOff, Mic, MicOff, Monitor, Hand, PhoneOff, Users, VolumeX, CheckCircle, UserPlus, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import axiosInstance from '../../services/axiosInstance';
 import { useInviteParticipant } from '../../queries/useMeetings';
+import { useFirmUsers, useFirmClients } from '../../queries/useLookups';
+import { getRole } from '../../utils/helpers';
 
 export const InAppVideoRoom = ({ meeting, onClose }) => {
   const { user } = useAuth();
   const inviteMutation = useInviteParticipant();
+
+  const isFirmAdmin = getRole() === 'FIRM_ADMIN';
+  const { data: firmUsers = [], isLoading: loadingUsers } = useFirmUsers({}, { enabled: isFirmAdmin });
+  const { data: firmClients = [], isLoading: loadingClients } = useFirmClients({}, { enabled: isFirmAdmin });
 
   // Media streams & video element references
   const localVideoRef = useRef(null);
@@ -24,9 +29,30 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
   // In-Call Live Participant Invitation Drawer State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
-  const [availableUsers, setAvailableUsers] = useState([]);
-  const [availableClients, setAvailableClients] = useState([]);
-  const [loadingInvitees, setLoadingInvitees] = useState(false);
+
+  const availableUsers = React.useMemo(() => {
+    if (!isFirmAdmin) return [];
+    return (firmUsers || []).map((u) => ({
+      id: u.id,
+      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+      email: u.email,
+      role: u.role || 'EMPLOYEE',
+      type: 'USER',
+    }));
+  }, [isFirmAdmin, firmUsers]);
+
+  const availableClients = React.useMemo(() => {
+    if (!isFirmAdmin) return [];
+    return (firmClients || []).map((c) => ({
+      id: c.id,
+      name: c.clientName || c.companyName || 'Client',
+      email: c.email,
+      role: 'CLIENT',
+      type: 'CLIENT',
+    }));
+  }, [isFirmAdmin, firmClients]);
+
+  const loadingInvitees = isFirmAdmin && (loadingUsers || loadingClients);
 
   // Host Privilege Check (Firm Admin / Super Admin or Meeting Creator)
   const isHost =
@@ -80,69 +106,6 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
       }
     };
   }, []);
-
-  // Fetch Role-Appropriate Users & Clients for Live Call Invitation
-  const fetchInviteOptions = async () => {
-    setLoadingInvitees(true);
-    try {
-      let uList = [];
-      let cList = [];
-
-      const role = user?.role;
-      if (role === 'SUPER_ADMIN' || role === 'FIRM_ADMIN' || role === 'ADMIN') {
-        const [usersRes, clientsRes] = await Promise.all([
-          axiosInstance.get('/firm-admin/users').catch(() => ({ data: { data: [] } })),
-          axiosInstance.get('/firm-admin/clients').catch(() => ({ data: { data: [] } })),
-        ]);
-
-        uList = (usersRes.data?.data || usersRes.data?.users || []).map((u) => ({
-          id: u.id,
-          name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
-          email: u.email,
-          role: u.role || 'EMPLOYEE',
-          type: 'USER',
-        }));
-
-        cList = (clientsRes.data?.data || clientsRes.data?.clients || []).map((c) => ({
-          id: c.id,
-          name: c.clientName || c.companyName || 'Client',
-          email: c.email,
-          role: 'CLIENT',
-          type: 'CLIENT',
-        }));
-      } else if (role === 'CLIENT') {
-        // Clients can invite their assigned firm auditors
-        const res = await axiosInstance.get('/client/my-user').catch(() => ({ data: { user: null } }));
-        const assigned = res.data?.data || res.data?.user || res.data?.users || [];
-        const arr = Array.isArray(assigned) ? assigned : (assigned ? [assigned] : []);
-        uList = arr.map((u) => ({
-          id: u.id,
-          name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
-          email: u.email,
-          role: u.role || 'AUDITOR',
-          type: 'USER',
-        }));
-      } else {
-        // Employees / staff can invite their assigned clients
-        const res = await axiosInstance.get('/user/clients').catch(() => ({ data: { data: [] } }));
-        const clients = res.data?.data || res.data?.clients || (Array.isArray(res.data) ? res.data : []);
-        cList = clients.map((c) => ({
-          id: c.id,
-          name: c.clientName || c.companyName || 'Client',
-          email: c.email,
-          role: 'CLIENT',
-          type: 'CLIENT',
-        }));
-      }
-
-      setAvailableUsers(uList);
-      setAvailableClients(cList);
-    } catch (err) {
-      console.warn('Failed to load invite options:', err);
-    } finally {
-      setLoadingInvitees(false);
-    }
-  };
 
   const handleSendLiveInvite = async (person) => {
     try {
@@ -305,10 +268,7 @@ export const InAppVideoRoom = ({ meeting, onClose }) => {
 
           {isHost && (
             <button
-              onClick={() => {
-                fetchInviteOptions();
-                setIsInviteOpen(true);
-              }}
+              onClick={() => setIsInviteOpen(true)}
               className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />

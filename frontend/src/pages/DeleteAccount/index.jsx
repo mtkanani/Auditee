@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../api/authApi';
 import InputField from '../../components/InputField';
 import Button from '../../components/Button';
+import { Modal } from '../../components/common/Modal';
 
 const DeleteAccount = () => {
   const { user, logout } = useAuth();
@@ -314,43 +315,47 @@ const DeleteAccount = () => {
       </div>
 
       {/* Double confirmation Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-          <div className="glass-panel p-8 rounded-2xl shadow-glass-lg max-w-sm w-full border border-rose-500/20 text-center animate-slide-up">
-            
-            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 mx-auto mb-4 animate-pulse">
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={
+          <div className="flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 mx-auto mb-2 animate-pulse">
               <AlertTriangle size={28} />
             </div>
+            <span className="text-lg font-bold text-white">Are you absolutely sure?</span>
+          </div>
+        }
+        maxWidth="max-w-sm"
+      >
+        <div className="text-center">
+          <p className="text-xs text-slate-400 leading-relaxed mb-6">
+            This will permanently delete the account for <strong className="text-slate-200">{emailAddress}</strong>. You will be logged out immediately.
+          </p>
 
-            <h4 className="text-lg font-bold text-white mb-2">Are you absolutely sure?</h4>
-            <p className="text-xs text-slate-400 leading-relaxed mb-6">
-              This will permanently delete the account for **{emailAddress}**. You will be logged out immediately.
-            </p>
-
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={submitting}
-                onClick={() => setShowModal(false)}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              
-              <Button
-                type="button"
-                variant="danger"
-                loading={submitting}
-                onClick={handleConfirmDelete}
-                className="flex-1 bg-rose-600 hover:bg-rose-500 border-none"
-              >
-                Yes, Delete
-              </Button>
-            </div>
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={submitting}
+              onClick={() => setShowModal(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            
+            <Button
+              type="button"
+              variant="danger"
+              loading={submitting}
+              onClick={handleConfirmDelete}
+              className="flex-1 bg-rose-600 hover:bg-rose-500 border-none"
+            >
+              Yes, Delete
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </>
   );
 };

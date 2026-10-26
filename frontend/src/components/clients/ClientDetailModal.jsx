@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Clock, DollarSign, ExternalLink, Folder, Layers, MapPin, Plus, Shield, Trash2, User, X } from 'lucide-react';
+import { Briefcase, Clock, DollarSign, ExternalLink, Folder, Layers, MapPin, Plus, Shield, Trash2, User } from 'lucide-react';
+import { Modal } from '../common/Modal';
 import {
   useClientDetail,
   useAddClientService,
@@ -9,8 +9,10 @@ import {
   useDeleteClientDocument,
 } from '../../queries/useClients';
 import toast from 'react-hot-toast';
+import { useConfirm } from '../common/ConfirmProvider';
 
 export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
+  const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'services' | 'billing' | 'documents' | 'history'
 
   // New Service Form State
@@ -63,8 +65,14 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
     );
   };
 
-  const handleRemoveService = (serviceId) => {
-    if (!window.confirm('Remove this subscribed service from client?')) return;
+  const handleRemoveService = async (serviceId) => {
+    const ok = await confirm({
+      title: 'Remove Service',
+      message: 'Remove this subscribed service from client?',
+      confirmText: 'Remove',
+      isDanger: true,
+    });
+    if (!ok) return;
     removeServiceMutation.mutate(
       { clientId, serviceId },
       {
@@ -93,8 +101,14 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
     );
   };
 
-  const handleDeleteDocument = (docId) => {
-    if (!window.confirm('Delete this master document?')) return;
+  const handleDeleteDocument = async (docId) => {
+    const ok = await confirm({
+      title: 'Delete Document',
+      message: 'Delete this master document?',
+      confirmText: 'Delete',
+      isDanger: true,
+    });
+    if (!ok) return;
     deleteDocMutation.mutate(
       { clientId, documentId: docId },
       {
@@ -106,62 +120,51 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="w-full max-w-5xl h-[85vh] bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
-        >
-          {/* Top Header Bar */}
-          <div className="p-6 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-indigo-500/20">
-                {client?.companyName?.[0] || client?.clientName?.[0] || 'C'}
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-extrabold text-slate-100 tracking-tight">
-                    {client?.companyName || client?.clientName}
-                  </h2>
-                  <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
-                    {client?.clientType || 'CLIENT'}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                      client?.status === 'ACTIVE'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                    }`}
-                  >
-                    {client?.status || 'ACTIVE'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
-                  <span>Client ID: #{client?.id}</span>
-                  <span>•</span>
-                  <span>{client?.email}</span>
-                  {client?.phone && (
-                    <>
-                      <span>•</span>
-                      <span>{client?.phone}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-6 h-6"  />
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-indigo-500/20">
+            {client?.companyName?.[0] || client?.clientName?.[0] || 'C'}
           </div>
 
-          {/* Tab Navigation Header */}
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="block text-xl font-extrabold text-slate-100 tracking-tight">
+                {client?.companyName || client?.clientName}
+              </span>
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
+                {client?.clientType || 'CLIENT'}
+              </span>
+              <span
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                  client?.status === 'ACTIVE'
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                }`}
+              >
+                {client?.status || 'ACTIVE'}
+              </span>
+            </div>
+            <p className="text-xs font-normal text-slate-400 mt-0.5 flex items-center gap-3">
+              <span>Client ID: #{client?.id}</span>
+              <span>•</span>
+              <span>{client?.email}</span>
+              {client?.phone && (
+                <>
+                  <span>•</span>
+                  <span>{client?.phone}</span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      }
+      maxWidth="max-w-5xl"
+    >
+      <div className="-m-6 flex flex-col min-h-0">
+        {/* Tab Navigation Header */}
           <div className="flex items-center gap-2 px-6 pt-3 border-b border-slate-800 bg-slate-900/60 overflow-x-auto">
             <button
               onClick={() => setActiveTab('profile')}
@@ -713,8 +716,7 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
               </>
             )}
           </div>
-        </motion.div>
       </div>
-    </AnimatePresence>
+    </Modal>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Landmark, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Modal } from '../common/Modal';
 import { useBankDetails, useUpdateFirmBankDetails } from '../../queries/useInvoices';
 
 export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
@@ -47,35 +48,17 @@ export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
     });
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-              <Landmark className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-extrabold text-slate-100">Firm Banking & Payment Settings</h3>
-              <p className="text-xs text-slate-400">Configure CA Firm bank details & UPI ID for client online payments</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        {loading ? (
-          <div className="p-12 text-center text-xs text-slate-400">Loading banking settings...</div>
-        ) : (
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Firm Banking & Payment Settings"
+      maxWidth="max-w-xl"
+    >
+      {loading ? (
+        <div className="p-12 text-center text-xs text-slate-400">Loading banking settings...</div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
             {/* Account Holder Name & Bank Name */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -188,8 +171,7 @@ export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 };
 

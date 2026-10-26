@@ -3,6 +3,8 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { TableSkeleton } from '../../components/common/Skeleton';
+import { EmptyState } from '../../components/common/EmptyState';
 import { CircleAlert, CircleCheckBig, Clock, CreditCard, FileText, Printer, Search } from 'lucide-react';
 import { useClientInvoices } from '../../queries/useInvoices';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
@@ -114,9 +116,12 @@ export const ClientBilling = () => {
       {/* Invoices List Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         {isLoading ? (
-          <div className="p-12 text-center text-xs text-slate-400">Loading your invoices...</div>
+          <TableSkeleton rows={6} cols={8} />
         ) : invoices.length === 0 ? (
-          <div className="p-12 text-center text-xs text-slate-400">No billing invoices found.</div>
+          <EmptyState
+            title="No billing invoices found"
+            description="You have no invoices or payment records at this time."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
