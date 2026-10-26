@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axiosInstance from '../services/axiosInstance';
+import { queryClient } from '../lib/queryClient';
 
 const AuthContext = createContext(null);
 
@@ -84,6 +85,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('userData', JSON.stringify(userData));
       localStorage.setItem('userRole', userData.role || 'user');
 
+      queryClient.clear();
       setAccessToken(token);
       setUser(userData);
       setIsAuthenticated(true);
@@ -109,6 +111,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    queryClient.clear();
     setUser(null);
     setAccessToken(null);
     setIsAuthenticated(false);
