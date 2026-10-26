@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, Award, Briefcase, DollarSign, MapPin, Shield, SquareCheckBig, Target, TrendingUp, UserPlus, Users, Zap } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
-  CartesianGrid, AreaChart, Area, PieChart, Pie, Cell, RadialBarChart, RadialBar, Legend,
+  CartesianGrid, AreaChart, Area, PieChart, Pie, Cell,
 } from 'recharts';
-import { firmAdminService } from '../../services/firmAdminService';
+import { useFirmAdminDashboard } from '../../queries/useFirms';
 import { AttendanceWidget } from '../../components/attendance/AttendanceWidget';
 import { ConfigureGeofenceModal } from '../../components/attendance/ConfigureGeofenceModal';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 const monthlyData = [
   { month: 'Feb', gst: 42, tax: 28, audit: 15 },
@@ -69,25 +68,10 @@ const recentActivity = [
 export const FirmAdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { dashboard: data } = useFirmAdminDashboard();
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const res = await firmAdminService.getDashboard();
-        setData(res.data || res);
-      } catch (error) {
-        toast.error('Failed to load dashboard');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
 
   const kpiCards = [
     {

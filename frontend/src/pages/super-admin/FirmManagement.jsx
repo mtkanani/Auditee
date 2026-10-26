@@ -1,25 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Pagination } from '../../components/common/Pagination';
-import { StatusBadge } from '../../components/common/StatusBadge';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
 import { Key, Pen, Plus, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import toast from 'react-hot-toast';
-import { superAdminService } from '../../services/superAdminService';
+import { useDebounce } from '../../hooks/useDebounce';
 import FirmForm from '../../components/FirmManagement/FirmForm';
+import {
+  useFirmsList,
+  useCreateFirm,
+  useUpdateFirm,
+  useDeleteFirm,
+  useUpdateFirmStatus,
+  useResetFirmAdminPassword,
+} from '../../queries/useFirms';
 
 export const FirmManagement = () => {
-  const [firms, setFirms] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -28,87 +31,69 @@ export const FirmManagement = () => {
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [selectedFirm, setSelectedFirm] = useState(null);
 
-  const { register: regCreate, handleSubmit: handleSubmitCreate, reset: resetCreate } = useForm();
   const { register: regEdit, handleSubmit: handleSubmitEdit, reset: resetEdit } = useForm();
   const { register: regReset, handleSubmit: handleSubmitReset, reset: resetReset } = useForm();
 
-  const fetchFirms = async () => {
-    setIsLoading(true);
-    try {
-      const res = await superAdminService.getAllFirms({
-        page,
-        limit: 10,
-        search,
-        status: statusFilter || undefined,
-      });
-      setFirms(res.data || res.firms || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotalRecords(res.pagination?.totalRecords || (res.data ? res.data.length : 0));
-    } catch (error) {
-      toast.error('Failed to fetch firms');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const queryParams = useMemo(() => ({
+    page,
+    limit: 10,
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+  }), [page, debouncedSearch, statusFilter]);
+
+  const { firms, totalPages, totalRecords, isLoading } = useFirmsList(queryParams);
+
+  const createFirmMutation = useCreateFirm();
+  const updateFirmMutation = useUpdateFirm();
+  const deleteFirmMutation = useDeleteFirm();
+  const updateFirmStatusMutation = useUpdateFirmStatus();
+  const resetFirmAdminPasswordMutation = useResetFirmAdminPassword();
 
   useEffect(() => {
-    fetchFirms();
-  }, [page, search, statusFilter]);
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
 
   const handleCreateFirm = async (firmData, adminData) => {
     try {
-      await superAdminService.createFirm({ firm: firmData, firmAdmin: adminData });
-      toast.success('CA Firm created successfully!');
+      await createFirmMutation.mutateAsync({ firm: firmData, firmAdmin: adminData });
       setIsCreateModalOpen(false);
-      fetchFirms();
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Failed to create firm.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
   const handleEditFirm = async (data) => {
     if (!selectedFirm) return;
     try {
-      await superAdminService.updateFirm(selectedFirm.id, data);
-      toast.success('Firm updated successfully!');
+      await updateFirmMutation.mutateAsync({ id: selectedFirm.id, data });
       setIsEditModalOpen(false);
-      fetchFirms();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update firm.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
-  const handleStatusChange = async (firmId, newStatus) => {
-    try {
-      await superAdminService.updateFirmStatus(firmId, newStatus);
-      toast.success(`Firm status updated to ${newStatus}`);
-      fetchFirms();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update status.');
-    }
+  const handleStatusChange = (firmId, newStatus) => {
+    updateFirmStatusMutation.mutate({ id: firmId, status: newStatus });
   };
 
   const handleDeleteFirm = async () => {
     if (!selectedFirm) return;
     try {
-      await superAdminService.deleteFirm(selectedFirm.id);
-      toast.success('Firm deleted successfully!');
+      await deleteFirmMutation.mutateAsync(selectedFirm.id);
       setIsDeleteModalOpen(false);
-      fetchFirms();
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete firm.');
+    } catch {
+      // toast error handled in hook
     }
   };
 
   const handleResetPassword = async (data) => {
     if (!selectedFirm) return;
     try {
-      await superAdminService.resetFirmAdminPassword(selectedFirm.id, data.newPassword);
-      toast.success('Firm Admin password reset successfully!');
+      await resetFirmAdminPasswordMutation.mutateAsync({ id: selectedFirm.id, newPassword: data.newPassword });
       setIsResetPasswordOpen(false);
       resetReset();
-    } catch (error) {
-      toast.error(error.message || 'Failed to reset password.');
+    } catch {
+      // toast error handled in hook
     }
   };
 

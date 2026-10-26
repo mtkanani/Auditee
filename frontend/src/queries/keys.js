@@ -104,6 +104,14 @@ export const assignmentKeys = {
   list: (params) => [...assignmentKeys.all, 'list', params],
 };
 
+export const firmKeys = {
+  all: ['firms'],
+  lists: () => [...firmKeys.all, 'list'],
+  list: (params) => [...firmKeys.lists(), params],
+  detail: (id) => [...firmKeys.all, 'detail', id],
+};
+
+
 
 
 

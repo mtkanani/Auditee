@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { ChartCard } from '../../components/common/ChartCard';
@@ -6,29 +6,12 @@ import { DataTable } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { ArrowUpRight, CircleCheckBig, Layers, OctagonAlert, Plus } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { superAdminService } from '../../services/superAdminService';
+import { useFirmsList } from '../../queries/useFirms';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
 export const SuperAdminDashboard = () => {
   const navigate = useNavigate();
-  const [firms, setFirms] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchFirms = async () => {
-    try {
-      const res = await superAdminService.getAllFirms({ limit: 5 });
-      setFirms(res.data || res.firms || []);
-    } catch (error) {
-      toast.error('Failed to load Super Admin dashboard data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFirms();
-  }, []);
+  const { firms, isLoading } = useFirmsList({ limit: 5 });
 
   // Growth Analytics Chart mock data
   const chartData = [
@@ -48,7 +31,7 @@ export const SuperAdminDashboard = () => {
     {
       header: 'Actions',
       key: 'actions',
-      render: (r) => (
+      render: () => (
         <button
           onClick={() => navigate('/super-admin/firms')}
           className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
