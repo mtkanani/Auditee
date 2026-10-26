@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Landmark, QrCode, Save, ShieldCheck, CheckCircle } from 'lucide-react';
+import { X, Landmark, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { invoiceService } from '../../services/invoiceService';
+import { useBankDetails, useUpdateFirmBankDetails } from '../../queries/useInvoices';
 
 export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
   const [formData, setFormData] = useState({
@@ -14,50 +14,37 @@ export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
     notes: '',
   });
 
-  const [loading, setLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const { bankDetails, isLoading: loading, error } = useBankDetails({ enabled: isOpen });
+  const updateBankMutation = useUpdateFirmBankDetails();
 
   useEffect(() => {
-    if (isOpen) {
-      fetchBankDetails();
+    if (bankDetails) {
+      setFormData({
+        bankName: bankDetails.bankName || '',
+        accountNumber: bankDetails.accountNumber || '',
+        ifscCode: bankDetails.ifscCode || '',
+        accountHolderName: bankDetails.accountHolderName || '',
+        branchName: bankDetails.branchName || '',
+        upiId: bankDetails.upiId || '',
+        notes: bankDetails.notes || '',
+      });
     }
-  }, [isOpen]);
+  }, [bankDetails]);
 
-  const fetchBankDetails = async () => {
-    setLoading(true);
-    try {
-      const res = await invoiceService.getBankDetails();
-      if (res.data) {
-        setFormData({
-          bankName: res.data.bankName || '',
-          accountNumber: res.data.accountNumber || '',
-          ifscCode: res.data.ifscCode || '',
-          accountHolderName: res.data.accountHolderName || '',
-          branchName: res.data.branchName || '',
-          upiId: res.data.upiId || '',
-          notes: res.data.notes || '',
-        });
-      }
-    } catch (err) {
+  useEffect(() => {
+    if (error) {
       toast.error('Failed to load firm bank details.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [error]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSaving(true);
-    try {
-      await invoiceService.updateFirmBankDetails(formData);
-      toast.success('Firm bank & payment details updated successfully!');
-      if (onSaved) onSaved();
-      onClose();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update bank details.');
-    } finally {
-      setIsSaving(false);
-    }
+    updateBankMutation.mutate(formData, {
+      onSuccess: () => {
+        if (onSaved) onSaved();
+        onClose();
+      },
+    });
   };
 
   if (!isOpen) return null;
@@ -192,11 +179,11 @@ export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
               </button>
               <button
                 type="submit"
-                disabled={isSaving}
+                disabled={updateBankMutation.isPending}
                 className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>{isSaving ? 'Saving Settings...' : 'Save Bank Details'}</span>
+                <span>{updateBankMutation.isPending ? 'Saving Settings...' : 'Save Bank Details'}</span>
               </button>
             </div>
           </form>

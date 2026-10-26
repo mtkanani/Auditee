@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CircleAlert, CircleCheckBig, Clock, CreditCard, FileText, Printer, Search } from 'lucide-react';
-import { invoiceService } from '../../services/invoiceService';
+import { useClientInvoices } from '../../queries/useInvoices';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
 import { ClientPaymentModal } from '../../components/invoices/ClientPaymentModal';
 import toast from 'react-hot-toast';
 
 export const ClientBilling = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState('');
 
   // Selected modals state
@@ -20,24 +20,16 @@ export const ClientBilling = () => {
   const [selectedPayInvoice, setSelectedPayInvoice] = useState(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
 
-  const fetchClientInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await invoiceService.getAllInvoices({
-        search,
-        status: statusFilter,
-      });
-      setInvoices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load billing invoices.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { invoices, isLoading, error: invoicesError } = useClientInvoices({
+    search: debouncedSearch || undefined,
+    status: statusFilter || undefined,
+  });
 
   useEffect(() => {
-    fetchClientInvoices();
-  }, [search, statusFilter]);
+    if (invoicesError) {
+      toast.error('Failed to load billing invoices.');
+    }
+  }, [invoicesError]);
 
   // Compute billing summary metrics
   const totalBilled = invoices.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
@@ -193,7 +185,6 @@ export const ClientBilling = () => {
           invoiceId={selectedDetailInvoiceId}
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
-          onRefresh={fetchClientInvoices}
         />
       )}
 
@@ -203,9 +194,6 @@ export const ClientBilling = () => {
           invoice={selectedPayInvoice}
           isOpen={isPayModalOpen}
           onClose={() => setIsPayModalOpen(false)}
-          onPaymentSuccess={() => {
-            fetchClientInvoices();
-          }}
         />
       )}
     </div>

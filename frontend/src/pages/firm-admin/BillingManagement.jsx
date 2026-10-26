@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
@@ -8,15 +9,13 @@ import { CreateInvoiceModal } from '../../components/invoices/CreateInvoiceModal
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
 import { CircleCheckBig, Clock, DollarSign, Eye, FileText, Plus, TriangleAlert } from 'lucide-react';
 import { FirmBankDetailsModal } from '../../components/invoices/FirmBankDetailsModal';
-import { invoiceService } from '../../services/invoiceService';
+import { useFirmInvoices } from '../../queries/useInvoices';
 import toast from 'react-hot-toast';
 
 export const BillingManagement = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -26,25 +25,17 @@ export const BillingManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
-  const fetchInvoices = async () => {
-    setIsLoading(true);
-    try {
-      const res = await invoiceService.getAllInvoices({
-        search,
-        invoiceType: typeFilter || undefined,
-        status: statusFilter || undefined,
-      });
-      setInvoices(res.data || []);
-    } catch (err) {
-      toast.error('Failed to load billing & invoices');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { invoices, isLoading, error: invoicesError } = useFirmInvoices({
+    search: debouncedSearch || undefined,
+    invoiceType: typeFilter || undefined,
+    status: statusFilter || undefined,
+  });
 
   useEffect(() => {
-    fetchInvoices();
-  }, [search, typeFilter, statusFilter]);
+    if (invoicesError) {
+      toast.error('Failed to load billing & invoices');
+    }
+  }, [invoicesError]);
 
   // Metrics
   const totalRevenue = invoices.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
@@ -208,7 +199,6 @@ export const BillingManagement = () => {
       <CreateInvoiceModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={fetchInvoices}
       />
 
       {/* Invoice Detail / PDF Preview Modal */}
@@ -216,7 +206,6 @@ export const BillingManagement = () => {
         invoiceId={selectedInvoiceId}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onRefresh={fetchInvoices}
       />
     </div>
   );

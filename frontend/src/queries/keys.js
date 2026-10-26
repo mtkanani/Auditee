@@ -23,3 +23,11 @@ export const clientKeys = {
   detail: (id) => [...clientKeys.all, 'detail', id],
   profile: () => [...clientKeys.all, 'profile'],
 };
+
+export const invoiceKeys = {
+  all: ['invoices'],
+  lists: () => [...invoiceKeys.all, 'list'],
+  list: (scope, filters) => [...invoiceKeys.lists(), scope, filters], // scope: 'firm' | 'client'
+  detail: (id) => [...invoiceKeys.all, 'detail', id],
+  bankDetails: () => [...invoiceKeys.all, 'bank-details'],
+};

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   CreditCard,
@@ -13,21 +13,24 @@ import {
   Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { invoiceService } from '../../services/invoiceService';
+import { useBankDetails, useRecordPayment } from '../../queries/useInvoices';
 
 export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess }) => {
   const [paymentMethod, setPaymentMethod] = useState('UPI'); // UPI | CARD | NET_BANKING | WALLET
   const [amountToPay, setAmountToPay] = useState(invoice?.balanceAmount || 0);
 
+  const { bankDetails: fetchedBankDetails } = useBankDetails({ enabled: isOpen });
+  const recordPaymentMutation = useRecordPayment();
+
   // Dynamic Firm Bank Details
-  const [bankDetails, setBankDetails] = useState({
-    bankName: '',
-    accountNumber: '',
-    ifscCode: '',
-    accountHolderName: invoice?.firm?.firmName || '',
-    branchName: '',
-    upiId: '',
-  });
+  const bankDetails = {
+    bankName: fetchedBankDetails?.bankName || '',
+    accountNumber: fetchedBankDetails?.accountNumber || '',
+    ifscCode: fetchedBankDetails?.ifscCode || '',
+    accountHolderName: invoice?.firm?.firmName || fetchedBankDetails?.accountHolderName || '',
+    branchName: fetchedBankDetails?.branchName || '',
+    upiId: fetchedBankDetails?.upiId || '',
+  };
 
   // Form input states
   const [utrNumber, setUtrNumber] = useState('');
@@ -39,19 +42,7 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
   const [selectedBank, setSelectedBank] = useState('HDFC');
   const [walletPhone, setWalletPhone] = useState('');
 
-  const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      invoiceService
-        .getBankDetails()
-        .then((res) => {
-          if (res.data) setBankDetails(res.data);
-        })
-        .catch(() => {});
-    }
-  }, [isOpen]);
 
   if (!isOpen || !invoice) return null;
 
@@ -73,7 +64,7 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
     setTimeout(() => setCopiedUpi(false), 2000);
   };
 
-  const handleCompletePayment = async (e) => {
+  const handleCompletePayment = (e) => {
     e.preventDefault();
     const payAmountNum = parseFloat(amountToPay);
 
@@ -87,31 +78,31 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
       return;
     }
 
-    setIsProcessing(true);
+    recordPaymentMutation.mutate(
+      {
+        invoiceId: invoice.id,
+        paymentData: {
+          amount: payAmountNum,
+          paymentMethod,
+          transactionRef: utrNumber.trim() || `TXN-${Date.now().toString().slice(-8)}`,
+          notes: `Paid via ${paymentMethod} by Client ${invoice.client?.clientName || ''}`,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          setPaymentSuccess({
+            transactionId: `TXN-${Date.now().toString().slice(-8)}`,
+            amountPaid: payAmountNum,
+            method: paymentMethod,
+            date: new Date().toLocaleString('en-IN'),
+            invoiceNumber: invoice.invoiceNumber,
+          });
 
-    try {
-      const res = await invoiceService.recordPayment(invoice.id, {
-        amount: payAmountNum,
-        paymentMethod,
-        transactionRef: utrNumber.trim() || `TXN-${Date.now().toString().slice(-8)}`,
-        notes: `Paid via ${paymentMethod} by Client ${invoice.client?.clientName || ''}`,
-      });
-
-      setPaymentSuccess({
-        transactionId: `TXN-${Date.now().toString().slice(-8)}`,
-        amountPaid: payAmountNum,
-        method: paymentMethod,
-        date: new Date().toLocaleString('en-IN'),
-        invoiceNumber: invoice.invoiceNumber,
-      });
-
-      toast.success(`Payment of ₹${payAmountNum.toLocaleString('en-IN')} recorded successfully!`);
-      if (onPaymentSuccess) onPaymentSuccess(res.data);
-    } catch (err) {
-      toast.error(err.message || 'Payment processing failed.');
-    } finally {
-      setIsProcessing(false);
-    }
+          toast.success(`Payment of ₹${payAmountNum.toLocaleString('en-IN')} recorded successfully!`);
+          if (onPaymentSuccess) onPaymentSuccess(res.data);
+        },
+      }
+    );
   };
 
   return (
@@ -449,10 +440,10 @@ export const ClientPaymentModal = ({ invoice, isOpen, onClose, onPaymentSuccess 
                 </button>
                 <button
                   type="submit"
-                  disabled={isProcessing}
+                  disabled={recordPaymentMutation.isPending}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  {isProcessing ? (
+                  {recordPaymentMutation.isPending ? (
                     <span>Authorizing Payment...</span>
                   ) : (
                     <>
