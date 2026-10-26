@@ -3,27 +3,18 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Briefcase, FileText, Mail, MapPin, Phone } from 'lucide-react';
-import { userService } from '../../services/userService';
+import { useMyClients } from '../../queries/useClients';
 import toast from 'react-hot-toast';
 
 export const MyClients = () => {
-  const [clients, setClients] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { clients, error } = useMyClients();
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const res = await userService.getClients();
-        setClients(res.data || res.clients || []);
-      } catch (error) {
-        toast.error('Failed to load assigned clients');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchClients();
-  }, []);
+    if (error) {
+      toast.error('Failed to load assigned clients');
+    }
+  }, [error]);
 
   const filteredClients = clients.filter(
     (c) =>

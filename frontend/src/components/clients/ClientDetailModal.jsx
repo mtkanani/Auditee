@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Briefcase, Clock, DollarSign, ExternalLink, Folder, Layers, MapPin, Plus, Shield, Trash2, User, X } from 'lucide-react';
-import { firmAdminService } from '../../services/firmAdminService';
+import {
+  useClientDetail,
+  useAddClientService,
+  useRemoveClientService,
+  useAddClientDocument,
+  useDeleteClientDocument,
+} from '../../queries/useClients';
 import toast from 'react-hot-toast';
 
 export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'services' | 'billing' | 'documents' | 'history'
-  const [client, setClient] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // New Service Form State
   const [isAddingService, setIsAddingService] = useState(false);
@@ -26,85 +30,79 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
     fileUrl: '',
   });
 
-  const fetchClientDetails = async () => {
-    if (!clientId) return;
-    setIsLoading(true);
-    try {
-      const res = await firmAdminService.getClientById(clientId);
-      setClient(res.data || res);
-    } catch (err) {
-      toast.error('Failed to load client master details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { client, isLoading, error } = useClientDetail(clientId, { enabled: isOpen });
+
+  const addServiceMutation = useAddClientService();
+  const removeServiceMutation = useRemoveClientService();
+  const addDocMutation = useAddClientDocument();
+  const deleteDocMutation = useDeleteClientDocument();
 
   useEffect(() => {
-    if (isOpen && clientId) {
-      fetchClientDetails();
+    if (error) {
+      toast.error('Failed to load client master details');
     }
-  }, [isOpen, clientId]);
+  }, [error]);
 
   if (!isOpen) return null;
 
-  const handleAddService = async (e) => {
+  const handleAddService = (e) => {
     e.preventDefault();
     if (!serviceForm.serviceName.trim()) {
       toast.error('Please enter a service name');
       return;
     }
-    try {
-      await firmAdminService.addClientService(clientId, serviceForm);
-      toast.success('Service added to client subscription!');
-      setIsAddingService(false);
-      setServiceForm({ serviceName: '', serviceCategory: 'TAXATION', billingFrequency: 'MONTHLY', feeAmount: '' });
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add service');
-    }
+    addServiceMutation.mutate(
+      { clientId, serviceData: serviceForm },
+      {
+        onSuccess: () => {
+          setIsAddingService(false);
+          setServiceForm({ serviceName: '', serviceCategory: 'TAXATION', billingFrequency: 'MONTHLY', feeAmount: '' });
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleRemoveService = async (serviceId) => {
+  const handleRemoveService = (serviceId) => {
     if (!window.confirm('Remove this subscribed service from client?')) return;
-    try {
-      await firmAdminService.removeClientService(clientId, serviceId);
-      toast.success('Subscribed service removed');
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to remove service');
-    }
+    removeServiceMutation.mutate(
+      { clientId, serviceId },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleAddDocument = async (e) => {
+  const handleAddDocument = (e) => {
     e.preventDefault();
     if (!docForm.documentName.trim() || !docForm.fileUrl.trim()) {
       toast.error('Document name and file URL are required');
       return;
     }
-    try {
-      await firmAdminService.addClientDocument(clientId, docForm);
-      toast.success('Master document added!');
-      setIsAddingDoc(false);
-      setDocForm({ documentName: '', documentType: 'GST_CERTIFICATE', fileUrl: '' });
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add document');
-    }
+    addDocMutation.mutate(
+      { clientId, docData: docForm },
+      {
+        onSuccess: () => {
+          setIsAddingDoc(false);
+          setDocForm({ documentName: '', documentType: 'GST_CERTIFICATE', fileUrl: '' });
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
-  const handleDeleteDocument = async (docId) => {
+  const handleDeleteDocument = (docId) => {
     if (!window.confirm('Delete this master document?')) return;
-    try {
-      await firmAdminService.deleteClientDocument(clientId, docId);
-      toast.success('Document deleted');
-      fetchClientDetails();
-      if (onRefresh) onRefresh();
-    } catch (err) {
-      toast.error(err.message || 'Failed to delete document');
-    }
+    deleteDocMutation.mutate(
+      { clientId, documentId: docId },
+      {
+        onSuccess: () => {
+          if (onRefresh) onRefresh();
+        },
+      }
+    );
   };
 
   return (

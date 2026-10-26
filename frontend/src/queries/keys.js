@@ -15,3 +15,11 @@ export const lookupKeys = {
   users: (p) => ['lookup', 'users', p],
   clients: (p) => ['lookup', 'clients', p],
 };
+
+export const clientKeys = {
+  all: ['clients'],
+  lists: () => [...clientKeys.all, 'list'],
+  list: (scope, filters) => [...clientKeys.lists(), scope, filters], // scope: 'firm' | 'user'
+  detail: (id) => [...clientKeys.all, 'detail', id],
+  profile: () => [...clientKeys.all, 'profile'],
+};

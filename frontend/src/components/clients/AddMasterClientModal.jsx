@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../common/Modal';
 import { Check, CircleAlert, CircleCheckBig, Lock, LockOpen, RefreshCw, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { firmAdminService } from '../../services/firmAdminService';
+import { useVerifyGst, useVerifyPan, useCreateClient } from '../../queries/useClients';
 
 export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
   const [isGstExempt, setIsGstExempt] = useState(false);
@@ -11,6 +11,10 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
 
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
+
+  const verifyGstMutation = useVerifyGst();
+  const verifyPanMutation = useVerifyPan();
+  const createClientMutation = useCreateClient();
 
   // Form State
   const [formData, setFormData] = useState({
@@ -33,7 +37,6 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
     cinNumber: '',
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
   // Reset modal state on open/close
@@ -75,7 +78,7 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
-  const handleVerifyGst = async () => {
+  const handleVerifyGst = () => {
     const cleanGst = gstNumberInput.trim().toUpperCase();
     setFieldErrors((prev) => ({ ...prev, gstNumberInput: null }));
 
@@ -93,33 +96,35 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
     }
 
     setIsVerifying(true);
-    try {
-      const res = await firmAdminService.verifyGst(cleanGst);
-      if (res.success && res.data) {
-        setVerificationResult({
-          type: 'GST',
-          data: res.data,
-        });
-        // Auto-fill extracted values into profile form fields
-        setFormData((prev) => ({
-          ...prev,
-          clientName: res.data.legalName || res.data.tradeName || prev.clientName,
-          companyName: res.data.legalName || res.data.tradeName || prev.companyName,
-          clientType: res.data.constitution || prev.clientType,
-          state: res.data.stateName || prev.state,
-        }));
-        toast.success('⚡ GSTIN Verified! Account details unlocked & auto-filled.');
-      } else {
-        toast.error(res.message || 'GST Verification failed');
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'GST Verification failed');
-    } finally {
-      setIsVerifying(false);
-    }
+    verifyGstMutation.mutate(cleanGst, {
+      onSuccess: (res) => {
+        setIsVerifying(false);
+        if (res.success && res.data) {
+          setVerificationResult({
+            type: 'GST',
+            data: res.data,
+          });
+          // Auto-fill extracted values into profile form fields
+          setFormData((prev) => ({
+            ...prev,
+            clientName: res.data.legalName || res.data.tradeName || prev.clientName,
+            companyName: res.data.legalName || res.data.tradeName || prev.companyName,
+            clientType: res.data.constitution || prev.clientType,
+            state: res.data.stateName || prev.state,
+          }));
+          toast.success('⚡ GSTIN Verified! Account details unlocked & auto-filled.');
+        } else {
+          toast.error(res.message || 'GST Verification failed');
+        }
+      },
+      onError: (err) => {
+        setIsVerifying(false);
+        toast.error(err.response?.data?.message || err.message || 'GST Verification failed');
+      },
+    });
   };
 
-  const handleVerifyPan = async () => {
+  const handleVerifyPan = () => {
     const cleanPan = panNumberInput.trim().toUpperCase();
     setFieldErrors((prev) => ({ ...prev, panNumberInput: null }));
 
@@ -137,25 +142,27 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
     }
 
     setIsVerifying(true);
-    try {
-      const res = await firmAdminService.verifyPan(cleanPan);
-      if (res.success && res.data) {
-        setVerificationResult({
-          type: 'PAN',
-          data: res.data,
-        });
-        toast.success('⚡ PAN verified successfully! Account details sections unlocked.');
-      } else {
-        toast.error(res.message || 'PAN Verification failed');
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'PAN Verification failed');
-    } finally {
-      setIsVerifying(false);
-    }
+    verifyPanMutation.mutate(cleanPan, {
+      onSuccess: (res) => {
+        setIsVerifying(false);
+        if (res.success && res.data) {
+          setVerificationResult({
+            type: 'PAN',
+            data: res.data,
+          });
+          toast.success('⚡ PAN verified successfully! Account details sections unlocked.');
+        } else {
+          toast.error(res.message || 'PAN Verification failed');
+        }
+      },
+      onError: (err) => {
+        setIsVerifying(false);
+        toast.error(err.response?.data?.message || err.message || 'PAN Verification failed');
+      },
+    });
   };
 
-  const handleCreateAccount = async (e) => {
+  const handleCreateAccount = (e) => {
     e.preventDefault();
     setFieldErrors({});
 
@@ -196,56 +203,55 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        ...formData,
-        phone: formData.phone || formData.contactPersonPhone,
-        gstNumber: verificationResult.type === 'GST' ? verificationResult.data.gstNumber : null,
-        panNumber: verificationResult.type === 'GST' ? verificationResult.data.panNumber : panNumberInput.trim().toUpperCase(),
-        taxRegistrationType: isGstExempt ? 'EXEMPT' : 'REGULAR',
-        isGstVerified: verificationResult.type === 'GST',
-        isPanVerified: true,
-      };
+    const payload = {
+      ...formData,
+      phone: formData.phone || formData.contactPersonPhone,
+      gstNumber: verificationResult.type === 'GST' ? verificationResult.data.gstNumber : null,
+      panNumber: verificationResult.type === 'GST' ? verificationResult.data.panNumber : panNumberInput.trim().toUpperCase(),
+      taxRegistrationType: isGstExempt ? 'EXEMPT' : 'REGULAR',
+      isGstVerified: verificationResult.type === 'GST',
+      isPanVerified: true,
+    };
 
-      await firmAdminService.createClient(payload);
-      toast.success('⚡ Master Client Account created successfully!');
-      if (onSuccess) onSuccess();
-      onClose();
-    } catch (err) {
-      console.error('Create Client Error:', err);
-      const serverMsg = err.response?.data?.message || err.message || '';
-      const serverErrors = err.response?.data?.errors || {};
-      const newFieldErrors = {};
+    createClientMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success('⚡ Master Client Account created successfully!');
+        if (onSuccess) onSuccess();
+        onClose();
+      },
+      onError: (err) => {
+        console.error('Create Client Error:', err);
+        const serverMsg = err.response?.data?.message || err.message || '';
+        const serverErrors = err.response?.data?.errors || {};
+        const newFieldErrors = {};
 
-      const lowerMsg = serverMsg.toLowerCase();
+        const lowerMsg = serverMsg.toLowerCase();
 
-      if (lowerMsg.includes('email') || serverErrors.email) {
-        newFieldErrors.email = lowerMsg.includes('already exists') || lowerMsg.includes('registered')
-          ? 'This Email / Gmail address is already registered in Auditee. Please use a different email.'
-          : (serverErrors.email || serverMsg);
-      }
-      if (lowerMsg.includes('phone') || lowerMsg.includes('mobile') || serverErrors.phone) {
-        newFieldErrors.contactPersonPhone = 'This mobile number is already registered or invalid.';
-      }
-      if (lowerMsg.includes('gst') || serverErrors.gstNumber) {
-        newFieldErrors.gstNumberInput = 'This GSTIN is already registered in your firm.';
-      }
-      if (lowerMsg.includes('pan') || serverErrors.panNumber) {
-        newFieldErrors.panNumberInput = 'This PAN number is already registered in your firm.';
-      }
-      if (lowerMsg.includes('password') || serverErrors.password) {
-        newFieldErrors.password = 'Password must be at least 6 characters long.';
-      }
+        if (lowerMsg.includes('email') || serverErrors.email) {
+          newFieldErrors.email = lowerMsg.includes('already exists') || lowerMsg.includes('registered')
+            ? 'This Email / Gmail address is already registered in Auditee. Please use a different email.'
+            : (serverErrors.email || serverMsg);
+        }
+        if (lowerMsg.includes('phone') || lowerMsg.includes('mobile') || serverErrors.phone) {
+          newFieldErrors.contactPersonPhone = 'This mobile number is already registered or invalid.';
+        }
+        if (lowerMsg.includes('gst') || serverErrors.gstNumber) {
+          newFieldErrors.gstNumberInput = 'This GSTIN is already registered in your firm.';
+        }
+        if (lowerMsg.includes('pan') || serverErrors.panNumber) {
+          newFieldErrors.panNumberInput = 'This PAN number is already registered in your firm.';
+        }
+        if (lowerMsg.includes('password') || serverErrors.password) {
+          newFieldErrors.password = 'Password must be at least 6 characters long.';
+        }
 
-      if (Object.keys(newFieldErrors).length > 0) {
-        setFieldErrors(newFieldErrors);
-      }
+        if (Object.keys(newFieldErrors).length > 0) {
+          setFieldErrors(newFieldErrors);
+        }
 
-      toast.error(serverMsg || 'Failed to create Master Client Account');
-    } finally {
-      setIsSubmitting(false);
-    }
+        toast.error(serverMsg || 'Failed to create Master Client Account');
+      },
+    });
   };
 
   const isVerified = verificationResult && verificationResult.data?.isVerified;
@@ -758,10 +764,10 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
             {/* Submit Action Button */}
             <button
               type="submit"
-              disabled={!isVerified || isSubmitting}
+              disabled={!isVerified || createClientMutation.isPending}
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs shadow-xl shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all"
             >
-              {isSubmitting ? (
+              {createClientMutation.isPending ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin"  />
                   <span>Creating Account...</span>

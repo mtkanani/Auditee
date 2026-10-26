@@ -4,7 +4,6 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Pagination } from '../../components/common/Pagination';
-import { StatusBadge } from '../../components/common/StatusBadge';
 import { StatsCard } from '../../components/common/StatsCard';
 import { Modal } from '../../components/common/Modal';
 import { ConfirmationModal } from '../../components/common/ConfirmationModal';
@@ -13,18 +12,19 @@ import { AddMasterClientModal } from '../../components/clients/AddMasterClientMo
 import { Briefcase, DollarSign, Eye, Layers, Pen, Plus, Shield, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { firmAdminService } from '../../services/firmAdminService';
+import {
+  useFirmClientsList,
+  useUpdateClient,
+  useUpdateClientStatus,
+  useDeleteClient,
+} from '../../queries/useClients';
 
 export const ClientManagement = () => {
-  const [clients, setClients] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
   const [clientTypeFilter, setClientTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalRecords, setTotalRecords] = useState(0);
 
   // Modals & Drawers
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -33,77 +33,57 @@ export const ClientManagement = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
 
-  const { register: regCreate, handleSubmit: handleSubmitCreate, reset: resetCreate } = useForm();
   const { register: regEdit, handleSubmit: handleSubmitEdit, reset: resetEdit } = useForm();
 
-  const fetchClients = async () => {
-    setIsLoading(true);
-    try {
-      const res = await firmAdminService.getClients({
-        page,
-        limit: 10,
-        search: debouncedSearch || undefined,
-        clientType: clientTypeFilter || undefined,
-        status: statusFilter || undefined,
-      });
-      setClients(res.data || res.clients || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotalRecords(res.pagination?.totalRecords || (res.data ? res.data.length : 0));
-    } catch (error) {
-      toast.error('Failed to fetch clients');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    clients,
+    pagination,
+    isLoading,
+    error: clientsError,
+  } = useFirmClientsList({
+    page,
+    limit: 10,
+    search: debouncedSearch || undefined,
+    clientType: clientTypeFilter || undefined,
+    status: statusFilter || undefined,
+  });
+
+  const updateClientMutation = useUpdateClient();
+  const updateStatusMutation = useUpdateClientStatus();
+  const deleteClientMutation = useDeleteClient();
 
   useEffect(() => {
-    fetchClients();
-  }, [page, debouncedSearch, clientTypeFilter, statusFilter]);
-
-  const handleCreateClient = async (data) => {
-    try {
-      await firmAdminService.createClient(data);
-      toast.success('Client profile created successfully!');
-      setIsCreateModalOpen(false);
-      resetCreate();
-      fetchClients();
-    } catch (error) {
-      toast.error(error.message || 'Failed to create client.');
+    if (clientsError) {
+      toast.error('Failed to fetch clients');
     }
-  };
+  }, [clientsError]);
 
-  const handleEditClient = async (data) => {
+  const totalPages = pagination?.totalPages || 1;
+  const totalRecords = pagination?.totalRecords || (pagination ? 0 : clients.length);
+
+  const handleEditClient = (data) => {
     if (!selectedClient) return;
-    try {
-      await firmAdminService.updateClient(selectedClient.id, data);
-      toast.success('Client updated successfully!');
-      setIsEditModalOpen(false);
-      fetchClients();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update client.');
-    }
+    updateClientMutation.mutate(
+      { clientId: selectedClient.id, data },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+        },
+      }
+    );
   };
 
-  const handleStatusChange = async (clientId, newStatus) => {
-    try {
-      await firmAdminService.updateClientStatus(clientId, newStatus);
-      toast.success(`Client status updated to ${newStatus}`);
-      fetchClients();
-    } catch (error) {
-      toast.error(error.message || 'Failed to update client status.');
-    }
+  const handleStatusChange = (clientId, newStatus) => {
+    updateStatusMutation.mutate({ clientId, status: newStatus });
   };
 
-  const handleDeleteClient = async () => {
+  const handleDeleteClient = () => {
     if (!selectedClient) return;
-    try {
-      await firmAdminService.deleteClient(selectedClient.id);
-      toast.success('Client deleted successfully!');
-      setIsDeleteModalOpen(false);
-      fetchClients();
-    } catch (error) {
-      toast.error(error.message || 'Failed to delete client.');
-    }
+    deleteClientMutation.mutate(selectedClient.id, {
+      onSuccess: () => {
+        setIsDeleteModalOpen(false);
+      },
+    });
   };
 
   // Metrics Calculations
@@ -236,7 +216,6 @@ export const ClientManagement = () => {
         actions={
           <button
             onClick={() => {
-              resetCreate();
               setIsCreateModalOpen(true);
             }}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 flex items-center gap-2"
@@ -327,14 +306,12 @@ export const ClientManagement = () => {
         clientId={selectedClient?.id}
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        onRefresh={fetchClients}
       />
 
       {/* Create Master Client Gated Verification Modal */}
       <AddMasterClientModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={fetchClients}
       />
 
       {/* Edit Client Modal */}
@@ -403,9 +380,10 @@ export const ClientManagement = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-4"
+            disabled={updateClientMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save Client Changes
+            {updateClientMutation.isPending ? 'Saving Client Changes...' : 'Save Client Changes'}
           </button>
         </form>
       </Modal>
@@ -415,6 +393,7 @@ export const ClientManagement = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteClient}
+        isLoading={deleteClientMutation.isPending}
         title="Delete Client Master Account"
         message={`Are you sure you want to delete client "${selectedClient?.clientName}"?`}
       />
