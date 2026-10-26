@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { Bell, Calendar, CircleCheckBig, Clock, List, Plus, Shield, TriangleAlert, Zap } from 'lucide-react';
-import { complianceService } from '../../services/complianceService';
-import { firmAdminService } from '../../services/firmAdminService';
+import {
+  useComplianceItems,
+  useGenerateIndianPresets,
+  useUpdateComplianceStatus,
+  useConvertComplianceToTask,
+  useSendComplianceReminder,
+  useCreateComplianceItem,
+} from '../../queries/useCompliance';
+import { useFirmClients, useFirmUsers } from '../../queries/useLookups';
 import toast from 'react-hot-toast';
 
 export const Compliance = () => {
-  const [items, setItems] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'table'
 
   // Filters
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 400);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -40,97 +45,87 @@ export const Compliance = () => {
   const [newClientId, setNewClientId] = useState('');
   const [newPenalty, setNewPenalty] = useState('');
 
-  const fetchCompliance = async () => {
-    setIsLoading(true);
-    try {
-      const [compRes, clientRes, userRes] = await Promise.all([
-        complianceService.getAllComplianceItems({ search, category: categoryFilter || undefined, status: statusFilter || undefined }),
-        firmAdminService.getClients({ limit: 100 }),
-        firmAdminService.getUsers({ limit: 100 }),
-      ]);
-      setItems(compRes.data || []);
-      setClients(clientRes.data || clientRes.clients || []);
-      setUsers(userRes.data || userRes.users || []);
-    } catch (err) {
-      toast.error('Failed to load compliance tracker data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data: items = [],
+    isLoading,
+    error,
+  } = useComplianceItems({
+    search: debouncedSearch || undefined,
+    category: categoryFilter || undefined,
+    status: statusFilter || undefined,
+  });
+
+  const { data: clients = [] } = useFirmClients({ limit: 100 });
+  const { data: users = [] } = useFirmUsers({ limit: 100 });
 
   useEffect(() => {
-    fetchCompliance();
-  }, [search, categoryFilter, statusFilter]);
-
-  const handleGeneratePresets = async () => {
-    try {
-      await complianceService.generateIndianPresets(selectedYear, selectedMonth);
-      toast.success(`Indian Statutory Calendar generated for Month ${selectedMonth}/${selectedYear}!`);
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to generate statutory presets');
+    if (error) {
+      toast.error('Failed to load compliance tracker data');
     }
+  }, [error]);
+
+  const generatePresetsMutation = useGenerateIndianPresets();
+  const updateStatusMutation = useUpdateComplianceStatus();
+  const convertToTaskMutation = useConvertComplianceToTask();
+  const sendReminderMutation = useSendComplianceReminder();
+  const createComplianceItemMutation = useCreateComplianceItem();
+
+  const handleGeneratePresets = () => {
+    generatePresetsMutation.mutate({ year: selectedYear, month: selectedMonth });
   };
 
-  const handleStatusChange = async (id, newStatus) => {
-    try {
-      await complianceService.updateComplianceStatus(id, newStatus);
-      toast.success(`Status updated to ${newStatus}`);
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to update status');
-    }
+  const handleStatusChange = (id, newStatus) => {
+    updateStatusMutation.mutate({ id, status: newStatus });
   };
 
-  const handleConvertToTaskSubmit = async (e) => {
+  const handleConvertToTaskSubmit = (e) => {
     e.preventDefault();
     if (!selectedItem) return;
-    try {
-      await complianceService.convertToTask(selectedItem.id, { assignedUserIds });
-      toast.success(`Compliance item converted to an active Task!`);
-      setIsTaskModalOpen(false);
-      setSelectedItem(null);
-      setAssignedUserIds([]);
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to convert to task');
-    }
+    convertToTaskMutation.mutate(
+      { id: selectedItem.id, taskOptions: { assignedUserIds } },
+      {
+        onSuccess: () => {
+          setIsTaskModalOpen(false);
+          setSelectedItem(null);
+          setAssignedUserIds([]);
+        },
+      }
+    );
   };
 
-  const handleSendReminder = async (item) => {
-    try {
-      await complianceService.sendReminder(item.id);
-      toast.success(`Deadline reminder broadcasted on Notice Board for ${item.title}!`);
-    } catch (err) {
-      toast.error(err.message || 'Failed to broadcast reminder');
-    }
+  const handleSendReminder = (item) => {
+    sendReminderMutation.mutate(item.id, {
+      onSuccess: () => {
+        toast.success(`Deadline reminder broadcasted on Notice Board for ${item.title}!`);
+      },
+    });
   };
 
-  const handleAddCustomSubmit = async (e) => {
+  const handleAddCustomSubmit = (e) => {
     e.preventDefault();
     if (!newTitle.trim() || !newDueDate) {
       toast.error('Title and Due Date are required');
       return;
     }
-    try {
-      await complianceService.createComplianceItem({
+    createComplianceItemMutation.mutate(
+      {
         title: newTitle.trim(),
         category: newCategory,
         dueDate: newDueDate,
         period: newPeriod.trim(),
         clientId: newClientId ? parseInt(newClientId, 10) : null,
         penaltyDetails: newPenalty.trim(),
-      });
-      toast.success('Custom compliance item added!');
-      setIsAddModalOpen(false);
-      setNewTitle('');
-      setNewDueDate('');
-      setNewPeriod('');
-      setNewPenalty('');
-      fetchCompliance();
-    } catch (err) {
-      toast.error(err.message || 'Failed to add item');
-    }
+      },
+      {
+        onSuccess: () => {
+          setIsAddModalOpen(false);
+          setNewTitle('');
+          setNewDueDate('');
+          setNewPeriod('');
+          setNewPenalty('');
+        },
+      }
+    );
   };
 
   // Metrics
@@ -284,9 +279,10 @@ export const Compliance = () => {
 
           <button
             onClick={handleGeneratePresets}
-            className="py-2 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg whitespace-nowrap"
+            disabled={generatePresetsMutation.isPending}
+            className="py-2 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg whitespace-nowrap"
           >
-            Generate Deadlines
+            {generatePresetsMutation.isPending ? 'Generating...' : 'Generate Deadlines'}
           </button>
         </div>
       </div>
@@ -468,9 +464,10 @@ export const Compliance = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={convertToTaskMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
           >
-            Create Task & Assign Auditors
+            {convertToTaskMutation.isPending ? 'Converting...' : 'Create Task & Assign Auditors'}
           </button>
         </form>
       </Modal>
@@ -561,9 +558,10 @@ export const Compliance = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-2"
+            disabled={createComplianceItemMutation.isPending}
+            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
           >
-            Create Compliance Item
+            {createComplianceItemMutation.isPending ? 'Creating...' : 'Create Compliance Item'}
           </button>
         </form>
       </Modal>

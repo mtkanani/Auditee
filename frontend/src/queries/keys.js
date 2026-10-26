@@ -42,3 +42,10 @@ export const leaveKeys = {
   balances: () => [...leaveKeys.all, 'balances'],
 };
 
+export const complianceKeys = {
+  all: ['compliance'],
+  lists: () => [...complianceKeys.all, 'list'],
+  list: (filters) => [...complianceKeys.lists(), filters],
+};
+
+
