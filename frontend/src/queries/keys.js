@@ -91,5 +91,19 @@ export const reportKeys = {
   type: (reportType, params) => [...reportKeys.all, 'type', reportType, params],
 };
 
+export const userKeys = {
+  all: ['users'],
+  lists: () => [...userKeys.all, 'list'],
+  list: (params) => [...userKeys.lists(), params],
+  detail: (id) => [...userKeys.all, 'detail', id],
+  profile: () => [...userKeys.all, 'profile'],
+};
+
+export const assignmentKeys = {
+  all: ['assignments'],
+  list: (params) => [...assignmentKeys.all, 'list', params],
+};
+
+
 
 

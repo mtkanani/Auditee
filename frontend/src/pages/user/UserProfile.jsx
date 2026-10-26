@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '../../components/common/PageHeader';
 import { Avatar } from '../../components/common/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Lock, Save, TriangleAlert, User } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { userService } from '../../services/userService';
-import { authService } from '../../services/authService';
+import { useUpdateUserProfile, useChangePassword } from '../../queries/useUsers';
 
 export const UserProfile = () => {
   const { user, updateUserState } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   const { register: regProfile, handleSubmit: handleSubmitProfile, reset: resetProfile } = useForm();
-  const { register: regPass, handleSubmit: handleSubmitPass, reset: resetPass, watch } = useForm();
+  const { register: regPass, handleSubmit: handleSubmitPass, reset: resetPass } = useForm();
 
-  const newPassword = watch('newPassword');
+  const updateProfileMutation = useUpdateUserProfile();
+  const changePasswordMutation = useChangePassword();
+
+  const isLoading = updateProfileMutation.isPending;
+  const isPasswordLoading = changePasswordMutation.isPending;
 
   useEffect(() => {
     if (user) {
@@ -32,28 +32,24 @@ export const UserProfile = () => {
   }, [user, resetProfile]);
 
   const onUpdateProfile = async (data) => {
-    setIsLoading(true);
     try {
-      const res = await userService.updateProfile(data);
+      await updateProfileMutation.mutateAsync(data);
       updateUserState(data);
-      toast.success('Profile updated successfully!');
-    } catch (error) {
-      toast.error(error.message || 'Failed to update profile.');
-    } finally {
-      setIsLoading(false);
+    } catch {
+      // toast error handled in hook
     }
   };
 
   const onChangePassword = async (data) => {
-    setIsPasswordLoading(true);
     try {
-      await authService.changePassword(user.email, data.currentPassword, data.newPassword);
-      toast.success('Password changed successfully!');
+      await changePasswordMutation.mutateAsync({
+        email: user.email,
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
       resetPass();
-    } catch (error) {
-      toast.error(error.message || 'Failed to change password.');
-    } finally {
-      setIsPasswordLoading(false);
+    } catch {
+      // toast error handled in hook
     }
   };
 
