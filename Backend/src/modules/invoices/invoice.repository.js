@@ -54,13 +54,12 @@ class InvoiceRepository {
       ];
     }
 
+    // List views only need totals; items and payments are loaded by findInvoiceById.
     const invoices = await prisma.invoice.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         client: { select: { id: true, clientName: true, companyName: true, email: true, gstNumber: true } },
-        items: true,
-        payments: { orderBy: { createdAt: 'desc' } },
       },
     });
 

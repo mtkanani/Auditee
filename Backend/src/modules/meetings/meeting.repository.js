@@ -73,9 +73,9 @@ class MeetingRepository {
           },
         },
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+        // notes and actionItems feed MeetingNotesEditor from the list; files and
+        // attendance logs aren't shown in the list, so they're left to findMeetingById.
         notes: true,
-        files: true,
-        attendanceLogs: true,
         actionItems: true,
       },
     });
