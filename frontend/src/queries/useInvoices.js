@@ -15,8 +15,9 @@ export const useFirmInvoices = (filters = {}) => {
   });
 
   return {
-    invoices: query.data?.data || query.data || [],
+    invoices: query.data?.data || [],
     pagination: query.data?.pagination,
+    summary: query.data?.summary,
     ...query,
   };
 };
@@ -29,8 +30,9 @@ export const useClientInvoices = (filters = {}) => {
   });
 
   return {
-    invoices: query.data?.data || query.data || [],
+    invoices: query.data?.data || [],
     pagination: query.data?.pagination,
+    summary: query.data?.summary,
     ...query,
   };
 };

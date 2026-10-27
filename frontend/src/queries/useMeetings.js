@@ -15,7 +15,8 @@ export const useMeetings = (filters = {}) => {
   });
 
   return {
-    meetings: query.data?.data || query.data || [],
+    meetings: query.data?.data || [],
+    pagination: query.data?.pagination,
     ...query,
   };
 };

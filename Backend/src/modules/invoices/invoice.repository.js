@@ -1,4 +1,5 @@
 const prisma = require('../../config/db');
+const { parsePagination, findManyPaginated } = require('../../utils/pagination');
 
 class InvoiceRepository {
   async generateNextInvoiceNumber(firmId, invoiceType = 'TAX_INVOICE') {
@@ -31,7 +32,7 @@ class InvoiceRepository {
     });
   }
 
-  async findAllInvoices({ firmId, status, invoiceType, clientId, search }) {
+  async findAllInvoices({ firmId, status, invoiceType, clientId, search, page, limit }) {
     const where = { firmId, deletedAt: null };
 
     if (status) {
@@ -54,17 +55,40 @@ class InvoiceRepository {
       ];
     }
 
-    const invoices = await prisma.invoice.findMany({
+    // List views only need totals; items and payments are loaded by findInvoiceById.
+    const listArgs = {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         client: { select: { id: true, clientName: true, companyName: true, email: true, gstNumber: true } },
-        items: true,
-        payments: { orderBy: { createdAt: 'desc' } },
       },
-    });
+    };
 
-    return invoices;
+    // Summary cards cover every matching invoice, not just the current page.
+    const [result, sums, overdueCount, pendingCount] = await Promise.all([
+      findManyPaginated(prisma.invoice, listArgs, parsePagination({ page, limit })),
+      prisma.invoice.aggregate({
+        where,
+        _sum: { totalAmount: true, paidAmount: true, balanceAmount: true },
+      }),
+      prisma.invoice.count({
+        where: {
+          AND: [where, { OR: [{ status: 'OVERDUE' }, { dueDate: { lt: new Date() }, status: { not: 'PAID' } }] }],
+        },
+      }),
+      prisma.invoice.count({ where: { AND: [where, { status: { not: 'PAID' } }] } }),
+    ]);
+
+    return {
+      ...result,
+      summary: {
+        totalAmount: sums._sum.totalAmount || 0,
+        paidAmount: sums._sum.paidAmount || 0,
+        balanceAmount: sums._sum.balanceAmount || 0,
+        overdueCount,
+        pendingCount,
+      },
+    };
   }
 
   async findInvoiceById(id, firmId) {

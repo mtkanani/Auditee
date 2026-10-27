@@ -7,6 +7,7 @@ import { DataTable } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { CardSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
+import { Pagination } from '../../components/common/Pagination';
 import { Bell, Calendar, CircleCheckBig, Clock, List, Plus, Shield, TriangleAlert, Zap } from 'lucide-react';
 import {
   useComplianceItems,
@@ -47,15 +48,25 @@ export const Compliance = () => {
   const [newClientId, setNewClientId] = useState('');
   const [newPenalty, setNewPenalty] = useState('');
 
+  const [page, setPage] = useState(1);
+
   const {
-    data: items = [],
+    items,
+    pagination,
+    summary,
     isLoading,
     error,
   } = useComplianceItems({
+    page,
+    limit: 12,
     search: debouncedSearch || undefined,
     category: categoryFilter || undefined,
     status: statusFilter || undefined,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, categoryFilter, statusFilter]);
 
   const { data: clients = [] } = useFirmClients({ limit: 100 });
   const { data: users = [] } = useFirmUsers({ limit: 100 });
@@ -130,11 +141,11 @@ export const Compliance = () => {
     );
   };
 
-  // Metrics
-  const totalItems = items.length;
-  const pendingCount = items.filter((i) => i.status === 'UPCOMING' || i.status === 'IN_PROGRESS').length;
-  const overdueCount = items.filter((i) => i.status === 'OVERDUE').length;
-  const filedCount = items.filter((i) => i.status === 'FILED').length;
+  // Metrics cover every matching item (computed server-side), not just this page
+  const totalItems = summary?.total || 0;
+  const pendingCount = summary?.pending || 0;
+  const overdueCount = summary?.overdue || 0;
+  const filedCount = summary?.filed || 0;
 
   const columns = [
     {
@@ -437,6 +448,16 @@ export const Compliance = () => {
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <DataTable columns={columns} data={items} isLoading={isLoading} />
         </div>
+      )}
+
+      {pagination?.totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={pagination.totalPages}
+          totalRecords={pagination.totalRecords}
+          limit={12}
+          onPageChange={setPage}
+        />
       )}
 
       {/* Convert Compliance to Task Modal */}

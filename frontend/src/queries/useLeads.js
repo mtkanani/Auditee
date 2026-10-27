@@ -5,15 +5,19 @@ import { queryClient } from '../lib/queryClient';
 import toast from 'react-hot-toast';
 
 export const useLeads = (filters = {}, options = {}) => {
-  return useQuery({
+  const query = useQuery({
     queryKey: leadKeys.list(filters),
-    queryFn: async () => {
-      const res = await leadService.getAllLeads(filters);
-      return res.data || res || [];
-    },
+    queryFn: () => leadService.getAllLeads(filters),
     placeholderData: keepPreviousData,
     ...options,
   });
+
+  return {
+    leads: query.data?.data || [],
+    pagination: query.data?.pagination,
+    summary: query.data?.summary,
+    ...query,
+  };
 };
 
 export const useLeadDetail = (leadId, options = {}) => {

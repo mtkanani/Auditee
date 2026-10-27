@@ -18,11 +18,13 @@ class ComplianceController {
   async getAllComplianceItems(req, res, next) {
     try {
       const firmId = req.user.firmId;
-      const items = await complianceService.getAllComplianceItems(req.query, firmId);
+      const { data, pagination, summary } = await complianceService.getAllComplianceItems(req.query, firmId);
       return res.status(200).json({
         success: true,
         message: 'Compliance items fetched successfully',
-        data: items,
+        data,
+        pagination,
+        summary,
       });
     } catch (error) {
       next(error);

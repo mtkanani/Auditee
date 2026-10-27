@@ -5,15 +5,19 @@ import { queryClient } from '../lib/queryClient';
 import toast from 'react-hot-toast';
 
 export const useComplianceItems = (filters = {}, options = {}) => {
-  return useQuery({
+  const query = useQuery({
     queryKey: complianceKeys.list(filters),
-    queryFn: async () => {
-      const res = await complianceService.getAllComplianceItems(filters);
-      return res.data || res || [];
-    },
+    queryFn: () => complianceService.getAllComplianceItems(filters),
     placeholderData: keepPreviousData,
     ...options,
   });
+
+  return {
+    items: query.data?.data || [],
+    pagination: query.data?.pagination,
+    summary: query.data?.summary,
+    ...query,
+  };
 };
 
 export const useGenerateIndianPresets = () => {

@@ -1,6 +1,28 @@
 const prisma = require('../../config/db');
+const { parsePagination, findManyPaginated, countBy } = require('../../utils/pagination');
 
 class DocumentRepository {
+  /** One page of vault documents plus summary counts over every matching document. */
+  async listVault(args, { page, limit }) {
+    const { where } = args;
+    const [result, categoryGroups, confidential] = await Promise.all([
+      findManyPaginated(prisma.documentVault, args, parsePagination({ page, limit })),
+      prisma.documentVault.groupBy({ by: ['category'], where, _count: { _all: true } }),
+      prisma.documentVault.count({ where: { AND: [where, { isConfidential: true }] } }),
+    ]);
+
+    const byCategory = countBy(categoryGroups, 'category');
+    return {
+      ...result,
+      summary: {
+        total: Object.values(byCategory).reduce((a, b) => a + b, 0),
+        gst: byCategory.GST_FILINGS || 0,
+        tax: byCategory.INCOME_TAX || 0,
+        confidential,
+      },
+    };
+  }
+
   async createDocument(data) {
     return await prisma.documentVault.create({
       data,
@@ -12,7 +34,7 @@ class DocumentRepository {
     });
   }
 
-  async findFirmDocuments({ firmId, category, search, clientId, taskId }) {
+  async findFirmDocuments({ firmId, category, search, clientId, taskId, page, limit }) {
     const where = {
       firmId,
       deletedAt: null,
@@ -39,7 +61,7 @@ class DocumentRepository {
       ];
     }
 
-    return await prisma.documentVault.findMany({
+    return await this.listVault({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -47,10 +69,10 @@ class DocumentRepository {
         task: { select: { id: true, title: true } },
         uploader: { select: { id: true, firstName: true, lastName: true, role: true } },
       },
-    });
+    }, { page, limit });
   }
 
-  async findClientDocuments({ clientId, firmId, category, search }) {
+  async findClientDocuments({ clientId, firmId, category, search, page, limit }) {
     const where = {
       firmId,
       clientId,
@@ -69,17 +91,17 @@ class DocumentRepository {
       ];
     }
 
-    return await prisma.documentVault.findMany({
+    return await this.listVault({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
         task: { select: { id: true, title: true } },
         uploader: { select: { id: true, firstName: true, lastName: true, role: true } },
       },
-    });
+    }, { page, limit });
   }
 
-  async findUserDocuments({ firmId, category, search }) {
+  async findUserDocuments({ firmId, category, search, page, limit }) {
     const where = {
       firmId,
       deletedAt: null,
@@ -97,7 +119,7 @@ class DocumentRepository {
       ];
     }
 
-    return await prisma.documentVault.findMany({
+    return await this.listVault({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -105,7 +127,7 @@ class DocumentRepository {
         task: { select: { id: true, title: true } },
         uploader: { select: { id: true, firstName: true, lastName: true, role: true } },
       },
-    });
+    }, { page, limit });
   }
 
   async findDocumentById(id, firmId) {

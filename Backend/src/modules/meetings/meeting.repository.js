@@ -1,4 +1,5 @@
 const prisma = require('../../config/db');
+const { parsePagination, findManyPaginated } = require('../../utils/pagination');
 
 class MeetingRepository {
   async createMeeting(data) {
@@ -27,7 +28,7 @@ class MeetingRepository {
     });
   }
 
-  async findMeetingsByFirm({ firmId, userId, clientId, role, userEmail, search, status, type }) {
+  async findMeetingsByFirm({ firmId, userId, clientId, role, userEmail, search, status, type, page, limit }) {
     const where = {
       firmId: parseInt(firmId, 10),
     };
@@ -62,7 +63,7 @@ class MeetingRepository {
       }
     }
 
-    return await prisma.meeting.findMany({
+    return await findManyPaginated(prisma.meeting, {
       where,
       orderBy: { startTime: 'asc' },
       include: {
@@ -73,12 +74,12 @@ class MeetingRepository {
           },
         },
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+        // notes and actionItems feed MeetingNotesEditor from the list; files and
+        // attendance logs aren't shown in the list, so they're left to findMeetingById.
         notes: true,
-        files: true,
-        attendanceLogs: true,
         actionItems: true,
       },
-    });
+    }, parsePagination({ page, limit }));
   }
 
   async findMeetingById(meetingId) {

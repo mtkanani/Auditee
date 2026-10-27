@@ -22,11 +22,13 @@ class InvoiceController {
       if (req.user.role === 'CLIENT') {
         queryParams.clientId = req.user.clientId || req.user.id;
       }
-      const invoices = await invoiceService.getAllInvoices(queryParams, firmId);
+      const { data, pagination, summary } = await invoiceService.getAllInvoices(queryParams, firmId);
       return res.status(200).json({
         success: true,
         message: 'Invoices fetched successfully',
-        data: invoices,
+        data,
+        pagination,
+        summary,
       });
     } catch (error) {
       next(error);

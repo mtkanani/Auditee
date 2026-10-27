@@ -19,10 +19,12 @@ class DocumentController {
   async getFirmVault(req, res, next) {
     try {
       const firmId = req.user.firmId;
-      const docs = await documentService.getFirmVaultDocuments(firmId, req.query);
+      const { data, pagination, summary } = await documentService.getFirmVaultDocuments(firmId, req.query);
       return res.status(200).json({
         success: true,
-        data: docs,
+        data,
+        pagination,
+        summary,
       });
     } catch (error) {
       next(error);
@@ -33,10 +35,12 @@ class DocumentController {
     try {
       const firmId = req.user.firmId;
       const clientId = req.user.clientId || req.user.id;
-      const docs = await documentService.getClientVaultDocuments(clientId, firmId, req.query);
+      const { data, pagination, summary } = await documentService.getClientVaultDocuments(clientId, firmId, req.query);
       return res.status(200).json({
         success: true,
-        data: docs,
+        data,
+        pagination,
+        summary,
       });
     } catch (error) {
       next(error);
@@ -46,10 +50,12 @@ class DocumentController {
   async getUserVault(req, res, next) {
     try {
       const firmId = req.user.firmId;
-      const docs = await documentService.getUserVaultDocuments(firmId, req.query);
+      const { data, pagination, summary } = await documentService.getUserVaultDocuments(firmId, req.query);
       return res.status(200).json({
         success: true,
-        data: docs,
+        data,
+        pagination,
+        summary,
       });
     } catch (error) {
       next(error);

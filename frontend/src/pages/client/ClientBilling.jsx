@@ -5,6 +5,7 @@ import { StatsCard } from '../../components/common/StatsCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { TableSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
+import { Pagination } from '../../components/common/Pagination';
 import { CircleAlert, CircleCheckBig, Clock, CreditCard, FileText, Printer, Search } from 'lucide-react';
 import { useClientInvoices } from '../../queries/useInvoices';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
@@ -15,6 +16,7 @@ export const ClientBilling = () => {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
 
   // Selected modals state
   const [selectedDetailInvoiceId, setSelectedDetailInvoiceId] = useState(null);
@@ -22,10 +24,16 @@ export const ClientBilling = () => {
   const [selectedPayInvoice, setSelectedPayInvoice] = useState(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
 
-  const { invoices, isLoading, error: invoicesError } = useClientInvoices({
+  const { invoices, pagination, summary, isLoading, error: invoicesError } = useClientInvoices({
+    page,
+    limit: 10,
     search: debouncedSearch || undefined,
     status: statusFilter || undefined,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter]);
 
   useEffect(() => {
     if (invoicesError) {
@@ -34,10 +42,11 @@ export const ClientBilling = () => {
   }, [invoicesError]);
 
   // Compute billing summary metrics
-  const totalBilled = invoices.reduce((acc, inv) => acc + Number(inv.totalAmount || 0), 0);
-  const totalPaid = invoices.reduce((acc, inv) => acc + Number(inv.paidAmount || 0), 0);
-  const totalOutstanding = invoices.reduce((acc, inv) => acc + Number(inv.balanceAmount || 0), 0);
-  const pendingCount = invoices.filter((inv) => inv.status !== 'PAID').length;
+  // Server-side totals over every matching invoice, not just this page
+  const totalBilled = Number(summary?.totalAmount || 0);
+  const totalPaid = Number(summary?.paidAmount || 0);
+  const totalOutstanding = Number(summary?.balanceAmount || 0);
+  const pendingCount = summary?.pendingCount || 0;
 
   const handleOpenPayModal = (invoice) => {
     setSelectedPayInvoice(invoice);
@@ -182,6 +191,13 @@ export const ClientBilling = () => {
             </table>
           </div>
         )}
+        <Pagination
+          currentPage={page}
+          totalPages={pagination?.totalPages || 1}
+          totalRecords={pagination?.totalRecords || 0}
+          limit={10}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Invoice Detail PDF Modal */}

@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Calendar, Plus, Search, Video, Clock, Users, CheckCircle, FileText, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useMeetings, useJoinMeeting, useUpdateMeetingStatus } from '../../queries/useMeetings';
 import { useDebounce } from '../../hooks/useDebounce';
 import { CardSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
+import { Pagination } from '../../components/common/Pagination';
 import ScheduleMeetingModal from '../../components/meetings/ScheduleMeetingModal';
 import InAppVideoRoom from '../../components/meetings/InAppVideoRoom';
 import MeetingNotesEditor from '../../components/meetings/MeetingNotesEditor';
@@ -18,15 +19,21 @@ export const MeetingsManagement = () => {
   const [activeVideoMeeting, setActiveVideoMeeting] = useState(null);
   const [activeNotesMeeting, setActiveNotesMeeting] = useState(null);
 
+  const [page, setPage] = useState(1);
+
   const filters = useMemo(() => {
-    const params = {};
+    const params = { page, limit: 12 };
     if (debouncedSearch) params.search = debouncedSearch;
     if (statusFilter) params.status = statusFilter;
     if (typeFilter) params.type = typeFilter;
     return params;
+  }, [page, debouncedSearch, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    setPage(1);
   }, [debouncedSearch, statusFilter, typeFilter]);
 
-  const { meetings, isLoading } = useMeetings(filters);
+  const { meetings, pagination, isLoading } = useMeetings(filters);
   const joinMeetingMutation = useJoinMeeting();
   const updateStatusMutation = useUpdateMeetingStatus();
 
@@ -241,6 +248,16 @@ export const MeetingsManagement = () => {
             );
           })}
         </div>
+      )}
+
+      {pagination?.totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={pagination.totalPages}
+          totalRecords={pagination.totalRecords}
+          limit={12}
+          onPageChange={setPage}
+        />
       )}
 
       {/* Schedule Meeting Modal */}

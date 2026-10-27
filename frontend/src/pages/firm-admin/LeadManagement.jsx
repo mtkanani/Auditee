@@ -4,6 +4,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
+import { Pagination } from '../../components/common/Pagination';
 import { Modal } from '../../components/common/Modal';
 import { LeadDetailModal } from '../../components/leads/LeadDetailModal';
 import { ArrowRight, CircleCheckBig, FileText, Grid3x3, List, MessageSquare, Plus, Users } from 'lucide-react';
@@ -32,14 +33,24 @@ export const LeadManagement = () => {
   const [source, setSource] = useState('DIRECT');
   const [notes, setNotes] = useState('');
 
+  const [page, setPage] = useState(1);
+
+  // The kanban needs every lead to fill its stage columns; only the table pages.
   const {
-    data: leads = [],
+    leads,
+    pagination,
+    summary,
     isLoading,
     error,
   } = useLeads({
+    ...(viewMode === 'table' ? { page, limit: 10 } : {}),
     search: debouncedSearch || undefined,
     stage: stageFilter || undefined,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, stageFilter, viewMode]);
 
   useEffect(() => {
     if (error) {
@@ -88,12 +99,11 @@ export const LeadManagement = () => {
   };
 
   // Metrics calculation
-  const totalLeads = leads.length;
-  const inDiscussionCount = leads.filter((l) => l.stage === 'DISCUSSION').length;
-  const proposalSentCount = leads.filter((l) => l.stage === 'PROPOSAL_SENT').length;
-  const wonValueTotal = leads
-    .filter((l) => l.stage === 'WON')
-    .reduce((acc, curr) => acc + (curr.estimatedValue || 0), 0);
+  // Computed server-side over every matching lead, so they don't change with the page
+  const totalLeads = summary?.total || 0;
+  const inDiscussionCount = summary?.stageCounts?.DISCUSSION || 0;
+  const proposalSentCount = summary?.stageCounts?.PROPOSAL_SENT || 0;
+  const wonValueTotal = summary?.wonValue || 0;
 
   const pipelineStages = [
     { key: 'NEW_LEAD', title: 'NEW INQUIRY', color: 'border-blue-500/40 text-blue-400 bg-blue-500/10' },
@@ -301,6 +311,13 @@ export const LeadManagement = () => {
       {viewMode === 'table' && (
         <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <DataTable columns={columns} data={leads} isLoading={isLoading} />
+          <Pagination
+            currentPage={page}
+            totalPages={pagination?.totalPages || 1}
+            totalRecords={pagination?.totalRecords || 0}
+            limit={10}
+            onPageChange={setPage}
+          />
         </div>
       )}
 

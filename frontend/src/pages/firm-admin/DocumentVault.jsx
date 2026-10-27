@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Archive, CloudUpload, Download, File, FileText, Folder, Funnel, Grid3x3, Image, List, Lock, RefreshCw, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useVaultDocuments, useDeleteDocument } from '../../queries/useDocuments';
@@ -7,6 +7,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { Modal } from '../../components/common/Modal';
 import { TableSkeleton, CardSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
+import { Pagination } from '../../components/common/Pagination';
 import { UploadDocumentModal } from '../../components/documents/UploadDocumentModal';
 
 const CATEGORIES = [
@@ -58,15 +59,21 @@ export const DocumentVault = () => {
 
   const debouncedSearch = useDebounce(search, 400);
 
+  const [page, setPage] = useState(1);
+
   const filters = useMemo(() => {
-    const params = {};
+    const params = { page, limit: 12 };
     if (category !== 'ALL') params.category = category;
     if (debouncedSearch) params.search = debouncedSearch;
     return params;
+  }, [page, category, debouncedSearch]);
+
+  useEffect(() => {
+    setPage(1);
   }, [category, debouncedSearch]);
 
   const scope = isFirmAdmin ? 'firm' : isClient ? 'client' : 'user';
-  const { docs, isLoading, isFetching, refetch } = useVaultDocuments(scope, filters);
+  const { docs, pagination, summary, isLoading, isFetching, refetch } = useVaultDocuments(scope, filters);
   const { data: clients = [] } = useFirmClients({ limit: 200 }, { enabled: isFirmAdmin });
   const deleteMutation = useDeleteDocument();
 
@@ -78,13 +85,13 @@ export const DocumentVault = () => {
     });
   };
 
-  // Stats
-  const stats = useMemo(() => ({
-    total: docs.length,
-    gst: docs.filter((d) => d.category === 'GST_FILINGS').length,
-    tax: docs.filter((d) => d.category === 'INCOME_TAX').length,
-    confidential: docs.filter((d) => d.isConfidential).length,
-  }), [docs]);
+  // Stats cover every matching document (computed server-side), not just this page
+  const stats = {
+    total: summary?.total || 0,
+    gst: summary?.gst || 0,
+    tax: summary?.tax || 0,
+    confidential: summary?.confidential || 0,
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 lg:p-8">
@@ -357,6 +364,16 @@ export const DocumentVault = () => {
             );
           })}
         </div>
+      )}
+
+      {pagination?.totalPages > 1 && (
+        <Pagination
+          currentPage={page}
+          totalPages={pagination.totalPages}
+          totalRecords={pagination.totalRecords}
+          limit={12}
+          onPageChange={setPage}
+        />
       )}
 
       {/* Delete Confirm Modal */}

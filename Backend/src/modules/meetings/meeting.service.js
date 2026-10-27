@@ -218,6 +218,8 @@ class MeetingService {
       search: query.search,
       status: query.status,
       type: query.type,
+      page: query.page,
+      limit: query.limit,
     });
   }
 

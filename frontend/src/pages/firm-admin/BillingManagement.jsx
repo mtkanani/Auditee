@@ -4,6 +4,7 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
+import { Pagination } from '../../components/common/Pagination';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CreateInvoiceModal } from '../../components/invoices/CreateInvoiceModal';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
@@ -18,6 +19,7 @@ export const BillingManagement = () => {
   const debouncedSearch = useDebounce(search, 400);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
 
   // Modals
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
@@ -25,11 +27,17 @@ export const BillingManagement = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
-  const { invoices, isLoading, error: invoicesError } = useFirmInvoices({
+  const { invoices, pagination, summary, isLoading, error: invoicesError } = useFirmInvoices({
+    page,
+    limit: 10,
     search: debouncedSearch || undefined,
     invoiceType: typeFilter || undefined,
     status: statusFilter || undefined,
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, typeFilter, statusFilter]);
 
   useEffect(() => {
     if (invoicesError) {
@@ -37,11 +45,11 @@ export const BillingManagement = () => {
     }
   }, [invoicesError]);
 
-  // Metrics
-  const totalRevenue = invoices.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
-  const totalReceived = invoices.reduce((acc, curr) => acc + (curr.paidAmount || 0), 0);
-  const totalOutstanding = invoices.reduce((acc, curr) => acc + (curr.balanceAmount || 0), 0);
-  const overdueCount = invoices.filter((i) => i.status === 'OVERDUE' || (new Date(i.dueDate) < new Date() && i.status !== 'PAID')).length;
+  // Metrics cover every matching invoice (computed server-side), not just this page
+  const totalRevenue = summary?.totalAmount || 0;
+  const totalReceived = summary?.paidAmount || 0;
+  const totalOutstanding = summary?.balanceAmount || 0;
+  const overdueCount = summary?.overdueCount || 0;
 
   const columns = [
     {
@@ -187,6 +195,13 @@ export const BillingManagement = () => {
       {/* Master Invoice Data Table */}
       <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
         <DataTable columns={columns} data={invoices} isLoading={isLoading} />
+        <Pagination
+          currentPage={page}
+          totalPages={pagination?.totalPages || 1}
+          totalRecords={pagination?.totalRecords || 0}
+          limit={10}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Firm Banking & Payment Settings Modal */}
