@@ -15,13 +15,15 @@ export const useVaultDocuments = (scope, filters = {}) => {
       if (scope === 'firm') res = await documentService.getFirmVault(filters);
       else if (scope === 'client') res = await documentService.getClientVault(filters);
       else res = await documentService.getUserVault(filters);
-      return res.data?.data || res.data || [];
+      return res.data;
     },
     placeholderData: keepPreviousData,
   });
 
   return {
-    docs: Array.isArray(query.data) ? query.data : [],
+    docs: query.data?.data || [],
+    pagination: query.data?.pagination,
+    summary: query.data?.summary,
     ...query,
   };
 };

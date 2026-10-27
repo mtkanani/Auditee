@@ -24,6 +24,8 @@ class DocumentService {
       firmId,
       category: queryParams.category,
       search: queryParams.search,
+      page: queryParams.page,
+      limit: queryParams.limit,
       clientId: queryParams.clientId,
       taskId: queryParams.taskId,
     });
@@ -35,6 +37,8 @@ class DocumentService {
       firmId,
       category: queryParams.category,
       search: queryParams.search,
+      page: queryParams.page,
+      limit: queryParams.limit,
     });
   }
 
@@ -43,6 +47,8 @@ class DocumentService {
       firmId,
       category: queryParams.category,
       search: queryParams.search,
+      page: queryParams.page,
+      limit: queryParams.limit,
     });
   }
 
