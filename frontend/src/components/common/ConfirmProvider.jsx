@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
-import { ConfirmationModal } from './ConfirmationModal';
+import React, { createContext, useContext, useState, useRef, useCallback, lazy, Suspense } from 'react';
+
+// Lazy so framer-motion (pulled in by Modal) stays out of the login bundle.
+const ConfirmationModal = lazy(() =>
+  import('./ConfirmationModal').then((m) => ({ default: m.ConfirmationModal }))
+);
 
 const ConfirmContext = createContext(null);
 
 export const ConfirmProvider = ({ children }) => {
+  // Mount the modal on first use, then keep it mounted so its exit animation plays.
+  const [hasOpened, setHasOpened] = useState(false);
   const [dialogState, setDialogState] = useState({
     isOpen: false,
     title: 'Confirm Action',
@@ -24,6 +30,7 @@ export const ConfirmProvider = ({ children }) => {
   } = {}) => {
     return new Promise((resolve) => {
       resolverRef.current = resolve;
+      setHasOpened(true);
       setDialogState({
         isOpen: true,
         title,
@@ -48,16 +55,20 @@ export const ConfirmProvider = ({ children }) => {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      <ConfirmationModal
-        isOpen={dialogState.isOpen}
-        onClose={handleClose}
-        onConfirm={handleConfirm}
-        title={dialogState.title}
-        message={dialogState.message}
-        confirmText={dialogState.confirmText}
-        cancelText={dialogState.cancelText}
-        isDanger={dialogState.isDanger}
-      />
+      {hasOpened && (
+        <Suspense fallback={null}>
+          <ConfirmationModal
+            isOpen={dialogState.isOpen}
+            onClose={handleClose}
+            onConfirm={handleConfirm}
+            title={dialogState.title}
+            message={dialogState.message}
+            confirmText={dialogState.confirmText}
+            cancelText={dialogState.cancelText}
+            isDanger={dialogState.isDanger}
+          />
+        </Suspense>
+      )}
     </ConfirmContext.Provider>
   );
 };
