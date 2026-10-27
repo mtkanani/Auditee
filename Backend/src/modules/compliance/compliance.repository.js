@@ -1,4 +1,5 @@
 const prisma = require('../../config/db');
+const { parsePagination, findManyPaginated, countBy } = require('../../utils/pagination');
 
 class ComplianceRepository {
   async createComplianceItem(data) {
@@ -10,7 +11,7 @@ class ComplianceRepository {
     });
   }
 
-  async findAllComplianceItems({ firmId, category, status, clientId, search }) {
+  async findAllComplianceItems({ firmId, category, status, clientId, search, page, limit }) {
     const where = { firmId };
 
     if (category) {
@@ -33,15 +34,30 @@ class ComplianceRepository {
       ];
     }
 
-    const items = await prisma.complianceItem.findMany({
+    const listArgs = {
       where,
       orderBy: { dueDate: 'asc' },
       include: {
         client: { select: { id: true, clientName: true, companyName: true, gstNumber: true, email: true } },
       },
-    });
+    };
 
-    return items;
+    // Status counts cover every matching item, not just the current page.
+    const [result, statusGroups] = await Promise.all([
+      findManyPaginated(prisma.complianceItem, listArgs, parsePagination({ page, limit })),
+      prisma.complianceItem.groupBy({ by: ['status'], where, _count: { _all: true } }),
+    ]);
+
+    const byStatus = countBy(statusGroups, 'status');
+    return {
+      ...result,
+      summary: {
+        total: Object.values(byStatus).reduce((a, b) => a + b, 0),
+        pending: (byStatus.UPCOMING || 0) + (byStatus.IN_PROGRESS || 0),
+        overdue: byStatus.OVERDUE || 0,
+        filed: byStatus.FILED || 0,
+      },
+    };
   }
 
   async findComplianceById(id, firmId) {
