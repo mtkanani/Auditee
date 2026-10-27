@@ -37,3 +37,35 @@ Roles: SUPER_ADMIN, FIRM_ADMIN, USER/EMPLOYEE, CLIENT.
 - **Phase 6 — accessibility and responsiveness:** `aria-label` on icon-only buttons; check every table and kanban at 375px (scroll or cards); keyboard-only pass through login → tasks → create invoice.
 - **Phase 7 (optional) — light theme:** move hard-coded colours (`bg-slate-950` etc.) into CSS variables in `src/index.css` first, then add light values.
 - **Backend follow-ups:** invoice numbers use `count + 1` (race condition / duplicates after delete) → use a per-firm counter in a transaction or a Postgres sequence. `npm start` runs `prisma db push`; switch to `prisma migrate deploy`. Client accounts can't use delete-account (service only looks up `users`).
+<!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
+
+### MCP & Skills awareness (Claude Code ToolBox)
+
+_Last synced: 2026-10-27T11:17:09.628Z._
+
+- **Full report:** `.claude/cloude-code-toolbox-mcp-skills-awareness.md` in this workspace (auto-overwritten on each scan). Use it as ground truth for configured servers and skill folders.
+- **MCP:** For **live tools** in Claude Code, enable the matching server via `/mcp`. Servers are configured in `~/.claude.json` (user) and `.mcp.json` (project).
+- **When the user’s task matches a server** (e.g. Confluence work and a **Confluence** / **Atlassian** MCP is listed), **prefer that server id** and plan on tool use—not only file search.
+- **Skills:** Folders below contain `SKILL.md`; attach or cite paths in chat when relevant.
+
+#### Workspace MCP
+
+- `e:\Auditee\Auditee\.mcp.json` _(workspace: Auditee)_ — _file missing_
+
+_No active workspace servers in mcp.json._
+
+#### User MCP
+
+- `C:\Users\archa\.claude.json` — _no servers defined_
+
+_No active user-scoped servers in mcp.json._
+
+#### Project skills
+
+_None found (or no workspace open)._
+
+#### User skills
+
+_None found._
+
+<!-- cloude-code-toolbox:mcp-skills-awareness-end -->
