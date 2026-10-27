@@ -173,10 +173,7 @@ export const FirmManagement = () => {
         subtitle="Create, update, monitor and manage tenant CA firms on Auditee"
         actions={
           <button
-            onClick={() => {
-              resetCreate();
-              setIsCreateModalOpen(true);
-            }}
+            onClick={() => setIsCreateModalOpen(true)}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
           >
             <Plus className="w-4 h-4"  />
