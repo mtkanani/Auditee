@@ -1,4 +1,5 @@
 const prisma = require('../../config/db');
+const { parsePagination, findManyPaginated } = require('../../utils/pagination');
 
 class LeadRepository {
   async createLead(data) {
@@ -7,7 +8,7 @@ class LeadRepository {
     });
   }
 
-  async findAllLeads({ firmId, stage, search, source }) {
+  async findAllLeads({ firmId, stage, search, source, page, limit }) {
     const where = {
       firmId,
       deletedAt: null,
@@ -31,7 +32,7 @@ class LeadRepository {
       ];
     }
 
-    const leads = await prisma.lead.findMany({
+    const listArgs = {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -40,9 +41,24 @@ class LeadRepository {
           select: { callLogs: true, meetingNotes: true, proposals: true },
         },
       },
-    });
+    };
 
-    return leads;
+    // Stage counts and won value cover every matching lead, not just the current page.
+    const [result, stageGroups] = await Promise.all([
+      findManyPaginated(prisma.lead, listArgs, parsePagination({ page, limit })),
+      prisma.lead.groupBy({ by: ['stage'], where, _count: { _all: true }, _sum: { estimatedValue: true } }),
+    ]);
+
+    const stageCounts = Object.fromEntries(stageGroups.map((g) => [g.stage, g._count._all]));
+    const won = stageGroups.find((g) => g.stage === 'WON');
+    return {
+      ...result,
+      summary: {
+        total: stageGroups.reduce((acc, g) => acc + g._count._all, 0),
+        stageCounts,
+        wonValue: won?._sum.estimatedValue || 0,
+      },
+    };
   }
 
   async findLeadById(id, firmId) {

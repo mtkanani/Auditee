@@ -18,11 +18,13 @@ class LeadController {
   async getAllLeads(req, res, next) {
     try {
       const firmId = req.user.firmId;
-      const leads = await leadService.getAllLeads(req.query, firmId);
+      const { data, pagination, summary } = await leadService.getAllLeads(req.query, firmId);
       return res.status(200).json({
         success: true,
         message: 'Leads fetched successfully',
-        data: leads,
+        data,
+        pagination,
+        summary,
       });
     } catch (error) {
       next(error);
