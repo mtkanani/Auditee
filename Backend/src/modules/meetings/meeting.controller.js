@@ -16,10 +16,11 @@ class MeetingController {
 
   async getAll(req, res, next) {
     try {
-      const meetings = await meetingService.getMeetings(req.user, req.query);
+      const { data, pagination } = await meetingService.getMeetings(req.user, req.query);
       return res.status(200).json({
         success: true,
-        data: meetings,
+        data,
+        pagination,
       });
     } catch (error) {
       next(error);
