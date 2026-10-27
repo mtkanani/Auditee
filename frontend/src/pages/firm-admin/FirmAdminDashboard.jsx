@@ -68,7 +68,7 @@ const recentActivity = [
 export const FirmAdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { dashboard: data } = useFirmAdminDashboard();
+  const { dashboard: data, isLoading } = useFirmAdminDashboard();
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
