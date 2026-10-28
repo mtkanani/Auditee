@@ -8,3 +8,4 @@ export { Tabs } from './Tabs';
 export { PageHeader } from './PageHeader';
 export { FilterBar, SearchInput } from './FilterBar';
 export { Table } from './Table';
+export { Menu, MenuItem, MenuLabel, MenuDivider } from './Menu';
