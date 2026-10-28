@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PageHeader } from '../../components/common/PageHeader';
 import { SearchBar } from '../../components/common/SearchBar';
 import { DataTable } from '../../components/common/DataTable';
@@ -25,7 +26,8 @@ export const FirmManagement = () => {
   const [page, setPage] = useState(1);
 
   // Modals state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(Boolean(location.state?.openCreate));
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
