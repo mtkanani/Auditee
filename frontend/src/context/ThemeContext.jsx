@@ -3,10 +3,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('auditee-theme');
-    return savedTheme || 'dark'; // Default to dark for sleek SaaS aesthetic
-  });
+  // index.html applies the saved theme class before first paint; start from it.
+  const [theme, setTheme] = useState(() =>
+    document.documentElement.classList.contains('light') ? 'light' : 'dark'
+  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -17,7 +17,11 @@ export const ThemeProvider = ({ children }) => {
       root.classList.add('light');
       root.classList.remove('dark');
     }
-    localStorage.setItem('auditee-theme', theme);
+    try {
+      localStorage.setItem('auditee-theme', theme);
+    } catch {
+      // Storage can be blocked (private mode); the theme still applies for this visit.
+    }
   }, [theme]);
 
   const toggleTheme = () => {

@@ -7,33 +7,8 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        brand: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6', // Violet
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-          950: '#2e1065',
-        },
-        accent: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e', // Success Green
-          600: '#16a34a',
-        },
-        slate: {
-          950: '#030712',
-          900: '#0f172a',
-          800: '#1e293b',
-          750: '#242f44', // Intermediate deep slate
-        }
-      },
+      // slate, brand and the semantic colours are theme tokens in src/index.css
+      // so they can switch between dark and light.
       fontFamily: {
         sans: ['"Inter Variable"', 'Inter', 'system-ui', 'sans-serif'],
       },
