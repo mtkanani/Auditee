@@ -1,14 +1,34 @@
 const { body, param, query } = require('express-validator');
 
+const uploadUrlValidation = [
+  body('fileName')
+    .trim()
+    .notEmpty()
+    .withMessage('File name is required')
+    .isLength({ max: 255 }),
+  body('fileSize')
+    .isInt({ min: 1 })
+    .withMessage('File size is required')
+    .toInt(),
+];
+
+const documentIdValidation = [
+  param('id').isInt({ min: 1 }).withMessage('Invalid document id').toInt(),
+];
+
 const uploadDocumentValidation = [
   body('title')
     .trim()
     .notEmpty()
     .withMessage('Document title is required'),
+  // Either storageKey (file stored in R2) or fileUrl (an outside link) is required; the service checks which.
+  body('storageKey')
+    .optional({ nullable: true })
+    .isString()
+    .isLength({ max: 512 }),
   body('fileUrl')
-    .trim()
-    .notEmpty()
-    .withMessage('File URL is required'),
+    .optional({ nullable: true })
+    .trim(),
   body('fileName')
     .trim()
     .notEmpty()
@@ -43,5 +63,7 @@ const uploadDocumentValidation = [
 ];
 
 module.exports = {
+  uploadUrlValidation,
   uploadDocumentValidation,
+  documentIdValidation,
 };

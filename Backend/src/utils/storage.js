@@ -51,7 +51,8 @@ const keyBelongsToFirm = (key, firmId) => typeof key === 'string' && key.startsW
 const presignUpload = async (key, contentType) => {
   ensureConfigured();
   const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType });
-  return getSignedUrl(s3, command, { expiresIn: UPLOAD_URL_TTL_SECONDS });
+  // Sign Content-Type too, so the upload is refused unless it is exactly the type we allowed.
+  return getSignedUrl(s3, command, { expiresIn: UPLOAD_URL_TTL_SECONDS, signableHeaders: new Set(['content-type']) });
 };
 
 /** Short-lived URL that downloads the object under its original file name. */
