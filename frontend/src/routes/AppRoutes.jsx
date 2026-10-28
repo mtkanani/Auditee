@@ -16,6 +16,9 @@ const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/auth/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const VerifyOTP = lazy(() => import('../pages/auth/VerifyOTP').then((m) => ({ default: m.VerifyOTP })));
 
+// UI kit showcase: development only, removed from production builds.
+const UiKit = import.meta.env.DEV ? lazy(() => import('../pages/dev/UiKit')) : null;
+
 // Lazy-loaded Super Admin Pages
 const SuperAdminDashboard = lazy(() => import('../pages/super-admin/SuperAdminDashboard').then((m) => ({ default: m.SuperAdminDashboard })));
 const MeetingsManagement = lazy(() => import('../pages/meetings/MeetingsManagement').then((m) => ({ default: m.MeetingsManagement })));
@@ -78,6 +81,8 @@ export const AppRoutes = () => {
             )
           }
         />
+
+        {UiKit && <Route path="/ui-kit" element={<UiKit />} />}
 
         {/* Public Auth Routes */}
         <Route path="/register" element={<Register />} />
