@@ -1,251 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import { Modal } from '../common/Modal';
-import { Calendar, Clock, Settings } from 'lucide-react';
-import { useUpdateLeavePolicy } from '../../queries/useLeave';
+import React from 'react';
+import { CalendarRange, Repeat, Save } from 'lucide-react';
+import { Modal } from '../../common/Modal';
+import { Button, Field, Input } from '../../ui';
+import { cn } from '../../../lib/cn';
+import { useLeavePolicyForm } from './useLeavePolicyForm';
+
+const MODES = [
+  { value: 'YEARLY', title: 'Per year', detail: 'Full yearly quota given upfront', icon: CalendarRange },
+  { value: 'MONTHLY', title: 'Per month', detail: 'Leave builds up each month', icon: Repeat },
+];
 
 export const ConfigureLeavePolicyModal = ({ isOpen, onClose, currentPolicy, onPolicyUpdated }) => {
-  const [accrualMode, setAccrualMode] = useState('YEARLY');
-  const [casualLeaveQuota, setCasualLeaveQuota] = useState(12);
-  const [sickLeaveQuota, setSickLeaveQuota] = useState(10);
-  const [earnedLeaveQuota, setEarnedLeaveQuota] = useState(15);
-  const [perMonthCasual, setPerMonthCasual] = useState(1.0);
-  const [perMonthSick, setPerMonthSick] = useState(0.83);
-  const [perMonthEarned, setPerMonthEarned] = useState(1.25);
-  const [updateAllBalances, setUpdateAllBalances] = useState(true);
-
-  const updatePolicyMutation = useUpdateLeavePolicy();
-
-  useEffect(() => {
-    if (currentPolicy) {
-      setAccrualMode(currentPolicy.accrualMode || 'YEARLY');
-      setCasualLeaveQuota(currentPolicy.casualLeaveQuota ?? 12);
-      setSickLeaveQuota(currentPolicy.sickLeaveQuota ?? 10);
-      setEarnedLeaveQuota(currentPolicy.earnedLeaveQuota ?? 15);
-      setPerMonthCasual(currentPolicy.perMonthCasual ?? 1.0);
-      setPerMonthSick(currentPolicy.perMonthSick ?? 0.83);
-      setPerMonthEarned(currentPolicy.perMonthEarned ?? 1.25);
-    }
-  }, [currentPolicy]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const payload = {
-      accrualMode,
-      casualLeaveQuota: parseFloat(casualLeaveQuota),
-      sickLeaveQuota: parseFloat(sickLeaveQuota),
-      earnedLeaveQuota: parseFloat(earnedLeaveQuota),
-      perMonthCasual: parseFloat(perMonthCasual),
-      perMonthSick: parseFloat(perMonthSick),
-      perMonthEarned: parseFloat(perMonthEarned),
-      updateAllBalances,
-    };
-
-    updatePolicyMutation.mutate(payload, {
-      onSuccess: () => {
-        if (onPolicyUpdated) onPolicyUpdated();
-        onClose();
-      },
-    });
-  };
-
-  // Auto-calculation handlers (Per Month <-> Per Year)
-  const handleCasualQuotaChange = (val) => {
-    setCasualLeaveQuota(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      setPerMonthCasual(parseFloat((num / 12).toFixed(2)));
-    }
-  };
-
-  const handlePerMonthCasualChange = (val) => {
-    setPerMonthCasual(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      setCasualLeaveQuota(parseFloat((num * 12).toFixed(1)));
-    }
-  };
-
-  const handleSickQuotaChange = (val) => {
-    setSickLeaveQuota(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      setPerMonthSick(parseFloat((num / 12).toFixed(2)));
-    }
-  };
-
-  const handlePerMonthSickChange = (val) => {
-    setPerMonthSick(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      setSickLeaveQuota(parseFloat((num * 12).toFixed(1)));
-    }
-  };
-
-  const handleEarnedQuotaChange = (val) => {
-    setEarnedLeaveQuota(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      setPerMonthEarned(parseFloat((num / 12).toFixed(2)));
-    }
-  };
-
-  const handlePerMonthEarnedChange = (val) => {
-    setPerMonthEarned(val);
-    const num = parseFloat(val);
-    if (!isNaN(num)) {
-      setEarnedLeaveQuota(parseFloat((num * 12).toFixed(1)));
-    }
-  };
+  const { accrualMode, setAccrualMode, quotas, updateAllBalances, setUpdateAllBalances, handleSubmit, updatePolicyMutation } =
+    useLeavePolicyForm({ currentPolicy, onClose, onPolicyUpdated });
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Configure Firm Leave Policy & Quotas ⚙️">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1">
-          <p className="font-bold text-indigo-400">Firm-Wide Custom Leave Quotas</p>
-          <p className="text-slate-400">
-            Set annual and monthly leave allowances for your firm. Changing monthly rates automatically updates yearly totals (12x).
-          </p>
+    <Modal isOpen={isOpen} onClose={onClose} title="Leave policy" maxWidth="max-w-2xl">
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <p className="text-sm text-muted">
+          Firm-wide leave allowances. Change either number and the other updates (a year is 12 months).
+        </p>
+
+        <fieldset>
+          <legend className="text-sm font-medium text-fg mb-1.5">How leave is given</legend>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {MODES.map((m) => {
+              const Icon = m.icon;
+              const on = accrualMode === m.value;
+              return (
+                <label
+                  key={m.value}
+                  className={cn(
+                    'flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors',
+                    on ? 'border-accent bg-accent-soft/50' : 'border-line hover:border-line-strong'
+                  )}
+                >
+                  <input type="radio" name="accrualMode" className="mt-1 accent-[var(--accent)]" checked={on} onChange={() => setAccrualMode(m.value)} />
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium text-fg">{m.title}</span>
+                    <span className="block text-xs text-muted">{m.detail}</span>
+                  </span>
+                  <Icon className={cn('w-5 h-5 shrink-0', on ? 'text-accent-fg' : 'text-subtle')} aria-hidden="true" />
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {quotas.map((q) => (
+            <fieldset key={q.key} className="rounded-xl border border-line bg-sunken/40 p-3 space-y-3">
+              <legend className="sr-only">{q.title}</legend>
+              <p className="text-sm font-medium text-fg" aria-hidden="true">{q.title}</p>
+              <Field label="Days a year">
+                {(p) => <Input {...p} type="number" step="0.5" min="0" value={q.year} onChange={(e) => q.onYear(e.target.value)} className="h-9" />}
+              </Field>
+              <Field label="Days a month">
+                {(p) => <Input {...p} type="number" step="0.1" min="0" value={q.month} onChange={(e) => q.onMonth(e.target.value)} className="h-9" />}
+              </Field>
+            </fieldset>
+          ))}
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-slate-200 mb-1.5">Calculation & Tracking Mode</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setAccrualMode('YEARLY')}
-              className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
-                accrualMode === 'YEARLY'
-                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-              }`}
-            >
-              <div>
-                <p className="font-bold text-slate-100">Per Year (Annual)</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Full yearly quota allocated upfront</p>
-              </div>
-              <Calendar className="w-5 h-5 text-indigo-400"  />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setAccrualMode('MONTHLY')}
-              className={`p-3 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between ${
-                accrualMode === 'MONTHLY'
-                  ? 'bg-purple-600/20 border-purple-500 text-purple-300'
-                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-              }`}
-            >
-              <div>
-                <p className="font-bold text-slate-100">Per Month (Accrual)</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Accrued monthly limit breakdown</p>
-              </div>
-              <Clock className="w-5 h-5 text-purple-400"  />
-            </button>
-          </div>
-        </div>
-
-        {/* Quota Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-          {/* Casual Leave */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <label className="block text-xs font-bold text-indigo-400">Casual Leave (CL)</label>
-            <div>
-              <span className="text-[10px] text-slate-400">Annual Limit (Days/Year)</span>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={casualLeaveQuota}
-                onChange={(e) => handleCasualQuotaChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 mt-1"
-              />
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400">Monthly Accrual (Days/Month)</span>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                value={perMonthCasual}
-                onChange={(e) => handlePerMonthCasualChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 mt-1"
-              />
-            </div>
-          </div>
-
-          {/* Sick Leave */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <label className="block text-xs font-bold text-purple-400">Sick Leave (SL)</label>
-            <div>
-              <span className="text-[10px] text-slate-400">Annual Limit (Days/Year)</span>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={sickLeaveQuota}
-                onChange={(e) => handleSickQuotaChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-purple-500 mt-1"
-              />
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400">Monthly Accrual (Days/Month)</span>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                value={perMonthSick}
-                onChange={(e) => handlePerMonthSickChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-purple-500 mt-1"
-              />
-            </div>
-          </div>
-
-          {/* Earned Leave */}
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-            <label className="block text-xs font-bold text-emerald-400">Earned Leave (EL)</label>
-            <div>
-              <span className="text-[10px] text-slate-400">Annual Limit (Days/Year)</span>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={earnedLeaveQuota}
-                onChange={(e) => handleEarnedQuotaChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 mt-1"
-              />
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400">Monthly Accrual (Days/Month)</span>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                value={perMonthEarned}
-                onChange={(e) => handlePerMonthEarnedChange(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 mt-1"
-              />
-            </div>
-          </div>
-        </div>
-
-        <label className="flex items-center gap-2 p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 cursor-pointer">
+        <label className="flex items-start gap-3 p-3 rounded-xl border border-line text-sm text-fg cursor-pointer">
           <input
             type="checkbox"
+            className="mt-0.5 w-4 h-4 rounded accent-[var(--accent)]"
             checked={updateAllBalances}
             onChange={(e) => setUpdateAllBalances(e.target.checked)}
-            className="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500"
           />
           <span>Update existing employee balances to match these new quota limits</span>
         </label>
 
-        <button
-          type="submit"
-          disabled={updatePolicyMutation.isPending}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50"
-        >
-          <Settings className="w-4 h-4"  />
-          <span>{updatePolicyMutation.isPending ? 'Updating Policy...' : 'Save Firm Leave Policy'}</span>
-        </button>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" icon={Save} loading={updatePolicyMutation.isPending}>Save policy</Button>
+        </div>
       </form>
     </Modal>
   );
