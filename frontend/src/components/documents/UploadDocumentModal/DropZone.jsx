@@ -5,7 +5,7 @@ import { cn } from '../../../lib/cn';
 const ACCEPT = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.zip';
 
 /** Click or drop a file. A real button, so it also works from the keyboard. */
-export const DropZone = ({ fileName, fileSize, onFile }) => {
+export const DropZone = ({ fileName, fileSize, onFile, disabled = false }) => {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef(null);
 
@@ -17,10 +17,14 @@ export const DropZone = ({ fileName, fileSize, onFile }) => {
         className="hidden"
         accept={ACCEPT}
         tabIndex={-1}
-        onChange={(e) => onFile(e.target.files[0])}
+        onChange={(e) => {
+          onFile(e.target.files[0]);
+          e.target.value = ''; // so picking the same file again still fires
+        }}
       />
       <button
         type="button"
+        disabled={disabled}
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
@@ -30,11 +34,11 @@ export const DropZone = ({ fileName, fileSize, onFile }) => {
         onDrop={(e) => {
           e.preventDefault();
           setIsDragging(false);
-          onFile(e.dataTransfer.files[0]);
+          if (!disabled) onFile(e.dataTransfer.files[0]);
         }}
         className={cn(
           'w-full flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:opacity-60 disabled:cursor-not-allowed',
           isDragging
             ? 'border-accent bg-accent-soft/60'
             : fileName

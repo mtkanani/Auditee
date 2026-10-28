@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useConfirm } from '../../../components/common/ConfirmProvider';
-import { useVaultDocuments, useDeleteDocument } from '../../../queries/useDocuments';
+import { useVaultDocuments, useDeleteDocument, useDownloadDocument } from '../../../queries/useDocuments';
 import { useFirmClients } from '../../../queries/useLookups';
 import { useDebounce } from '../../../hooks/useDebounce';
 
@@ -35,8 +35,14 @@ export const useDocumentVault = () => {
   const { docs, pagination, summary, isLoading, isFetching, refetch } = useVaultDocuments(scope, filters);
   const { data: clients = [] } = useFirmClients({ limit: 200 }, { enabled: isFirmAdmin });
   const deleteMutation = useDeleteDocument();
+  const downloadMutation = useDownloadDocument();
 
-  const canDelete = (doc) => isFirmAdmin || doc.uploadedBy === user?.id;
+  // Mirrors the API: admins delete anything, everyone else only their own uploads.
+  const canDelete = (doc) =>
+    isFirmAdmin || (isClient ? doc.uploadedByClientId === (user?.clientId ?? user?.id) : doc.uploadedBy === user?.id);
+
+  const download = (doc) => downloadMutation.mutate(doc);
+  const downloadingId = downloadMutation.isPending ? downloadMutation.variables?.id : null;
 
   const handleDelete = async (doc) => {
     const ok = await confirm({
@@ -66,5 +72,6 @@ export const useDocumentVault = () => {
     docs, pagination, stats, isLoading, isFetching, refetch,
     clients,
     canDelete, handleDelete,
+    download, downloadingId,
   };
 };

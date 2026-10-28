@@ -41,3 +41,13 @@ export const formatDate = (d) =>
   d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
 export const clientName = (doc) => doc.client?.clientName || doc.client?.companyName;
+
+// Rows saved before real uploads existed point at a made-up bucket; there is no file behind them.
+const PLACEHOLDER_URL_PREFIX = 'https://auditee-vault.s3.amazonaws.com/';
+
+/** 'stored' (in R2, download via the API), 'link' (an outside link) or 'missing' (never uploaded). */
+export const fileState = (doc) => {
+  if (doc.storageKey) return 'stored';
+  if (doc.fileUrl && !doc.fileUrl.startsWith(PLACEHOLDER_URL_PREFIX)) return 'link';
+  return 'missing';
+};

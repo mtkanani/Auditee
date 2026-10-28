@@ -1,10 +1,11 @@
 import React from 'react';
-import { Download, Lock, Trash2 } from 'lucide-react';
+import { Lock, Trash2 } from 'lucide-react';
 import { cn } from '../../../lib/cn';
 import { Badge, Button } from '../../../components/ui';
 import { categoryLabel, clientName, fileType, formatDate, formatFileSize } from './files';
+import { DownloadAction } from './DownloadAction';
 
-export const getDocumentColumns = ({ canDelete, handleDelete }) => [
+export const getDocumentColumns = ({ canDelete, handleDelete, download, downloadingId }) => [
   {
     key: 'title',
     header: 'Document',
@@ -36,16 +37,7 @@ export const getDocumentColumns = ({ canDelete, handleDelete }) => [
     align: 'right',
     render: (doc) => (
       <div className="flex justify-end gap-1">
-        <a
-          href={doc.fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Download ${doc.title}`}
-          title="Download"
-          className="grid place-items-center h-8 w-8 rounded-lg text-accent-fg hover:bg-accent-soft transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-        >
-          <Download className="w-4 h-4" aria-hidden="true" />
-        </a>
+        <DownloadAction doc={doc} download={download} downloadingId={downloadingId} variant="icon" />
         {canDelete(doc) && (
           <Button size="icon-sm" variant="ghost" aria-label={`Delete ${doc.title}`} title="Delete" onClick={() => handleDelete(doc)} className="text-danger hover:bg-danger-soft">
             <Trash2 className="w-4 h-4" />

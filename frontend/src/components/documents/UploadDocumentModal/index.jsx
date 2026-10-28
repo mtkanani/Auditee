@@ -16,17 +16,19 @@ const CATEGORIES = [
   { value: 'GENERAL', label: 'General' },
 ];
 
-export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }) => {
-  const { form, setForm, setField, handleFileChange, handleSubmit, uploadMutation } = useUploadForm({ onClose, onSuccess });
+/** canMarkConfidential: false for client-portal users (the API files their uploads as non-confidential). */
+export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [], canMarkConfidential = true }) => {
+  const { form, setForm, setField, file, progress, handleFileChange, handleSubmit, handleClose, uploadMutation } = useUploadForm({ onClose, onSuccess });
 
   if (!isOpen) return null;
 
   const confidential = form.isConfidential;
+  const uploading = uploadMutation.isPending;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Upload a document" maxWidth="max-w-2xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Upload a document" maxWidth="max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-5">
-        <DropZone fileName={form.fileName} fileSize={form.fileSize} onFile={handleFileChange} />
+        <DropZone fileName={file?.name} fileSize={file?.size} onFile={handleFileChange} disabled={uploading} />
 
         <Field label="Title" required>
           {(p) => <Input {...p} required placeholder="e.g. GST return Q3 FY 2025-26" value={form.title} onChange={setField('title')} />}
@@ -36,6 +38,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
           <Field label="Category">
             {(p) => <Select {...p} value={form.category} onChange={setField('category')} options={CATEGORIES} />}
           </Field>
+          {clients.length > 0 && (
           <Field label="Client" hint="Optional">
             {(p) => (
               <Select {...p} value={form.clientId} onChange={setField('clientId')}>
@@ -46,12 +49,14 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
               </Select>
             )}
           </Field>
+          )}
         </div>
 
         <Field label="Notes" hint="Optional">
           {(p) => <Textarea {...p} rows={2} placeholder="Anything others should know about this file" value={form.notes} onChange={setField('notes')} />}
         </Field>
 
+        {canMarkConfidential && (
         <button
           type="button"
           role="switch"
@@ -69,7 +74,7 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
           <span className="flex-1 min-w-0">
             <span className="block text-sm font-medium text-fg">Confidential</span>
             <span className="block text-xs text-muted">
-              {confidential ? 'Only Firm Admins can see this document' : 'Clients & users can view this document'}
+              {confidential ? 'Only firm admins and you can see it' : 'Everyone at the firm, and the linked client, can see it'}
             </span>
           </span>
           <span
@@ -79,10 +84,23 @@ export const UploadDocumentModal = ({ isOpen, onClose, onSuccess, clients = [] }
             <span className={cn('absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all', confidential ? 'left-[18px]' : 'left-0.5')} />
           </span>
         </button>
+        )}
+
+        {uploading && (
+          <div className="space-y-1.5" role="status" aria-live="polite">
+            <div className="flex justify-between text-xs text-muted">
+              <span>{progress < 100 ? 'Uploading…' : 'Saving…'}</span>
+              <span className="tabular-nums">{progress}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-hover overflow-hidden">
+              <div className="h-full bg-accent transition-[width] duration-200" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end gap-2 pt-1">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" icon={CloudUpload} loading={uploadMutation.isPending}>Upload</Button>
+          <Button variant="ghost" onClick={handleClose} disabled={uploading}>Cancel</Button>
+          <Button type="submit" variant="primary" icon={CloudUpload} loading={uploading}>Upload</Button>
         </div>
       </form>
     </Modal>

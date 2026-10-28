@@ -79,7 +79,7 @@ export const DocumentVault = () => {
         <Table columns={getDocumentColumns(view)} data={docs} isLoading={isLoading} emptyState={empty} footer={pager} />
       )}
 
-      <UploadDocumentModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} clients={clients} />
+      <UploadDocumentModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} clients={clients} canMarkConfidential={!isClient} />
     </div>
   );
 };

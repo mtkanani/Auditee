@@ -1,10 +1,11 @@
 import React from 'react';
-import { Download, Lock, Trash2, User } from 'lucide-react';
+import { Lock, Trash2, User } from 'lucide-react';
 import { cn } from '../../../lib/cn';
 import { Badge, Button } from '../../../components/ui';
 import { categoryLabel, clientName, fileType, formatDate, formatFileSize } from './files';
+import { DownloadAction } from './DownloadAction';
 
-const DocumentCard = ({ doc, canDelete, handleDelete }) => {
+const DocumentCard = ({ doc, canDelete, handleDelete, download, downloadingId }) => {
   const { icon: FileIcon, tint } = fileType(doc.mimeType);
   return (
     <article className="flex flex-col rounded-2xl border border-line bg-surface shadow-card p-4 transition-all duration-150 hover:border-line-strong hover:shadow-raised">
@@ -39,14 +40,7 @@ const DocumentCard = ({ doc, canDelete, handleDelete }) => {
       )}
 
       <div className="flex gap-2 mt-auto pt-4">
-        <a
-          href={doc.fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg bg-accent-soft text-accent-fg text-xs font-medium hover:brightness-110 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-        >
-          <Download className="w-3.5 h-3.5" aria-hidden="true" /> Download
-        </a>
+        <DownloadAction doc={doc} download={download} downloadingId={downloadingId} />
         {canDelete(doc) && (
           <Button size="icon-sm" variant="danger" aria-label={`Delete ${doc.title}`} title="Delete" onClick={() => handleDelete(doc)}>
             <Trash2 className="w-4 h-4" />
@@ -57,10 +51,10 @@ const DocumentCard = ({ doc, canDelete, handleDelete }) => {
   );
 };
 
-export const DocumentGrid = ({ docs, canDelete, handleDelete }) => (
+export const DocumentGrid = ({ docs, canDelete, handleDelete, download, downloadingId }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
     {docs.map((doc) => (
-      <DocumentCard key={doc.id} doc={doc} canDelete={canDelete} handleDelete={handleDelete} />
+      <DocumentCard key={doc.id} doc={doc} canDelete={canDelete} handleDelete={handleDelete} download={download} downloadingId={downloadingId} />
     ))}
   </div>
 );
