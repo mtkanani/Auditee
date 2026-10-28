@@ -122,7 +122,8 @@ model Client {
   services                 ClientServiceItem[]
   firm                     Firm                @relation(fields: [firmId], references: [id], onDelete: Cascade)
   complianceItems          ComplianceItem[]
-  documentVaults           DocumentVault[]
+  documentVaults           DocumentVault[]     @relation("DocumentVaultClient")
+  uploadedDocumentVaults   DocumentVault[]     @relation("DocumentVaultClientUploader")
   invoices                 Invoice[]
   convertedLead            Lead?
   tasks                    Task[]
@@ -785,10 +786,15 @@ model DocumentVault {
   firmId         Int
   clientId       Int?
   taskId         Int?
-  uploadedBy     Int
+  uploadedBy     Int?
+  /// Set instead of uploadedBy when a client uploads from the client portal
+  uploadedByClientId Int?
   title          String
   fileName       String
-  fileUrl        String
+  /// External link for older rows; files stored in R2 use storageKey instead
+  fileUrl        String?
+  /// Object key in R2, always "firms/{firmId}/..."
+  storageKey     String?
   fileSize       Int              @default(0)
   mimeType       String           @default("application/pdf")
   category       DocumentCategory @default(GENERAL)
@@ -797,10 +803,11 @@ model DocumentVault {
   deletedAt      DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  client         Client?          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client         Client?          @relation("DocumentVaultClient", fields: [clientId], references: [id], onDelete: Cascade)
   firm           Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
   task           Task?            @relation(fields: [taskId], references: [id])
-  uploader       User             @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploader       User?            @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploaderClient Client?          @relation("DocumentVaultClientUploader", fields: [uploadedByClientId], references: [id], onDelete: SetNull)
 
   @@index([firmId, deletedAt, category])
   @@index([clientId])
