@@ -38,7 +38,7 @@ export const CustomReportBuilder = ({
       <div className="p-6 md:p-8 rounded-3xl bg-slate-900/80 border border-slate-800/80 shadow-2xl backdrop-blur-md space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-black text-white flex items-center gap-2">
+            <h3 className="text-lg font-black text-fg flex items-center gap-2">
               <SlidersVertical className="w-5 h-5 text-indigo-400" />
               <span>Custom Report Builder</span>
             </h3>
@@ -73,7 +73,7 @@ export const CustomReportBuilder = ({
                     </div>
                     {isSelected && <Check className="w-4 h-4 text-indigo-400" />}
                   </div>
-                  <p className="text-xs font-bold text-white">{ent.label}</p>
+                  <p className="text-xs font-bold text-fg">{ent.label}</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">{ent.desc}</p>
                 </button>
               );

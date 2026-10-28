@@ -30,7 +30,7 @@ export const ReportTable = ({
             <Icon className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h3 className="text-sm font-bold text-fg uppercase tracking-wider">
               {title}
             </h3>
             {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}

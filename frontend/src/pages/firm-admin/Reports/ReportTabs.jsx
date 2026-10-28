@@ -21,7 +21,7 @@ export const ReportTabs = ({ activeTab, onSelectTab }) => {
         <select
           value={activeTab}
           onChange={(e) => onSelectTab(e.target.value)}
-          className="w-full py-3 px-4 rounded-2xl bg-slate-900 border border-slate-800 text-white font-bold text-sm focus:outline-none focus:border-indigo-500"
+          className="w-full py-3 px-4 rounded-2xl bg-slate-900 border border-slate-800 text-fg font-bold text-sm focus:outline-none focus:border-indigo-500"
         >
           {allTabs.map((t) => (
             <option key={t.id} value={t.id}>
@@ -37,7 +37,7 @@ export const ReportTabs = ({ activeTab, onSelectTab }) => {
           {/* Left Scroll Button */}
           <button
             onClick={() => scrollTabs(-240)}
-            className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all z-10 mr-1 shadow-md cursor-pointer"
+            className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-fg hover:bg-slate-800 transition-all z-10 mr-1 shadow-md cursor-pointer"
             title="Scroll left"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -79,7 +79,7 @@ export const ReportTabs = ({ activeTab, onSelectTab }) => {
           {/* Right Scroll Button */}
           <button
             onClick={() => scrollTabs(240)}
-            className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all z-10 ml-1 shadow-md cursor-pointer"
+            className="p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 hover:text-fg hover:bg-slate-800 transition-all z-10 ml-1 shadow-md cursor-pointer"
             title="Scroll right"
           >
             <ChevronRight className="w-4 h-4" />

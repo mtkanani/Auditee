@@ -17,7 +17,7 @@ export const AdminPasswordFields = ({
           type={showPassword ? 'text' : 'password'}
           id="firmAdmin.password"
           placeholder=" "
-          className={`peer w-full pl-4 pr-11 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+          className={`peer w-full pl-4 pr-11 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
             errors.firmAdmin?.password ? 'border-rose-500' : 'border-slate-800'
           }`}
           {...register('firmAdmin.password', {
@@ -57,7 +57,7 @@ export const AdminPasswordFields = ({
           type={showConfirmPassword ? 'text' : 'password'}
           id="firmAdmin.confirmPassword"
           placeholder=" "
-          className={`peer w-full pl-4 pr-11 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+          className={`peer w-full pl-4 pr-11 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
             errors.firmAdmin?.confirmPassword ? 'border-rose-500' : 'border-slate-800'
           }`}
           {...register('firmAdmin.confirmPassword', {

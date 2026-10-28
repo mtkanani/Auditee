@@ -7,7 +7,7 @@ export const AdminDetailsSection = (props) => {
 
   return (
     <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
-      <h3 className="text-base font-bold text-white mb-5 flex items-center gap-2 pb-3 border-b border-slate-800/80">
+      <h3 className="text-base font-bold text-fg mb-5 flex items-center gap-2 pb-3 border-b border-slate-800/80">
         <UserCheck size={18} className="text-brand-400" />
         Section 2: Firm Admin Details
       </h3>
@@ -19,7 +19,7 @@ export const AdminDetailsSection = (props) => {
             type="text"
             id="firmAdmin.firstName"
             placeholder=" "
-            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
               errors.firmAdmin?.firstName ? 'border-rose-500' : 'border-slate-800'
             }`}
             {...register('firmAdmin.firstName', {
@@ -46,7 +46,7 @@ export const AdminDetailsSection = (props) => {
             type="text"
             id="firmAdmin.lastName"
             placeholder=" "
-            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
               errors.firmAdmin?.lastName ? 'border-rose-500' : 'border-slate-800'
             }`}
             {...register('firmAdmin.lastName', {
@@ -73,7 +73,7 @@ export const AdminDetailsSection = (props) => {
             type="email"
             id="firmAdmin.email"
             placeholder=" "
-            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
               errors.firmAdmin?.email ? 'border-rose-500' : 'border-slate-800'
             }`}
             {...register('firmAdmin.email', {
@@ -100,7 +100,7 @@ export const AdminDetailsSection = (props) => {
             type="text"
             id="firmAdmin.phone"
             placeholder=" "
-            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+            className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
               errors.firmAdmin?.phone ? 'border-rose-500' : 'border-slate-800'
             }`}
             {...register('firmAdmin.phone', {

@@ -17,7 +17,7 @@ export const InviteDrawer = ({
           <UserPlus className="w-5 h-5 text-indigo-400" />
           <h3 className="text-sm font-bold text-slate-100">Invite Users & Clients to Live Call</h3>
         </div>
-        <button onClick={() => setIsInviteOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white">
+        <button onClick={() => setIsInviteOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-fg">
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -30,7 +30,7 @@ export const InviteDrawer = ({
             placeholder="Search employees or clients by name/email..."
             value={inviteSearch}
             onChange={(e) => setInviteSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-indigo-500"
+            className="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-fg focus:outline-none focus:border-indigo-500"
           />
         </div>
 

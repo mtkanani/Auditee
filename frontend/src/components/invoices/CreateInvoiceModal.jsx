@@ -273,7 +273,7 @@ export const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           )}
 
-          <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-extrabold text-white">
+          <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-extrabold text-fg">
             <span>Total Payable Amount (Incl. GST):</span>
             <span className="text-emerald-400 text-base">₹{totalAmount.toLocaleString('en-IN')}</span>
           </div>
