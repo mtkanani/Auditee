@@ -78,7 +78,7 @@ export const ReportFilters = ({
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-fg cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -89,7 +89,7 @@ export const ReportFilters = ({
       <div className="flex items-center gap-2">
         <button
           onClick={onReset}
-          className="py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+          className="py-2 px-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-fg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
           <span>Reset</span>

@@ -6,6 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auditee – Practice Management for CA Firms</title>
     <meta name="description" content="Auditee helps CA and audit firms manage clients, tasks, compliance deadlines, invoices, attendance and leave in one place." />
+    <script>
+      // Apply the saved theme before first paint so light mode doesn't flash dark.
+      try {
+        var theme = localStorage.getItem('auditee-theme') === 'light' ? 'light' : 'dark';
+        document.documentElement.classList.add(theme);
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
 
   </head>
   <body>

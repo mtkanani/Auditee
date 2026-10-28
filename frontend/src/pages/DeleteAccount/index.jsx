@@ -323,7 +323,7 @@ const DeleteAccount = () => {
             <div className="w-14 h-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 mx-auto mb-2 animate-pulse">
               <AlertTriangle size={28} />
             </div>
-            <span className="text-lg font-bold text-white">Are you absolutely sure?</span>
+            <span className="text-lg font-bold text-fg">Are you absolutely sure?</span>
           </div>
         }
         maxWidth="max-w-sm"

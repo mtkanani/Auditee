@@ -3,7 +3,7 @@ import { Building2, ShieldAlert } from 'lucide-react';
 
 export const FirmDetailsSection = ({ register, errors }) => (
   <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
-    <h3 className="text-base font-bold text-white mb-5 flex items-center gap-2 pb-3 border-b border-slate-800/80">
+    <h3 className="text-base font-bold text-fg mb-5 flex items-center gap-2 pb-3 border-b border-slate-800/80">
       <Building2 size={18} className="text-brand-400" />
       Section 1: Firm Details
     </h3>
@@ -15,7 +15,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.firmName"
           placeholder=" "
-          className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+          className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
             errors.firm?.firmName ? 'border-rose-500' : 'border-slate-800'
           }`}
           {...register('firm.firmName', {
@@ -43,7 +43,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="email"
           id="firm.email"
           placeholder=" "
-          className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+          className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
             errors.firm?.email ? 'border-rose-500' : 'border-slate-800'
           }`}
           {...register('firm.email', {
@@ -70,7 +70,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.phone"
           placeholder=" "
-          className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
+          className={`peer w-full px-4 py-3 bg-slate-950 border rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors ${
             errors.firm?.phone ? 'border-rose-500' : 'border-slate-800'
           }`}
           {...register('firm.phone', {
@@ -98,7 +98,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.pincode"
           placeholder=" "
-          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
+          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
           {...register('firm.pincode', {
             maxLength: { value: 10, message: 'Must not exceed 10 characters' },
           })}
@@ -117,7 +117,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.address"
           placeholder=" "
-          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
+          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
           {...register('firm.address', {
             maxLength: { value: 255, message: 'Must not exceed 255 characters' },
           })}
@@ -136,7 +136,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.city"
           placeholder=" "
-          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
+          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
           {...register('firm.city')}
         />
         <label
@@ -153,7 +153,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.state"
           placeholder=" "
-          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
+          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
           {...register('firm.state')}
         />
         <label
@@ -170,7 +170,7 @@ export const FirmDetailsSection = ({ register, errors }) => (
           type="text"
           id="firm.country"
           placeholder=" "
-          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
+          className="peer w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-fg placeholder-transparent text-sm focus:outline-none focus:border-brand-500 transition-colors"
           {...register('firm.country')}
         />
         <label

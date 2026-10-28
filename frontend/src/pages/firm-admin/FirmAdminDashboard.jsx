@@ -135,7 +135,7 @@ export const FirmAdminDashboard = () => {
               <span className="text-2xl">👋</span>
               <span className="text-sm font-bold text-indigo-400 uppercase tracking-widest">{greeting}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-fg leading-tight">
               {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Firm Admin'}
             </h1>
             <p className="text-slate-400 text-sm mt-1 max-w-md">
@@ -177,7 +177,7 @@ export const FirmAdminDashboard = () => {
           ].map((s) => (
             <div key={s.label} className="text-center">
               <span className="text-xl">{s.icon}</span>
-              <p className="text-lg font-extrabold text-white mt-0.5">{s.value}</p>
+              <p className="text-lg font-extrabold text-fg mt-0.5">{s.value}</p>
               <p className="text-[10px] text-slate-500 font-semibold">{s.label}</p>
             </div>
           ))}
@@ -210,7 +210,7 @@ export const FirmAdminDashboard = () => {
               </div>
 
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{k.label}</p>
-              <p className="text-4xl font-black text-white">{isLoading ? '—' : k.value}</p>
+              <p className="text-4xl font-black text-fg">{isLoading ? '—' : k.value}</p>
 
               {/* Bottom progress bar */}
               <div className="absolute bottom-0 inset-x-0 h-0.5 bg-slate-800">
@@ -356,7 +356,7 @@ export const FirmAdminDashboard = () => {
                 <p className="text-xs font-bold text-slate-300">{g.label}</p>
               </div>
               <div className="flex items-end justify-between mb-2">
-                <span className="text-2xl font-extrabold text-white">{g.current}</span>
+                <span className="text-2xl font-extrabold text-fg">{g.current}</span>
                 <span className="text-[10px] text-slate-500 font-bold">/ {g.target}</span>
               </div>
               <div className="h-2 bg-slate-800 rounded-full overflow-hidden">

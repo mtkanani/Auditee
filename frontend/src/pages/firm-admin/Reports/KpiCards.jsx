@@ -22,7 +22,7 @@ export const KpiCards = ({ summary }) => {
                 <Icon className="w-4 h-4" />
               </div>
             </div>
-            <p className="text-xl md:text-2xl font-black text-white tracking-tight">{kpi.val}</p>
+            <p className="text-xl md:text-2xl font-black text-fg tracking-tight">{kpi.val}</p>
           </div>
         );
       })}

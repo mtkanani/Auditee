@@ -13,7 +13,7 @@ export const ReportsHeader = ({ onPrint, onExportCSV }) => {
             <Activity className="w-3.5 h-3.5" />
             <span>Enterprise Intelligence Engine</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-black text-fg tracking-tight">
             Firm Analytics & Audit Reports
           </h1>
           <p className="text-sm text-slate-400 mt-1 max-w-2xl font-medium">
@@ -24,7 +24,7 @@ export const ReportsHeader = ({ onPrint, onExportCSV }) => {
         <div className="flex items-center gap-3 self-start md:self-auto">
           <button
             onClick={onPrint}
-            className="py-2.5 px-4 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-200 text-xs font-bold hover:bg-slate-800 hover:text-white transition-all flex items-center gap-2 shadow-md hover:shadow-indigo-500/10 cursor-pointer"
+            className="py-2.5 px-4 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-200 text-xs font-bold hover:bg-slate-800 hover:text-fg transition-all flex items-center gap-2 shadow-md hover:shadow-indigo-500/10 cursor-pointer"
           >
             <Printer className="w-4 h-4 text-indigo-400" />
             <span>Print / PDF</span>
