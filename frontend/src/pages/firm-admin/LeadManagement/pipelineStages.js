@@ -1,7 +1,12 @@
+// Pipeline columns in order. dot is the column's colour; label is also used in the stage pickers.
 export const pipelineStages = [
-  { key: 'NEW_LEAD', title: 'NEW INQUIRY', color: 'border-blue-500/40 text-blue-400 bg-blue-500/10' },
-  { key: 'DISCUSSION', title: 'IN DISCUSSION', color: 'border-purple-500/40 text-purple-400 bg-purple-500/10' },
-  { key: 'PROPOSAL_SENT', title: 'PROPOSAL SENT', color: 'border-amber-500/40 text-amber-400 bg-amber-500/10' },
-  { key: 'WON', title: 'WON & CONVERTED', color: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10' },
-  { key: 'LOST', title: 'LOST / DROPPED', color: 'border-rose-500/40 text-rose-400 bg-rose-500/10' },
+  { key: 'NEW_LEAD', title: 'New inquiry', dot: 'bg-subtle' },
+  { key: 'DISCUSSION', title: 'In discussion', dot: 'bg-accent' },
+  { key: 'PROPOSAL_SENT', title: 'Proposal sent', dot: 'bg-warning' },
+  { key: 'WON', title: 'Won', dot: 'bg-success' },
+  { key: 'LOST', title: 'Lost', dot: 'bg-danger' },
 ];
+
+export const stageOptions = pipelineStages.map((s) => ({ value: s.key, label: s.title }));
+
+export const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
