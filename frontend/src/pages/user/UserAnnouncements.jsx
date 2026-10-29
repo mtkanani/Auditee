@@ -1,10 +1,11 @@
 import React from 'react';
-import { PageHeader } from '../../components/common/PageHeader';
+import { CircleCheckBig, Megaphone } from 'lucide-react';
 import { useUserAnnouncements, useAcknowledgeNotice } from '../../queries/useAnnouncements';
 import { CardSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
-import { motion } from 'framer-motion';
-import { CircleCheckBig, Clock, Radio, TriangleAlert } from 'lucide-react';
+import { NoticeCard } from '../../components/announcements/NoticeCard';
+import { shortDate } from '../../components/announcements/noticeStyle';
+import { Badge, Button, PageHeader } from '../../components/ui';
 
 export const UserAnnouncements = () => {
   const { notices, isLoading } = useUserAnnouncements();
@@ -15,116 +16,51 @@ export const UserAnnouncements = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Firm Notice Board"
-        subtitle="Review mandatory firm broadcasts, compliance notices, and policy guidelines from firm administration"
-      />
+    <div className="space-y-6 pb-8">
+      <PageHeader title="Notices" description="Policies, deadlines and instructions from your firm. Mark each one as read once you've gone through it." />
 
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <CardSkeleton key={i} />
-            ))}
-          </div>
-        ) : notices.length === 0 ? (
-          <EmptyState
-            icon={Radio}
-            title="No firm notices published yet"
-            description="When firm admins broadcast announcements, they will appear here."
-          />
-        ) : (
-          notices.map((notice) => (
-            <motion.div
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      ) : notices.length === 0 ? (
+        <div className="rounded-2xl border border-line bg-surface">
+          <EmptyState icon={Megaphone} title="No notices yet" description="When your firm posts a notice, it will show up here." />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {notices.map((notice) => (
+            <NoticeCard
               key={notice.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-6 rounded-2xl border shadow-xl space-y-4 ${
-                !notice.isAcknowledged
-                  ? 'bg-slate-900 border-indigo-500/40 shadow-indigo-500/5'
-                  : 'bg-slate-900/60 border-slate-800'
-              }`}
-            >
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2.5 rounded-xl border ${
-                      notice.priority === 'URGENT'
-                        ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
-                        : notice.priority === 'WARNING'
-                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
-                        : 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-                    }`}
-                  >
-                    {notice.priority === 'URGENT' ? (
-                      <TriangleAlert className="w-5 h-5"  />
-                    ) : (
-                      <Radio className="w-5 h-5"  />
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-800 text-indigo-400 border border-slate-700">
-                        {notice.category || 'GENERAL'}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          notice.priority === 'URGENT'
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                            : notice.priority === 'WARNING'
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                        }`}
-                      >
-                        {notice.priority}
-                      </span>
-                    </div>
-                    <h3 className="text-base font-bold text-slate-100 mt-1">{notice.title}</h3>
-                  </div>
+              notice={notice}
+              highlight={!notice.isAcknowledged}
+              footer={
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-xs text-subtle">From your firm admin</span>
+                  {notice.isAcknowledged ? (
+                    <Badge tone="success" className="h-8 px-3">
+                      <CircleCheckBig className="w-4 h-4" aria-hidden="true" />
+                      Read{notice.acknowledgedAt ? ` on ${shortDate(notice.acknowledgedAt)}` : ''}
+                    </Badge>
+                  ) : (
+                    <Button
+                      variant="primary"
+                      icon={CircleCheckBig}
+                      loading={acknowledgeNoticeMutation.isPending && acknowledgeNoticeMutation.variables === notice.id}
+                      disabled={acknowledgeNoticeMutation.isPending}
+                      onClick={() => handleAcknowledge(notice.id)}
+                    >
+                      Mark as read
+                    </Button>
+                  )}
                 </div>
-
-                <div className="flex items-center gap-2 text-xs text-slate-400 self-end sm:self-center">
-                  <Clock className="w-3.5 h-3.5"  />
-                  <span>{new Date(notice.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-
-              {/* Content */}
-              <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">
-                {notice.content}
-              </p>
-
-              {/* Footer / Action */}
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                <span className="text-[10px] text-slate-500">
-                  Published by Firm Admin
-                </span>
-
-                {notice.isAcknowledged ? (
-                  <span className="px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold flex items-center gap-1.5">
-                    <CircleCheckBig className="w-4 h-4"  />
-                    <span>
-                      Acknowledged {notice.acknowledgedAt ? `on ${new Date(notice.acknowledgedAt).toLocaleDateString()}` : ''}
-                    </span>
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => handleAcknowledge(notice.id)}
-                    disabled={acknowledgeNoticeMutation.isPending}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 transition-all disabled:opacity-50"
-                  >
-                    <CircleCheckBig className="w-4 h-4"  />
-                    <span>Acknowledge & Mark Read</span>
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          ))
-        )}
-      </div>
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

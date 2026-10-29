@@ -1,9 +1,9 @@
 import React from 'react';
-import { PageHeader } from '../../../components/common/PageHeader';
-import { DataTable } from '../../../components/common/DataTable';
+import { Download, UserPlus, Users } from 'lucide-react';
 import { Pagination } from '../../../components/common/Pagination';
 import { ConfirmationModal } from '../../../components/common/ConfirmationModal';
-import { Download, UserPlus } from 'lucide-react';
+import { EmptyState } from '../../../components/common/EmptyState';
+import { Button, PageHeader, Table } from '../../../components/ui';
 import { useUserManagement } from './useUserManagement';
 import { getUserColumns } from './userColumns';
 import { UserFilters } from './UserFilters';
@@ -28,71 +28,69 @@ export const UserManagement = () => {
     setIsDeleteModalOpen,
     handleDeleteUser,
     selectedUser,
+    setSelectedUser,
+    setIsDetailDrawerOpen,
   } = view;
 
   const columns = getUserColumns(view);
+  const openCreate = () => {
+    resetCreate();
+    setIsCreateModalOpen(true);
+  };
+  const addButton = (
+    <Button variant="primary" icon={UserPlus} onClick={openCreate}>
+      Add member
+    </Button>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <PageHeader
-        title="User (Employee) Management"
-        subtitle="Add, edit, manage and assign roles to your CA firm staff"
+        title="People"
+        description="Your firm's staff: their roles, contact details, status and sign-in."
         actions={
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleExport}
-              className="py-2.5 px-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-200 text-xs font-semibold flex items-center gap-2"
-            >
-              <Download className="w-4 h-4"  />
-              <span>Export CSV</span>
-            </button>
-            <button
-              onClick={() => {
-                resetCreate();
-                setIsCreateModalOpen(true);
-              }}
-              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
-            >
-              <UserPlus className="w-4 h-4"  />
-              <span>Add New Employee</span>
-            </button>
-          </div>
+          <>
+            <Button icon={Download} onClick={handleExport}>Export CSV</Button>
+            {addButton}
+          </>
         }
       />
 
-      {/* Filter Bar */}
       <UserFilters {...view} />
 
-      {/* Table */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-        <DataTable columns={columns} data={users} isLoading={isLoading} />
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalRecords={totalRecords}
-          onPageChange={setPage}
-        />
-      </div>
+      <Table
+        columns={columns}
+        data={users}
+        isLoading={isLoading}
+        onRowClick={(user) => {
+          setSelectedUser(user);
+          setIsDetailDrawerOpen(true);
+        }}
+        emptyState={
+          <EmptyState
+            icon={Users}
+            title="No one found"
+            description="Try a different search or filter, or add your first team member."
+            action={addButton}
+          />
+        }
+        footer={<Pagination currentPage={page} totalPages={totalPages} totalRecords={totalRecords} onPageChange={setPage} />}
+      />
 
-      {/* Create User Modal */}
       <CreateUserModal {...view} />
 
-      {/* Edit User Modal */}
       <EditUserModal {...view} />
 
-      {/* User Details Drawer */}
       <UserDetailsDrawer {...view} />
 
-      {/* Reset Password Modal */}
       <ResetPasswordModal {...view} />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteUser}
-        title="Delete Employee User"
-        message={`Are you sure you want to delete "${selectedUser?.firstName} ${selectedUser?.lastName}"?`}
+        title="Delete team member"
+        message={`Delete "${selectedUser?.firstName} ${selectedUser?.lastName}"?`}
       />
     </div>
   );

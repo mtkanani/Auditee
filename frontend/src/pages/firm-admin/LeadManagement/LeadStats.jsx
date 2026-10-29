@@ -1,17 +1,28 @@
 import React from 'react';
 import { CircleCheckBig, FileText, MessageSquare, Users } from 'lucide-react';
-import { StatsCard } from '../../../components/common/StatsCard';
+import { StatCard } from '../../../components/ui';
+import { inr } from './pipelineStages';
 
-export const LeadStats = ({ totalLeads, inDiscussionCount, proposalSentCount, wonValueTotal }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <StatsCard title="Total Active Leads" value={totalLeads} icon={Users} color="indigo" />
-    <StatsCard title="Leads in Discussion" value={inDiscussionCount} icon={MessageSquare} color="purple" />
-    <StatsCard title="Proposals Sent" value={proposalSentCount} icon={FileText} color="amber" />
-    <StatsCard
-      title="Converted Won Value"
-      value={`₹${wonValueTotal.toLocaleString('en-IN')}`}
-      icon={CircleCheckBig}
-      color="emerald"
+/** Server-side totals over every matching lead. The two middle cards filter the board to that stage. */
+export const LeadStats = ({ totalLeads, inDiscussionCount, proposalSentCount, wonValueTotal, setStageFilter }) => (
+  <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+    <StatCard label="Leads" value={totalLeads} icon={Users} />
+    <StatCard
+      label="In discussion"
+      value={inDiscussionCount}
+      icon={MessageSquare}
+      tone="neutral"
+      hint="show only these"
+      onClick={() => setStageFilter('DISCUSSION')}
     />
+    <StatCard
+      label="Proposals sent"
+      value={proposalSentCount}
+      icon={FileText}
+      tone="warning"
+      hint="show only these"
+      onClick={() => setStageFilter('PROPOSAL_SENT')}
+    />
+    <StatCard label="Won value" value={inr(wonValueTotal)} icon={CircleCheckBig} tone="success" />
   </div>
 );

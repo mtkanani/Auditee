@@ -1,6 +1,9 @@
 import React from 'react';
+import { Users, User, UsersRound } from 'lucide-react';
 import { Modal } from '../../../components/common/Modal';
+import { Button, Field, Select, Tabs } from '../../../components/ui';
 
+/** Accept a client work request and assign it to one employee, a group, or everyone. */
 export const ApproveRequestModal = ({
   isApproveModalOpen,
   setIsApproveModalOpen,
@@ -12,93 +15,88 @@ export const ApproveRequestModal = ({
   setRequestSelectedUserIds,
   users,
   approveRequestMutation,
-}) => (
-  <Modal
-    isOpen={isApproveModalOpen}
-    onClose={() => setIsApproveModalOpen(false)}
-    title={`Accept & Assign: ${selectedRequest?.title}`}
-  >
-    <form onSubmit={handleApproveRequestSubmit} className="space-y-4">
-      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300">
-        Client: <strong>{selectedRequest?.client?.companyName || selectedRequest?.client?.clientName}</strong>
-      </div>
+}) => {
+  const toggleUser = (id) =>
+    setRequestSelectedUserIds(
+      requestSelectedUserIds.includes(id) ? requestSelectedUserIds.filter((x) => x !== id) : [...requestSelectedUserIds, id]
+    );
 
-      <div className="space-y-2">
-        <label className="block text-xs font-bold text-indigo-400">Select Assignment Mode</label>
-        <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => setRequestAssignmentScope('SINGLE')}
-            className={`p-2 rounded-xl border text-xs font-bold ${
-              requestAssignmentScope === 'SINGLE' ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-slate-950 border-slate-800 text-slate-400'
-            }`}
-          >
-            Single Auditor
-          </button>
-          <button
-            type="button"
-            onClick={() => setRequestAssignmentScope('MULTIPLE')}
-            className={`p-2 rounded-xl border text-xs font-bold ${
-              requestAssignmentScope === 'MULTIPLE' ? 'bg-purple-600/20 border-purple-500 text-purple-300' : 'bg-slate-950 border-slate-800 text-slate-400'
-            }`}
-          >
-            Team Group
-          </button>
-          <button
-            type="button"
-            onClick={() => setRequestAssignmentScope('ALL')}
-            className={`p-2 rounded-xl border text-xs font-bold ${
-              requestAssignmentScope === 'ALL' ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'
-            }`}
-          >
-            ALL Employees
-          </button>
+  return (
+    <Modal
+      isOpen={isApproveModalOpen}
+      onClose={() => setIsApproveModalOpen(false)}
+      title={`Accept: ${selectedRequest?.title || ''}`}
+    >
+      <form onSubmit={handleApproveRequestSubmit} className="space-y-5">
+        <p className="text-sm text-muted">
+          For <span className="font-medium text-fg">{selectedRequest?.client?.companyName || selectedRequest?.client?.clientName}</span>
+        </p>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-fg">Assign to</p>
+          <Tabs
+            aria-label="Assignment mode"
+            value={requestAssignmentScope}
+            onChange={setRequestAssignmentScope}
+            items={[
+              { value: 'SINGLE', label: 'One person', icon: User },
+              { value: 'MULTIPLE', label: 'A team', icon: Users },
+              { value: 'ALL', label: 'Everyone', icon: UsersRound },
+            ]}
+          />
         </div>
 
         {requestAssignmentScope === 'SINGLE' && (
-          <select
-            value={requestSelectedUserIds[0] || ''}
-            onChange={(e) => setRequestSelectedUserIds(e.target.value ? [parseInt(e.target.value, 10)] : [])}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          >
-            <option value="">Select Auditor Employee...</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.firstName} {u.lastName} ({u.designation || 'Staff'})
-              </option>
-            ))}
-          </select>
+          <Field label="Employee">
+            {(p) => (
+              <Select
+                {...p}
+                value={requestSelectedUserIds[0] || ''}
+                onChange={(e) => setRequestSelectedUserIds(e.target.value ? [parseInt(e.target.value, 10)] : [])}
+              >
+                <option value="">Choose an employee</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName} ({u.designation || 'Staff'})
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
         )}
 
         {requestAssignmentScope === 'MULTIPLE' && (
-          <div className="space-y-1 max-h-32 overflow-y-auto">
-            {users.map((u) => (
-              <label key={u.id} className="flex items-center gap-2 p-1.5 rounded bg-slate-950 text-xs text-slate-200 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={requestSelectedUserIds.includes(u.id)}
-                  onChange={() => {
-                    if (requestSelectedUserIds.includes(u.id)) {
-                      setRequestSelectedUserIds(requestSelectedUserIds.filter((id) => id !== u.id));
-                    } else {
-                      setRequestSelectedUserIds([...requestSelectedUserIds, u.id]);
-                    }
-                  }}
-                />
-                <span>{u.firstName} {u.lastName}</span>
-              </label>
-            ))}
-          </div>
+          <fieldset className="space-y-1.5">
+            <legend className="text-sm font-medium text-fg mb-1.5">
+              Team members <span className="text-subtle font-normal">({requestSelectedUserIds.length} selected)</span>
+            </legend>
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-line divide-y divide-line">
+              {users.map((u) => (
+                <label key={u.id} className="flex items-center gap-3 px-3 h-10 text-sm text-fg cursor-pointer hover:bg-hover">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded accent-[var(--accent)]"
+                    checked={requestSelectedUserIds.includes(u.id)}
+                    onChange={() => toggleUser(u.id)}
+                  />
+                  {u.firstName} {u.lastName}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         )}
-      </div>
 
-      <button
-        type="submit"
-        disabled={approveRequestMutation.isPending}
-        className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {approveRequestMutation.isPending ? 'Accepting & Assigning...' : 'Confirm & Assign Task'}
-      </button>
-    </form>
-  </Modal>
-);
+        {requestAssignmentScope === 'ALL' && (
+          <p className="text-sm text-muted p-3 rounded-xl bg-accent-soft">Every employee in the firm will be assigned this task.</p>
+        )}
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={() => setIsApproveModalOpen(false)}>Cancel</Button>
+          <Button type="submit" variant="primary" loading={approveRequestMutation.isPending}>
+            Accept and assign
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};

@@ -191,13 +191,15 @@ export const ClientBilling = () => {
             </table>
           </div>
         )}
-        <Pagination
-          currentPage={page}
-          totalPages={pagination?.totalPages || 1}
-          totalRecords={pagination?.totalRecords || 0}
-          limit={10}
-          onPageChange={setPage}
-        />
+        <div className="border-t border-line">
+          <Pagination
+            currentPage={page}
+            totalPages={pagination?.totalPages || 1}
+            totalRecords={pagination?.totalRecords || 0}
+            limit={10}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       {/* Invoice Detail PDF Modal */}

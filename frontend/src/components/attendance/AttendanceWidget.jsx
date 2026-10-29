@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, List, Loader, LogIn, LogOut, MapPin, Wifi } from 'lucide-react';
+import { CalendarDays, Clock, LogIn, LogOut, MapPin } from 'lucide-react';
+import { Badge, Button } from '../ui';
+import { cn } from '../../lib/cn';
 import { useTodayAttendance, useCheckIn, useCheckOut } from '../../queries/useAttendance';
 
 const getTimeString = () =>
@@ -108,159 +110,89 @@ export const AttendanceWidget = () => {
   const entries = status?.entries || [];
   const totalHours = status?.totalWorkingHours || 0;
 
-  // Status badge config
-  const statusConfig = hasOpenEntry
-    ? { label: 'Working', color: 'text-indigo-400', bg: 'bg-indigo-500/10 border-indigo-500/20', dot: 'bg-indigo-400 animate-pulse' }
+  const state = hasOpenEntry
+    ? { label: 'Working', tone: 'accent' }
     : entries.length > 0
-    ? { label: 'Day Summary', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' }
-    : { label: 'Not Checked In', color: 'text-slate-400', bg: 'bg-slate-800 border-slate-700', dot: 'bg-slate-500' };
+      ? { label: 'Done for now', tone: 'success' }
+      : { label: 'Not checked in', tone: 'neutral' };
 
   return (
-    <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col gap-4">
-      {/* Gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 via-transparent to-emerald-600/5 pointer-events-none" />
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-600/25">
-            <Clock className="w-4 h-4 text-white"  />
-          </div>
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-100 leading-none">Attendance</h3>
-            <p className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-1">
-              <Calendar className="w-2.5 h-2.5"  />
+    <section aria-label="Attendance" className="rounded-2xl border border-line bg-surface shadow-card p-5 flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="grid place-items-center w-9 h-9 rounded-xl bg-accent-soft text-accent-fg shrink-0">
+            <Clock className="w-4 h-4" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-fg">Attendance</h3>
+            <p className="text-xs text-subtle flex items-center gap-1 truncate">
+              <CalendarDays className="w-3 h-3 shrink-0" aria-hidden="true" />
               {getTodayDate()}
             </p>
           </div>
         </div>
-        <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusConfig.bg} ${statusConfig.color}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`} />
-          {statusConfig.label}
-        </span>
+        <Badge tone={state.tone} dot className={hasOpenEntry ? '[&>span:first-child]:animate-pulse' : undefined}>{state.label}</Badge>
       </div>
 
-      {/* Live Clock */}
-      <div className="text-center py-2">
-        <p className="text-4xl font-black text-slate-100 tabular-nums tracking-tight leading-none">
-          {currentTime}
-        </p>
-        {hasOpenEntry && (
-          <p className="text-xs text-indigo-400 font-bold mt-1.5 tabular-nums">
-            ⏱ Session: {getLiveSessionTime()}
-          </p>
-        )}
-        {!hasOpenEntry && totalHours > 0 && (
-          <p className="text-xs text-emerald-400 font-bold mt-1.5">
-            ✅ Total Today: {formatDuration(totalHours)}
-          </p>
-        )}
+      <div className="text-center py-1">
+        <p className="text-4xl font-semibold text-fg tabular-nums tracking-tight" aria-label={`Time now ${currentTime}`}>{currentTime}</p>
+        {hasOpenEntry && <p className="text-sm text-accent-fg font-medium mt-1.5 tabular-nums">This session {getLiveSessionTime()}</p>}
+        {!hasOpenEntry && totalHours > 0 && <p className="text-sm text-success font-medium mt-1.5">Today so far {formatDuration(totalHours)}</p>}
       </div>
 
-      {/* Action Button */}
       {loading ? (
-        <div className="flex items-center justify-center py-2">
-          <Loader className="w-5 h-5 text-indigo-400 animate-spin"  />
-        </div>
+        <div className="h-11 rounded-xl bg-hover animate-pulse" aria-hidden="true" />
       ) : hasOpenEntry ? (
-        <button
-          onClick={handleCheckOut}
-          disabled={actionLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold text-sm shadow-lg shadow-rose-600/25 transition-all active:scale-[0.98] disabled:opacity-60"
-        >
-          {actionLoading ? (
-            <><Loader className="w-4 h-4 animate-spin"  /> Getting location...</>
-          ) : (
-            <><LogOut className="w-4 h-4"  /> Check Out</>
-          )}
-        </button>
+        <Button size="lg" variant="danger" icon={LogOut} loading={actionLoading} onClick={handleCheckOut} className="w-full">
+          {actionLoading ? 'Getting location…' : 'Check out'}
+        </Button>
       ) : (
-        <button
-          onClick={handleCheckIn}
-          disabled={actionLoading}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm shadow-lg shadow-emerald-600/25 transition-all active:scale-[0.98] disabled:opacity-60"
-        >
-          {actionLoading ? (
-            <><Loader className="w-4 h-4 animate-spin"  /> Getting location...</>
-          ) : (
-            <><MapPin className="w-3.5 h-3.5"  /><LogIn className="w-4 h-4"  /> Check In with GPS</>
-          )}
-        </button>
+        <Button size="lg" variant="primary" icon={LogIn} loading={actionLoading} onClick={handleCheckIn} className="w-full">
+          {actionLoading ? 'Getting location…' : 'Check in'}
+        </Button>
       )}
 
-      {/* Today's Punch Log */}
       {entries.length > 0 && (
-        <div className="border-t border-slate-800 pt-3">
-          <div className="flex items-center gap-1.5 mb-2.5">
-            <List className="w-3.5 h-3.5 text-slate-500"  />
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Today's Punches ({entries.length})
-            </span>
-          </div>
-          <div className="space-y-2 max-h-[152px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="border-t border-line pt-3 space-y-2">
+          <p className="text-xs text-subtle">Today ({entries.length} {entries.length === 1 ? 'check-in' : 'check-ins'})</p>
+          <ol className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
             {entries.map((entry, i) => {
               const isOpen = !entry.checkOutTime;
               const dur = isOpen
                 ? Math.max(0, (Date.now() - new Date(entry.checkInTime).getTime()) / 3600000)
                 : entry.durationHours || 0;
               return (
-                <div
-                  key={entry.id}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all ${
-                    isOpen
-                      ? 'bg-indigo-500/10 border-indigo-500/20'
-                      : 'bg-slate-800/50 border-slate-700/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isOpen ? 'bg-indigo-400 animate-pulse' : 'bg-emerald-400'}`} />
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-slate-400">#{i + 1}</span>
-                        <span className="font-bold text-emerald-400">{formatTime(entry.checkInTime)}</span>
-                        <span className="text-slate-600">→</span>
-                        <span className={`font-bold ${isOpen ? 'text-indigo-400' : 'text-rose-400'}`}>
-                          {isOpen ? 'Active' : formatTime(entry.checkOutTime)}
-                        </span>
-                      </div>
-                      {entry.checkInLocation && (
-                        <p className="text-[9px] text-slate-600 mt-0.5 truncate max-w-[140px]">
-                          <MapPin className="inline w-2 h-2 mr-0.5"  />
-                          {entry.checkInLocation}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <span className={`text-[10px] font-extrabold ${isOpen ? 'text-indigo-300' : 'text-slate-300'}`}>
-                      {formatDuration(dur)}
-                    </span>
-                    {isOpen && (
-                      <p className="text-[8px] text-indigo-400/70">running</p>
+                <li key={entry.id} className={cn('flex items-center justify-between gap-3 px-3 py-2 rounded-xl border text-sm', isOpen ? 'border-accent/30 bg-accent-soft/40' : 'border-line')}>
+                  <div className="min-w-0">
+                    <p className="tabular-nums text-fg">
+                      <span className="text-subtle text-xs mr-1.5">#{i + 1}</span>
+                      {formatTime(entry.checkInTime)} <span className="text-subtle">→</span> {isOpen ? <span className="text-accent-fg font-medium">now</span> : formatTime(entry.checkOutTime)}
+                    </p>
+                    {entry.checkInLocation && (
+                      <p className="flex items-center gap-1 text-xs text-subtle truncate max-w-[180px]">
+                        <MapPin className="w-3 h-3 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{entry.checkInLocation}</span>
+                      </p>
                     )}
                   </div>
-                </div>
+                  <span className={cn('text-sm font-medium tabular-nums shrink-0', isOpen ? 'text-accent-fg' : 'text-fg')}>{formatDuration(dur)}</span>
+                </li>
               );
             })}
-          </div>
-
-          {/* Day Total Summary */}
-          <div className="mt-2.5 flex items-center justify-between px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700/50">
-            <span className="text-[10px] font-bold text-slate-500">Total Working Hours</span>
-            <span className="text-sm font-extrabold text-emerald-400">{formatDuration(totalHours)}</span>
+          </ol>
+          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-sunken/60 text-sm">
+            <span className="text-muted">Total today</span>
+            <span className="font-semibold text-fg tabular-nums">{formatDuration(totalHours)}</span>
           </div>
         </div>
       )}
 
-      {/* GPS footer */}
-      <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400">
-        <Wifi className="w-2.5 h-2.5 text-indigo-400"  />
-        <span>
-          {status?.geofence?.geofenceEnabled
-            ? `📍 Office GPS Geofence Active (${status.geofence.geofenceRadiusMeters}m radius)`
-            : 'GPS-verified attendance · Multiple punches supported'}
-        </span>
-      </div>
-    </div>
+      <p className="flex items-center justify-center gap-1.5 text-xs text-subtle">
+        <MapPin className="w-3 h-3" aria-hidden="true" />
+        {status?.geofence?.geofenceEnabled
+          ? `Check-in only within ${status.geofence.geofenceRadiusMeters} m of the office`
+          : 'Location is recorded with each check-in'}
+      </p>
+    </section>
   );
 };
