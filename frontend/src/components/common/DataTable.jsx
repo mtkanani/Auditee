@@ -3,6 +3,10 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { TableSkeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
 
+/**
+ * Plain themed table with no card of its own, for pages that wrap it in their own box.
+ * New screens should use the kit Table, which brings the card, loading and empty states.
+ */
 export const DataTable = ({
   columns = [],
   data = [],
@@ -23,43 +27,38 @@ export const DataTable = ({
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded-t-2xl">
-      <table className="w-full text-left text-sm text-slate-300">
-        <thead className="bg-slate-900/90 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800 tracking-wider">
-          <tr>
-            {columns.map((col) => (
-              <th
-                key={col.key || col.header}
-                onClick={() => col.sortable && onSort && onSort(col.key)}
-                className={`py-3.5 px-4 sm:px-6 ${
-                  col.sortable ? 'cursor-pointer select-none hover:text-indigo-400' : ''
-                } ${col.className || ''}`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span>{col.header}</span>
-                  {col.sortable && sortBy === col.key && (
-                    <span>
-                      {sortOrder === 'asc' ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-indigo-400"  />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-indigo-400"  />
-                      )}
-                    </span>
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead>
+          <tr className="bg-sunken/60 text-xs font-medium text-subtle border-b border-line">
+            {columns.map((col) => {
+              const sorted = col.sortable && sortBy === col.key;
+              return (
+                <th
+                  key={col.key || col.header}
+                  scope="col"
+                  aria-sort={sorted ? (sortOrder === 'asc' ? 'ascending' : 'descending') : undefined}
+                  className={`py-3 px-4 sm:px-5 whitespace-nowrap ${col.className || ''}`}
+                >
+                  {col.sortable && onSort ? (
+                    <button type="button" onClick={() => onSort(col.key)} className="inline-flex items-center gap-1 hover:text-fg">
+                      {col.header}
+                      {sorted && (sortOrder === 'asc' ? <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" /> : <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />)}
+                    </button>
+                  ) : (
+                    col.header
                   )}
-                </div>
-              </th>
-            ))}
+                </th>
+              );
+            })}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
+        <tbody className="divide-y divide-line">
           {data.map((row, rowIndex) => (
-            <tr
-              key={row.id || rowIndex}
-              className="hover:bg-slate-800/40 transition-colors duration-150 group"
-            >
+            <tr key={row.id || rowIndex} className="hover:bg-hover transition-colors duration-150">
               {columns.map((col) => (
-                <td key={col.key || col.header} className={`py-4 px-4 sm:px-6 text-sm ${col.className || ''}`}>
-                  {col.render ? col.render(row, rowIndex) : row[col.key] ?? 'N/A'}
+                <td key={col.key || col.header} className={`py-3.5 px-4 sm:px-5 text-sm text-fg ${col.className || ''}`}>
+                  {col.render ? col.render(row, rowIndex) : row[col.key] ?? '—'}
                 </td>
               ))}
             </tr>
