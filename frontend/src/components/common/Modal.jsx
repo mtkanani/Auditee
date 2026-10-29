@@ -145,11 +145,12 @@ export const Modal = ({
               className={`relative w-full ${maxWidth} bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden z-10 text-left my-8 outline-none`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20">
-                <h3 id={titleId} className="text-base font-extrabold text-slate-100 flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20">
+                {/* min-w-0 lets long titles truncate instead of widening the dialog on phones */}
+                <h3 id={titleId} className="min-w-0 flex-1 text-base font-extrabold text-slate-100 flex items-center gap-2">
                   {title}
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {headerActions}
                   <button
                     type="button"

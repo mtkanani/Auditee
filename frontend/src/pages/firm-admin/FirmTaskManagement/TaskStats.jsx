@@ -1,17 +1,19 @@
 import React from 'react';
 import { CircleCheckBig, Clock, Inbox, Layers } from 'lucide-react';
-import { StatsCard } from '../../../components/common/StatsCard';
+import { StatCard } from '../../../components/ui';
 
-export const TaskStats = ({ totalRecords, inProgressCount, completedCount, clientRequests }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <StatsCard title="Total Tasks" value={totalRecords} icon={Layers} color="indigo" />
-    <StatsCard title="In Progress Tasks" value={inProgressCount} icon={Clock} color="purple" />
-    <StatsCard title="Completed Tasks" value={completedCount} icon={CircleCheckBig} color="emerald" />
-    <StatsCard
-      title="Client Work Requests"
+export const TaskStats = ({ totalRecords, inProgressCount, completedCount, clientRequests, setActiveTab }) => (
+  <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+    <StatCard label="Total tasks" value={totalRecords} icon={Layers} />
+    <StatCard label="In progress" value={inProgressCount} icon={Clock} tone="warning" hint="on this page" />
+    <StatCard label="Completed" value={completedCount} icon={CircleCheckBig} tone="success" hint="on this page" />
+    <StatCard
+      label="Client requests"
       value={clientRequests.length}
       icon={Inbox}
-      color="rose"
+      tone={clientRequests.length ? 'danger' : 'neutral'}
+      hint={clientRequests.length ? 'waiting for you' : 'none waiting'}
+      onClick={() => setActiveTab('requests')}
     />
   </div>
 );

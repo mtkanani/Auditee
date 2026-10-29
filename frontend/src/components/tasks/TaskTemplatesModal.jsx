@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal } from '../common/Modal';
 import { Check, Zap } from 'lucide-react';
+import { Modal } from '../common/Modal';
+import { Badge, Button } from '../ui';
+import { PriorityBadge } from './PriorityBadge';
 
 const PRESET_TEMPLATES = [
   {
@@ -54,59 +56,61 @@ const PRESET_TEMPLATES = [
   },
 ];
 
+const CATEGORY_LABELS = {
+  'TAXATION (GST)': 'GST',
+  'STATUTORY AUDIT': 'Statutory audit',
+  'TDS COMPLIANCE': 'TDS',
+  'ROC / SECRETARIAL': 'ROC / secretarial',
+};
+
 export const TaskTemplatesModal = ({ isOpen, onClose, onSelectTemplate }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="1-Click Audit & Tax Task Templates">
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-        <p className="text-xs text-slate-400">
-          Select a pre-configured CA audit template to automatically populate task title, category, priority, and subtask checklists.
+    <Modal isOpen={isOpen} onClose={onClose} title="Start from a template" maxWidth="max-w-2xl">
+      <div className="space-y-4">
+        <p className="text-sm text-muted">
+          Pick a ready-made CA task. It fills in the title, priority, scope and checklist, and you can change anything before saving.
         </p>
 
-        <div className="grid grid-cols-1 gap-3">
-          {PRESET_TEMPLATES.map((tmpl, idx) => (
-            <div
-              key={idx}
-              className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 transition-all space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                    {tmpl.category}
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    {tmpl.priority}
-                  </span>
+        <ul className="space-y-3">
+          {PRESET_TEMPLATES.map((tmpl) => (
+            <li key={tmpl.title} className="rounded-2xl border border-line bg-surface p-5 space-y-3 transition-colors hover:border-line-strong">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="accent">{CATEGORY_LABELS[tmpl.category] || tmpl.category}</Badge>
+                    <PriorityBadge priority={tmpl.priority} />
+                  </div>
+                  <h4 className="text-sm font-semibold text-fg">{tmpl.title}</h4>
                 </div>
-
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={Zap}
                   onClick={() => {
                     onSelectTemplate(tmpl);
                     onClose();
                   }}
-                  className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-1.5"
                 >
-                  <Zap size="1em" />
-                  <span>Use Template</span>
-                </button>
+                  Use template
+                </Button>
               </div>
 
-              <h4 className="text-sm font-bold text-slate-100">{tmpl.title}</h4>
-              <p className="text-xs text-slate-400">{tmpl.description}</p>
+              <p className="text-sm text-muted">{tmpl.description}</p>
 
-              {/* Subtasks Preview */}
-              <div className="pt-2 border-t border-slate-800/80 space-y-1">
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Preset Subtasks ({tmpl.subtasks.length}):</span>
-                {tmpl.subtasks.map((st, i) => (
-                  <div key={i} className="text-[11px] text-slate-300 flex items-center gap-1.5">
-                    <Check size="1em" className="text-indigo-400 flex-shrink-0"  />
-                    <span>{st}</span>
-                  </div>
-                ))}
+              <div className="pt-3 border-t border-line">
+                <p className="text-xs text-subtle mb-1.5">Checklist ({tmpl.subtasks.length} items)</p>
+                <ul className="space-y-1">
+                  {tmpl.subtasks.map((st) => (
+                    <li key={st} className="flex items-start gap-2 text-sm text-muted">
+                      <Check className="w-3.5 h-3.5 mt-1 text-success shrink-0" aria-hidden="true" />
+                      <span>{st}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </Modal>
   );

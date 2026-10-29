@@ -1,22 +1,32 @@
 import React from 'react';
+import { Clock } from 'lucide-react';
 
-export const HistoryTab = ({ task }) => (
-  <div className="space-y-4">
-    <h4 className="text-sm font-bold text-slate-200">Chronological Task Audit Timeline</h4>
-    <div className="space-y-3 relative border-l border-slate-800 ml-4 pl-6">
-      {task?.history?.map((h) => (
-        <div key={h.id} className="relative">
-          <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-slate-900" />
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-blue-400">{h.action}</span>
-              <span className="text-[10px] text-slate-500">{new Date(h.createdAt).toLocaleString()}</span>
-            </div>
-            <p className="text-slate-300">{h.details}</p>
-            <p className="text-[10px] text-slate-500">By {h.performedName}</p>
+const when = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const actionLabel = (a = '') => a.toLowerCase().replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+
+export const HistoryTab = ({ task }) => {
+  const history = task?.history || [];
+  if (history.length === 0) {
+    return (
+      <div className="flex flex-col items-center py-10 text-center rounded-2xl border border-dashed border-line">
+        <Clock className="w-5 h-5 text-subtle mb-2" aria-hidden="true" />
+        <p className="text-sm text-muted">No history recorded yet.</p>
+      </div>
+    );
+  }
+  return (
+    <ol className="relative border-l border-line ml-2 space-y-5">
+      {history.map((h) => (
+        <li key={h.id} className="relative pl-6">
+          <span className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-accent ring-4 ring-page" aria-hidden="true" />
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+            <p className="text-sm font-medium text-fg">{actionLabel(h.action)}</p>
+            <span className="text-xs text-subtle tabular-nums">{when(h.createdAt)}</span>
           </div>
-        </div>
+          {h.details && <p className="text-sm text-muted mt-0.5">{h.details}</p>}
+          <p className="text-xs text-subtle mt-0.5">By {h.performedName}</p>
+        </li>
       ))}
-    </div>
-  </div>
-);
+    </ol>
+  );
+};

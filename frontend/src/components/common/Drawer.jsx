@@ -31,14 +31,15 @@ export const Drawer = ({ isOpen, onClose, title, children, width = 'max-w-md' })
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className={`w-screen ${width} bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col`}
+              className={`w-screen ${width} bg-surface border-l border-line shadow-raised flex flex-col`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-                <h3 className="text-lg font-bold text-slate-100">{title}</h3>
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-line">
+                <h3 className="text-base font-semibold text-fg min-w-0 truncate">{title}</h3>
                 <button
                   onClick={onClose}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+                  aria-label="Close"
+                  className="p-1.5 rounded-lg text-muted hover:text-fg hover:bg-hover transition-colors shrink-0"
                 >
                   <X className="w-5 h-5"  />
                 </button>
