@@ -1,45 +1,47 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { CalendarDays, CalendarX } from 'lucide-react';
+import { Avatar } from '../../../components/common/Avatar';
 import { CardSkeleton } from '../../../components/common/Skeleton';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { dateRange } from './leaveFormat';
 
-export const LeaveCalendarGrid = ({ isLoading, calendarEvents }) => (
-  <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 shadow-xl">
-    <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-      <Calendar size="1em" className="text-indigo-400"  />
-      <span>Firm Approved Leave Calendar Grid</span>
-    </h3>
-
-    {isLoading ? (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+/** Approved leave in the chosen month, one card per absence. */
+export const LeaveCalendarGrid = ({ isLoading, calendarEvents }) => {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
           <CardSkeleton key={i} />
         ))}
       </div>
-    ) : calendarEvents.length === 0 ? (
-      <EmptyState
-        title="No Approved Employee Leaves"
-        description="No approved employee leaves scheduled for this month."
-      />
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {calendarEvents.map((ev) => (
-          <div key={ev.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-extrabold text-slate-100 text-xs">
-                {ev.user?.firstName} {ev.user?.lastName}
-              </span>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                APPROVED
-              </span>
-            </div>
-            <p className="text-xs text-amber-400 font-bold">
-              📅 {new Date(ev.startDate).toLocaleDateString()} to {new Date(ev.endDate).toLocaleDateString()}
-            </p>
-            <p className="text-xs text-slate-400 line-clamp-2">Reason: {ev.reason}</p>
-          </div>
-        ))}
+    );
+  }
+
+  if (calendarEvents.length === 0) {
+    return (
+      <div className="rounded-2xl border border-line bg-surface">
+        <EmptyState icon={CalendarX} title="No one is away" description="No approved leave falls in this month." />
       </div>
-    )}
-  </div>
-);
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+      {calendarEvents.map((ev) => (
+        <article key={ev.id} className="rounded-2xl border border-line bg-surface shadow-card p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <Avatar firstName={ev.user?.firstName} lastName={ev.user?.lastName} size="sm" className="shrink-0" />
+            <p className="text-sm font-medium text-fg truncate">
+              {ev.user?.firstName} {ev.user?.lastName}
+            </p>
+          </div>
+          <p className="flex items-center gap-1.5 text-sm text-fg">
+            <CalendarDays className="w-4 h-4 text-subtle" aria-hidden="true" />
+            {dateRange(ev.startDate, ev.endDate)}
+          </p>
+          {ev.reason && <p className="text-xs text-muted line-clamp-2">{ev.reason}</p>}
+        </article>
+      ))}
+    </div>
+  );
+};

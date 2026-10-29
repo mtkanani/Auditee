@@ -36,7 +36,7 @@ export const StatCard = ({ label, value, icon: Icon, tone = 'accent', delta, tre
     <Wrapper
       onClick={onClick}
       className={cn(
-        'group relative text-left w-full rounded-2xl bg-surface border border-line shadow-card p-5 overflow-hidden',
+        'group relative text-left w-full rounded-2xl bg-surface border border-line shadow-card p-4 sm:p-5 overflow-hidden',
         'transition-all duration-200',
         onClick && 'hover:shadow-raised hover:-translate-y-0.5 hover:border-line-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
         className
@@ -50,7 +50,7 @@ export const StatCard = ({ label, value, icon: Icon, tone = 'accent', delta, tre
           </span>
         )}
       </div>
-      <p className="mt-2 text-[28px] leading-8 font-semibold tracking-tight text-fg tabular-nums">{value}</p>
+      <p className="mt-2 text-[22px] leading-7 sm:text-[28px] sm:leading-8 font-semibold tracking-tight text-fg tabular-nums">{value}</p>
       {(delta || hint) && (
         <div className="mt-2 flex items-center gap-2 text-xs">
           {delta && (
@@ -63,7 +63,7 @@ export const StatCard = ({ label, value, icon: Icon, tone = 'accent', delta, tre
         </div>
       )}
       {/* accent hairline that lights up on hover */}
-      <span className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+      <span className="absolute inset-x-4 sm:inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
     </Wrapper>
   );
 };

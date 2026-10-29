@@ -1,6 +1,10 @@
 import React from 'react';
+import { Zap } from 'lucide-react';
 import { Modal } from '../../../components/common/Modal';
+import { Badge, Button } from '../../../components/ui';
+import { categoryLabel, shortDate } from './options';
 
+/** Turns a filing into a task and assigns it to the chosen employees. */
 export const ConvertToTaskModal = ({
   isTaskModalOpen,
   setIsTaskModalOpen,
@@ -10,45 +14,41 @@ export const ConvertToTaskModal = ({
   assignedUserIds,
   setAssignedUserIds,
   convertToTaskMutation,
-}) => (
-  <Modal
-    isOpen={isTaskModalOpen}
-    onClose={() => setIsTaskModalOpen(false)}
-    title={`⚡ Convert to Active Task: ${selectedItem?.title}`}
-  >
-    <form onSubmit={handleConvertToTaskSubmit} className="space-y-4">
-      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-1">
-        <p>Category: <strong>{selectedItem?.category}</strong></p>
-        <p>Due Date: <strong>{selectedItem?.dueDate ? new Date(selectedItem.dueDate).toLocaleDateString() : ''}</strong></p>
-      </div>
+}) => {
+  const toggle = (id) =>
+    setAssignedUserIds(assignedUserIds.includes(id) ? assignedUserIds.filter((x) => x !== id) : [...assignedUserIds, id]);
 
-      <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-        <label className="block text-xs font-bold text-indigo-400">Select Auditor Employee(s)</label>
-        {users.map((u) => (
-          <label key={u.id} className="flex items-center gap-2 p-1.5 rounded bg-slate-950 text-xs text-slate-200 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={assignedUserIds.includes(u.id)}
-              onChange={() => {
-                if (assignedUserIds.includes(u.id)) {
-                  setAssignedUserIds(assignedUserIds.filter((id) => id !== u.id));
-                } else {
-                  setAssignedUserIds([...assignedUserIds, u.id]);
-                }
-              }}
-            />
-            <span>{u.firstName} {u.lastName} ({u.designation || 'Staff'})</span>
-          </label>
-        ))}
-      </div>
+  return (
+    <Modal isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} title={`Make a task: ${selectedItem?.title || ''}`}>
+      <form onSubmit={handleConvertToTaskSubmit} className="space-y-5">
+        {selectedItem && (
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+            <Badge tone="accent">{categoryLabel(selectedItem.category)}</Badge>
+            <span>Due {shortDate(selectedItem.dueDate)}</span>
+          </div>
+        )}
 
-      <button
-        type="submit"
-        disabled={convertToTaskMutation.isPending}
-        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
-      >
-        {convertToTaskMutation.isPending ? 'Converting...' : 'Create Task & Assign Auditors'}
-      </button>
-    </form>
-  </Modal>
-);
+        <fieldset className="space-y-1.5">
+          <legend className="text-sm font-medium text-fg mb-1.5">
+            Assign to <span className="text-subtle font-normal">({assignedUserIds.length} selected)</span>
+          </legend>
+          <div className="max-h-56 overflow-y-auto rounded-xl border border-line divide-y divide-line">
+            {users.length === 0 && <p className="px-3 py-4 text-sm text-muted">No employees found.</p>}
+            {users.map((u) => (
+              <label key={u.id} className="flex items-center gap-3 px-3 h-11 text-sm cursor-pointer hover:bg-hover">
+                <input type="checkbox" className="w-4 h-4 rounded accent-[var(--accent)]" checked={assignedUserIds.includes(u.id)} onChange={() => toggle(u.id)} />
+                <span className="flex-1 text-fg">{u.firstName} {u.lastName}</span>
+                <span className="text-xs text-subtle">{u.designation || 'Staff'}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setIsTaskModalOpen(false)}>Cancel</Button>
+          <Button type="submit" variant="primary" icon={Zap} loading={convertToTaskMutation.isPending}>Create task</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};

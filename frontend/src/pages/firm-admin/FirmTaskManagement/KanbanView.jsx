@@ -1,77 +1,88 @@
 import React from 'react';
-import { CardSkeleton } from '../../../components/common/Skeleton';
+import { CalendarDays, ListChecks } from 'lucide-react';
+import { cn } from '../../../lib/cn';
+import { PriorityBadge } from './priority';
+import { checklist } from './checklist';
 
-export const KanbanView = ({ isLoading, tasksByStatus, setSelectedTaskId, setIsDetailModalOpen }) => (
-  isLoading ? (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 min-h-[60vh]">
-          <CardSkeleton />
-          <CardSkeleton />
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-    {['PENDING', 'IN_PROGRESS', 'UNDER_REVIEW', 'COMPLETED'].map((colStatus) => {
-      const colTasks = tasksByStatus[colStatus] || [];
-      return (
-        <div key={colStatus} className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3 min-h-[60vh]">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">{colStatus.replace('_', ' ')}</h4>
-            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
-              {colTasks.length}
+const COLUMNS = [
+  { status: 'PENDING', label: 'Pending', dot: 'bg-warning' },
+  { status: 'IN_PROGRESS', label: 'In progress', dot: 'bg-accent' },
+  { status: 'UNDER_REVIEW', label: 'Under review', dot: 'bg-accent-2' },
+  { status: 'COMPLETED', label: 'Completed', dot: 'bg-success' },
+];
+
+const isOverdue = (t) => t.dueDate && t.status !== 'COMPLETED' && new Date(t.dueDate) < new Date(new Date().toDateString());
+
+const TaskCard = ({ task, onOpen }) => {
+  const { done, total } = checklist(task);
+  const overdue = isOverdue(task);
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(task)}
+      className="w-full text-left p-3.5 rounded-xl bg-surface border border-line shadow-card space-y-2.5 transition-all duration-150 hover:border-line-strong hover:shadow-raised hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <PriorityBadge priority={task.priority} />
+        <span className="text-xs text-subtle tabular-nums">#{task.id}</span>
+      </div>
+      <div>
+        <p className="text-sm font-medium text-fg line-clamp-2">{task.title}</p>
+        <p className="text-xs text-subtle truncate mt-0.5">{task.client?.companyName || task.client?.clientName || 'Internal task'}</p>
+      </div>
+      {(total > 0 || task.dueDate) && (
+        <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-line text-xs">
+          {total > 0 ? (
+            <span className="flex items-center gap-1.5 text-muted">
+              <ListChecks className="w-3.5 h-3.5" aria-hidden="true" />
+              <span className="tabular-nums">{done}/{total}</span>
+              <span className="w-10 h-1 rounded-full bg-hover overflow-hidden">
+                <span className="block h-full bg-success" style={{ width: `${(done / total) * 100}%` }} />
+              </span>
             </span>
-          </div>
-
-          <div className="space-y-3">
-            {colTasks.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => {
-                  setSelectedTaskId(t.id);
-                  setIsDetailModalOpen(true);
-                }}
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/40 cursor-pointer transition-all space-y-2 shadow-lg group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400">
-                    #{t.id}
-                  </span>
-                  <span
-                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded ${
-                      t.priority === 'URGENT'
-                        ? 'bg-rose-500/10 text-rose-400'
-                        : t.priority === 'HIGH'
-                        ? 'bg-amber-500/10 text-amber-400'
-                        : 'bg-emerald-500/10 text-emerald-400'
-                    }`}
-                  >
-                    {t.priority}
-                  </span>
-                </div>
-
-                <h5 className="text-xs font-bold text-slate-100 group-hover:text-indigo-400 transition-colors line-clamp-2">
-                  {t.title}
-                </h5>
-                <p className="text-[11px] text-slate-400 truncate">
-                  {t.client?.companyName || t.client?.clientName || 'Firm Task'}
-                </p>
-
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>Checklist: {t.subtasks?.filter((s) => s.isCompleted)?.length || 0}/{t.subtasks?.length || 0}</span>
-                  {t.dueDate && <span>Due: {new Date(t.dueDate).toLocaleDateString()}</span>}
-                </div>
-              </div>
-            ))}
-
-            {colTasks.length === 0 && (
-              <p className="text-xs text-slate-500 py-8 text-center">No tasks in this column</p>
-            )}
-          </div>
+          ) : <span />}
+          {task.dueDate && (
+            <span className={cn('flex items-center gap-1', overdue ? 'text-danger font-medium' : 'text-subtle')}>
+              <CalendarDays className="w-3.5 h-3.5" aria-hidden="true" />
+              {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+            </span>
+          )}
         </div>
-      );
-    })}
+      )}
+    </button>
+  );
+};
+
+/** Four status columns. Columns scroll sideways on narrow screens instead of squashing. */
+export const KanbanView = ({ isLoading, tasksByStatus, onOpen }) => (
+  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2">
+    <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 min-w-full">
+      {COLUMNS.map((col) => {
+        const tasks = tasksByStatus[col.status] || [];
+        return (
+          <section key={col.status} aria-label={col.label} className="rounded-2xl bg-sunken/70 border border-line p-3 min-h-[60vh] flex flex-col">
+            <header className="flex items-center gap-2 px-1 pb-3">
+              <span className={cn('w-2 h-2 rounded-full', col.dot)} aria-hidden="true" />
+              <h3 className="text-sm font-medium text-fg">{col.label}</h3>
+              <span className="ml-auto text-xs font-medium text-subtle tabular-nums">{isLoading ? '' : tasks.length}</span>
+            </header>
+            <div className="space-y-2.5 flex-1">
+              {isLoading
+                ? Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="p-3.5 rounded-xl bg-surface border border-line space-y-2.5">
+                      <div className="h-5 w-16 rounded-full bg-hover animate-pulse" />
+                      <div className="h-3.5 w-3/4 rounded-full bg-hover animate-pulse" />
+                      <div className="h-3 w-1/2 rounded-full bg-hover animate-pulse" />
+                    </div>
+                  ))
+                : tasks.map((t) => <TaskCard key={t.id} task={t} onOpen={onOpen} />)}
+              {!isLoading && tasks.length === 0 && (
+                <p className="text-xs text-subtle text-center py-8 border border-dashed border-line rounded-xl">Nothing here</p>
+              )}
+            </div>
+          </section>
+        );
+      })}
+    </div>
   </div>
-  )
 );

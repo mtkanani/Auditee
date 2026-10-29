@@ -1,32 +1,25 @@
 import React from 'react';
-import { Briefcase, DollarSign, Layers, Shield } from 'lucide-react';
-import { StatsCard } from '../../../components/common/StatsCard';
+import { Briefcase, IndianRupee, Layers, Building2 } from 'lucide-react';
+import { StatCard } from '../../../components/ui';
 
+/** Total comes from the server; the other three are summed from the clients on this page. */
 export const ClientStats = ({ totalRecords, clients, totalSubscribedServices, totalOutstandingBalance }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-    <StatsCard
-      title="Total Clients"
-      value={totalRecords || clients.length}
-      icon={Briefcase}
-      color="indigo"
-    />
-    <StatsCard
-      title="Corporate Accounts"
+  <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+    <StatCard label="Total clients" value={totalRecords || clients.length} icon={Briefcase} />
+    <StatCard
+      label="Companies and firms"
       value={clients.filter((c) => c.clientType !== 'INDIVIDUAL').length}
-      icon={Shield}
-      color="purple"
+      icon={Building2}
+      tone="neutral"
+      hint="on this page"
     />
-    <StatsCard
-      title="Subscribed Services"
-      value={totalSubscribedServices}
-      icon={Layers}
-      color="emerald"
-    />
-    <StatsCard
-      title="Total Outstanding Fees"
-      value={`₹${totalOutstandingBalance.toLocaleString()}`}
-      icon={DollarSign}
-      color="rose"
+    <StatCard label="Active services" value={totalSubscribedServices} icon={Layers} tone="success" hint="on this page" />
+    <StatCard
+      label="Outstanding fees"
+      value={`₹${totalOutstandingBalance.toLocaleString('en-IN')}`}
+      icon={IndianRupee}
+      tone={totalOutstandingBalance > 0 ? 'danger' : 'neutral'}
+      hint="on this page"
     />
   </div>
 );
