@@ -8,7 +8,7 @@ import AuthLayout from '../../layouts/AuthLayout';
 import { Button } from '../../components/ui/Button';
 import { Field, Input } from '../../components/ui/Field';
 import { PasswordInput } from '../../components/ui/PasswordInput';
-import { StepTracker } from './StepTracker';
+import { StepTracker } from '../../components/ui/StepTracker';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -97,7 +97,7 @@ const ForgotPassword = () => {
             : 'Use at least 8 characters with upper and lower case letters, a number and a symbol.'
       }
     >
-      <StepTracker step={step} />
+      <StepTracker step={step} steps={['Email', 'Code', 'New password']} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
         {step === 1 && (

@@ -6,6 +6,7 @@ export { controlClass } from './controlClass';
 export { Badge, StatusTag } from './Badge';
 export { Card, StatCard } from './Card';
 export { Tabs } from './Tabs';
+export { StepTracker } from './StepTracker';
 export { PageHeader } from './PageHeader';
 export { FilterBar, SearchInput } from './FilterBar';
 export { Table } from './Table';
