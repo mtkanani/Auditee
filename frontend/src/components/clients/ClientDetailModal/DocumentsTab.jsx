@@ -1,6 +1,8 @@
-import React from 'react';
-import { ExternalLink, FileText, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, ExternalLink, FileText, Plus, Trash2 } from 'lucide-react';
 import { Button, Field, Input, Select } from '../../ui';
+import { AttachmentPicker } from '../../documents/AttachmentPicker';
+import { useOpenClientDocument, useUploadClientDocument } from '../../../queries/useAttachments';
 
 const TYPES = [
   { value: 'GST_CERTIFICATE', label: 'GST certificate' },
@@ -23,6 +25,39 @@ export const DocumentsTab = ({
 }) => {
   const set = (key) => (e) => setDocForm({ ...docForm, [key]: e.target.value });
   const docs = client.documents || [];
+  const [mode, setMode] = useState('file');
+  const [file, setFile] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const upload = useUploadClientDocument();
+  const openDoc = useOpenClientDocument();
+
+  const pickFile = (f) => {
+    setFile(f);
+    // Suggest the file name when no name has been typed yet.
+    if (f && !docForm.documentName.trim()) setDocForm({ ...docForm, documentName: f.name.replace(/\.[^.]+$/, '') });
+  };
+
+  const submit = (e) => {
+    if (mode === 'link') return handleAddDocument(e);
+    e.preventDefault();
+    if (!file || !docForm.documentName.trim()) return;
+    upload.mutate(
+      {
+        clientId: client.id,
+        file,
+        details: { documentName: docForm.documentName, documentType: docForm.documentType },
+        onProgress: setProgress,
+      },
+      {
+        onSuccess: () => {
+          setFile(null);
+          setIsAddingDoc(false);
+          setDocForm({ documentName: '', documentType: 'GST_CERTIFICATE', fileUrl: '' });
+        },
+        onSettled: () => setProgress(0),
+      }
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -34,21 +69,30 @@ export const DocumentsTab = ({
       </div>
 
       {isAddingDoc && (
-        <form onSubmit={handleAddDocument} className="rounded-2xl border border-accent/30 bg-accent-soft/40 p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <form onSubmit={submit} className="rounded-2xl border border-accent/30 bg-accent-soft/40 p-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Document name" required>
               {(p) => <Input {...p} required placeholder="GST registration certificate" value={docForm.documentName} onChange={set('documentName')} />}
             </Field>
             <Field label="Type">
               {(p) => <Select {...p} value={docForm.documentType} onChange={set('documentType')} options={TYPES} />}
             </Field>
-            <Field label="Link to file" required>
-              {(p) => <Input {...p} required placeholder="https://drive.google.com/…" value={docForm.fileUrl} onChange={set('fileUrl')} />}
-            </Field>
           </div>
+          <AttachmentPicker
+            mode={mode}
+            onModeChange={setMode}
+            file={file}
+            onFile={pickFile}
+            url={docForm.fileUrl}
+            onUrl={(v) => setDocForm({ ...docForm, fileUrl: v })}
+            progress={progress}
+            disabled={upload.isPending}
+          />
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setIsAddingDoc(false)}>Cancel</Button>
-            <Button type="submit" variant="primary">Save document</Button>
+            <Button variant="ghost" onClick={() => setIsAddingDoc(false)} disabled={upload.isPending}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={upload.isPending} disabled={mode === 'file' && !file}>
+              {mode === 'file' ? 'Upload document' : 'Save document'}
+            </Button>
           </div>
         </form>
       )}
@@ -72,15 +116,14 @@ export const DocumentsTab = ({
                   {typeLabel(doc.documentType)} · {new Date(doc.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               </div>
-              <a
-                href={doc.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open ${doc.documentName}`}
-                className="grid place-items-center w-8 h-8 rounded-lg text-muted hover:text-fg hover:bg-hover"
-              >
-                <ExternalLink className="w-4 h-4" aria-hidden="true" />
-              </a>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                icon={doc.storageKey ? Download : ExternalLink}
+                aria-label={`${doc.storageKey ? 'Download' : 'Open'} ${doc.documentName}`}
+                disabled={!doc.storageKey && !doc.fileUrl}
+                onClick={() => openDoc.mutate({ clientId: client.id, doc })}
+              />
               <Button
                 size="icon-sm"
                 variant="ghost"

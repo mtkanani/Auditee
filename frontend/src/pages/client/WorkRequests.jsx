@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Button, Card, Field, Input, PageHeader, Select, Textarea } from '../../components/ui';
 import { DropZone } from '../../components/documents/UploadDocumentModal/DropZone';
 import { useClientCreateTask } from '../../queries/useTasks';
+import { useUploadTaskAttachment } from '../../queries/useAttachments';
 
 const MAX_MB = 25;
 
@@ -19,7 +20,10 @@ const PRIORITIES = [
 export const WorkRequests = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [progress, setProgress] = useState(0);
   const clientCreateTaskMutation = useClientCreateTask();
+  const uploadAttachment = useUploadTaskAttachment();
+  const isSending = clientCreateTaskMutation.isPending || uploadAttachment.isPending;
 
   const {
     register,
@@ -37,19 +41,30 @@ export const WorkRequests = () => {
     setSelectedFile(file);
   };
 
-  const onSubmit = (data) => {
-    const payload = {
-      ...data,
-      dueDate: data.dueDate ? data.dueDate : undefined,
-      attachment: selectedFile ? selectedFile.name : undefined,
-    };
-    clientCreateTaskMutation.mutate(payload, {
-      onSuccess: () => {
-        reset();
-        setSelectedFile(null);
-        navigate('/client/tasks');
-      },
-    });
+  const done = () => {
+    reset();
+    setSelectedFile(null);
+    setProgress(0);
+    navigate('/client/tasks');
+  };
+
+  // Create the request first, then upload the file onto the new task.
+  const onSubmit = async (data) => {
+    const payload = { ...data, dueDate: data.dueDate ? data.dueDate : undefined };
+    let created;
+    try {
+      created = await clientCreateTaskMutation.mutateAsync(payload);
+    } catch {
+      return; // toast shown by the hook
+    }
+    const taskId = created?.data?.id;
+    if (!selectedFile || !taskId) return done();
+    try {
+      await uploadAttachment.mutateAsync({ taskId, file: selectedFile, onProgress: setProgress, silent: true });
+    } catch {
+      toast.error('Your request was sent, but the file did not upload. Open the request to attach it again.');
+    }
+    done();
   };
 
   return (
@@ -87,7 +102,7 @@ export const WorkRequests = () => {
           </div>
 
           <Field label="Attachment" hint="Optional. Invoices, statements or notices.">
-            {() => <DropZone fileName={selectedFile?.name} fileSize={selectedFile?.size} onFile={pickFile} />}
+            {() => <DropZone fileName={selectedFile?.name} fileSize={selectedFile?.size} onFile={pickFile} disabled={isSending} />}
           </Field>
 
           <Button
@@ -95,10 +110,10 @@ export const WorkRequests = () => {
             variant="primary"
             size="lg"
             icon={Send}
-            loading={clientCreateTaskMutation.isPending}
+            loading={isSending}
             className="w-full"
           >
-            {clientCreateTaskMutation.isPending ? 'Sending…' : 'Send request'}
+            {uploadAttachment.isPending ? `Uploading… ${progress}%` : clientCreateTaskMutation.isPending ? 'Sending…' : 'Send request'}
           </Button>
         </form>
       </Card>
