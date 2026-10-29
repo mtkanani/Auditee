@@ -32,7 +32,7 @@ export const getFirmColumns = ({ onStatusChange, onEdit, onResetPassword, onDele
         value={r.status}
         onChange={(e) => onStatusChange(r.id, e.target.value)}
         aria-label={`Status of ${r.firmName}`}
-        className={`${controlClass(false)} h-8 w-32 pl-2.5 pr-7 text-xs`}
+        className={`${controlClass(false)} h-8 min-w-32 pl-2.5 pr-3 text-xs`}
       >
         {FIRM_STATUSES.map((s) => (
           <option key={s.value} value={s.value}>
