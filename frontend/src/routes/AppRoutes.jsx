@@ -59,8 +59,8 @@ const ClientProfile = lazy(() => import('../pages/client/ClientProfile').then((m
 // Sleek Loading Fallback for Suspense
 const RouteLoadingFallback = () => (
   <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 space-y-3">
-    <div className="w-9 h-9 border-3 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-    <span className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase">Loading...</span>
+    <div className="w-9 h-9 border-3 border-accent/20 border-t-accent rounded-full animate-spin" aria-hidden="true" />
+    <span className="text-xs font-medium text-muted" role="status">Loading…</span>
   </div>
 );
 
@@ -151,17 +151,17 @@ export const AppRoutes = () => {
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-              <h1 className="text-6xl font-extrabold text-indigo-500 mb-2">404</h1>
-              <p className="text-xl font-bold text-slate-100">Page Not Found</p>
-              <p className="text-xs text-slate-400 max-w-sm mt-1 mb-6">
+            <div className="min-h-screen bg-page flex flex-col items-center justify-center p-6 text-center">
+              <h1 className="text-6xl font-semibold text-accent-fg mb-2 tabular-nums">404</h1>
+              <p className="text-xl font-semibold text-fg">Page not found</p>
+              <p className="text-sm text-muted max-w-sm mt-1 mb-6">
                 The page you are looking for does not exist or has been moved.
               </p>
               <Link
                 to="/"
-                className="py-2.5 px-6 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-lg"
+                className="inline-flex items-center h-10 px-5 rounded-xl bg-accent text-on-accent text-sm font-medium hover:bg-accent-hover transition-colors"
               >
-                Return Home
+                Go home
               </Link>
             </div>
           }

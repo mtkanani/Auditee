@@ -22,7 +22,7 @@ export const Drawer = ({ isOpen, onClose, title, children, width = 'max-w-md' })
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
           />
 
           <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
