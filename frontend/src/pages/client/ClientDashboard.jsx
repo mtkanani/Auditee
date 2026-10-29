@@ -1,21 +1,21 @@
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { PageHeader } from '../../components/common/PageHeader';
-import { StatsCard } from '../../components/common/StatsCard';
-import { StatusBadge } from '../../components/common/StatusBadge';
-import { PriorityBadge } from '../../components/common/PriorityBadge';
+import { Link } from 'react-router-dom';
+import { ArrowRight, CircleCheckBig, Clock, FileText, Plus, UserRound } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Card, PageHeader, StatCard, StatusTag } from '../../components/ui';
 import { Avatar } from '../../components/common/Avatar';
+import { EmptyState } from '../../components/common/EmptyState';
+import { PriorityBadge } from '../../components/tasks/PriorityBadge';
+import { NoticeBanner } from '../../components/announcements/NoticeBanner';
 import { clientService } from '../../services/clientService';
 import { dashboardKeys } from '../../queries/keys';
-import { NoticeBanner } from '../../components/announcements/NoticeBanner';
-import { CircleCheckBig, Clock, FileText, Plus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+
+const linkClass =
+  'inline-flex items-center gap-2 rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50';
 
 export const ClientDashboard = () => {
-  const navigate = useNavigate();
-
-  const { data: dashResult, error } = useQuery({
+  const { data: dashResult, error, isLoading } = useQuery({
     queryKey: dashboardKeys.byRole('client'),
     queryFn: async () => {
       const [dashRes, myUserRes] = await Promise.all([
@@ -31,6 +31,9 @@ export const ClientDashboard = () => {
 
   const data = dashResult?.dashboard;
   const assignedUser = dashResult?.assignedUser;
+  const metrics = data?.metrics || {};
+  const requests = data?.requests || [];
+  const show = (v) => (isLoading ? '…' : v ?? 0);
 
   useEffect(() => {
     if (error) {
@@ -39,88 +42,80 @@ export const ClientDashboard = () => {
   }, [error]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
-        title="Client Portal Dashboard"
-        subtitle="Manage your audit requests, GST filings, and communicate with your assigned CA staff"
+        title="Overview"
+        description="Your requests, their progress and the person looking after you."
         actions={
-          <button
-            onClick={() => navigate('/client/work-requests')}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4"  />
-            <span>Create Work Request</span>
-          </button>
+          <Link to="/client/work-requests" className={`${linkClass} h-9 px-4 bg-accent text-on-accent hover:bg-accent-hover`}>
+            <Plus className="w-4 h-4" aria-hidden="true" />
+            New request
+          </Link>
         }
       />
 
-      {/* Broadcast Notice Banner */}
       <NoticeBanner />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard title="Total Requests" value={data?.metrics?.totalRequests || 12} icon={FileText} color="indigo" />
-        <StatsCard title="Pending Requests" value={data?.metrics?.pendingRequests || 3} icon={Clock} color="amber" />
-        <StatsCard title="Completed Items" value={data?.metrics?.completedRequests || 9} icon={CircleCheckBig} color="emerald" />
-        <StatsCard title="Active Services" value="Tax & Audit" icon={CircleCheckBig} color="blue" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard label="All requests" value={show(metrics.totalRequests)} icon={FileText} tone="accent" />
+        <StatCard label="In progress" value={show(metrics.pendingRequests)} icon={Clock} tone="warning" />
+        <StatCard label="Completed" value={show(metrics.completedRequests)} icon={CircleCheckBig} tone="success" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Assigned CA Staff Card */}
-        <div className="lg:col-span-1 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-            Assigned CA Staff
-          </h3>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <Card title="Your contact at the firm">
           {assignedUser ? (
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-950 border border-slate-800">
+            <div className="flex items-center gap-3 min-w-0">
               <Avatar firstName={assignedUser.firstName} lastName={assignedUser.lastName} size="md" />
-              <div>
-                <h4 className="font-bold text-slate-100">{assignedUser.firstName} {assignedUser.lastName}</h4>
-                <p className="text-xs text-slate-400">{assignedUser.email}</p>
-                <span className="text-[10px] text-indigo-400 font-semibold">{assignedUser.designation || 'Senior CA Staff'}</span>
+              <div className="min-w-0">
+                <p className="font-medium text-fg truncate">
+                  {assignedUser.firstName} {assignedUser.lastName}
+                </p>
+                {assignedUser.email && (
+                  <a href={`mailto:${assignedUser.email}`} className="block text-sm text-accent-fg hover:underline truncate">
+                    {assignedUser.email}
+                  </a>
+                )}
+                {assignedUser.designation && <p className="text-xs text-muted mt-0.5">{assignedUser.designation}</p>}
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-slate-950/60 text-center text-xs text-slate-400 border border-slate-800">
-              CA Staff assigned automatically upon service request.
+            <div className="flex items-start gap-3 text-sm text-muted">
+              <UserRound className="w-5 h-5 text-subtle shrink-0" aria-hidden="true" />
+              <p>Your firm will assign someone to you when work starts on your first request.</p>
             </div>
           )}
-        </div>
+        </Card>
 
-        {/* Recent Work Requests Timeline */}
-        <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-slate-100">Work Requests Status</h3>
-            <button
-              onClick={() => navigate('/client/tasks')}
-              className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
-            >
-              View All Tasks →
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {(data?.requests || []).map((req) => (
-              <div
-                key={req.id}
-                className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between gap-4"
-              >
-                <div>
-                  <h4 className="font-bold text-slate-100 text-sm">{req.title}</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">{req.description || 'No description'}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <PriorityBadge priority={req.priority} />
-                  <StatusBadge status={req.status} />
-                </div>
-              </div>
-            ))}
-
-            {(!data?.requests || data.requests.length === 0) && (
-              <p className="text-xs text-slate-500 text-center py-6">No recent work requests.</p>
-            )}
-          </div>
-        </div>
+        <Card
+          title="Recent requests"
+          padded={false}
+          className="xl:col-span-2"
+          actions={
+            <Link to="/client/tasks" className={`${linkClass} text-accent-fg hover:underline`}>
+              View all <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </Link>
+          }
+        >
+          {requests.length === 0 ? (
+            <EmptyState icon={FileText} title="No requests yet" description="Requests you send to your firm will show up here." />
+          ) : (
+            <ul className="divide-y divide-line border-t border-line">
+              {requests.map((req) => (
+                <li key={req.id} className="px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                  <div className="min-w-0">
+                    <p className="font-medium text-fg text-sm truncate">{req.title}</p>
+                    {req.description && <p className="text-xs text-muted mt-0.5 line-clamp-1">{req.description}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <PriorityBadge priority={req.priority} />
+                    {req.status && <StatusTag status={String(req.status).toUpperCase()} />}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       </div>
     </div>
   );

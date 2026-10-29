@@ -1,39 +1,33 @@
 import React from 'react';
-import { SearchBar } from '../../../components/common/SearchBar';
+import { FilterBar, SearchInput, Select } from '../../../components/ui';
+
+const typeOptions = [
+  { value: '', label: 'All client types' },
+  { value: 'INDIVIDUAL', label: 'Individual' },
+  { value: 'PRIVATE_LIMITED', label: 'Private limited' },
+  { value: 'PARTNERSHIP', label: 'Partnership firm' },
+  { value: 'LLP', label: 'LLP' },
+  { value: 'PROPRIETORSHIP', label: 'Proprietorship' },
+  { value: 'TRUST', label: 'Trust or NGO' },
+];
+
+const statusOptions = [
+  { value: '', label: 'All statuses' },
+  { value: 'ACTIVE', label: 'Active' },
+  { value: 'INACTIVE', label: 'Inactive' },
+];
 
 export const ClientFilters = ({ search, setSearch, clientTypeFilter, setClientTypeFilter, statusFilter, setStatusFilter }) => (
-  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
-    <SearchBar
+  <FilterBar>
+    <SearchInput
       value={search}
       onChange={setSearch}
-      placeholder="Search client name, GST, PAN, TAN, company, contact person..."
-      className="w-full sm:max-w-md"
+      placeholder="Search name, GSTIN, PAN, contact"
+      className="sm:max-w-md"
     />
-
-    <div className="flex items-center gap-3 w-full sm:w-auto">
-      <select
-        value={clientTypeFilter}
-        onChange={(e) => setClientTypeFilter(e.target.value)}
-        className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-      >
-        <option value="">All Client Types</option>
-        <option value="INDIVIDUAL">INDIVIDUAL</option>
-        <option value="PRIVATE_LIMITED">PVT LTD COMPANY</option>
-        <option value="PARTNERSHIP">PARTNERSHIP FIRM</option>
-        <option value="LLP">LLP</option>
-        <option value="PROPRIETORSHIP">PROPRIETORSHIP</option>
-        <option value="TRUST">TRUST / NGO</option>
-      </select>
-
-      <select
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-        className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-      >
-        <option value="">All Statuses</option>
-        <option value="ACTIVE">ACTIVE</option>
-        <option value="INACTIVE">INACTIVE</option>
-      </select>
+    <div className="grid grid-cols-2 sm:flex gap-3 sm:ml-auto">
+      <Select aria-label="Client type" value={clientTypeFilter} onChange={(e) => setClientTypeFilter(e.target.value)} options={typeOptions} className="sm:w-48" />
+      <Select aria-label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} options={statusOptions} className="sm:w-40" />
     </div>
-  </div>
+  </FilterBar>
 );

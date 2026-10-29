@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-
+import { ArrowLeft, KeyRound, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
+import { Button } from '../../components/ui/Button';
+import { Field, Input } from '../../components/ui/Field';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 
 export const ResetPassword = () => {
   const navigate = useNavigate();
@@ -49,93 +52,66 @@ export const ResetPassword = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-xl font-bold text-slate-100">
-          {step === 1 ? 'Verify OTP Code' : 'Set New Password'}
-        </h3>
-        <p className="text-xs text-slate-400 mt-1">
-          {step === 1
-            ? 'Enter the 6-digit code sent to your email'
-            : 'Create a new strong password for your account'}
+    <div className="space-y-7">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight text-fg">{step === 1 ? 'Enter your code' : 'Choose a new password'}</h2>
+        <p className="mt-1 text-sm text-muted">
+          {step === 1 ? 'Enter the 6-digit code sent to your email.' : 'Use at least 8 characters.'}
         </p>
       </div>
 
       {step === 1 ? (
-        <form onSubmit={handleSubmit(onVerifyOtp)} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Email</label>
-            <input
-              type="email"
-              {...register('email', { required: 'Email is required' })}
-              placeholder="user@example.com"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">6-Digit OTP Code</label>
-            <input
-              type="text"
-              {...register('otp', { required: 'OTP is required', minLength: 6, maxLength: 6 })}
-              placeholder="123456"
-              maxLength={6}
-              className="w-full text-center tracking-widest text-lg font-bold px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 focus:outline-none focus:border-indigo-500"
-            />
-            {errors.otp && <p className="text-xs text-rose-400 mt-1">{errors.otp.message}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/25 transition-all"
-          >
-            {isLoading ? 'Verifying OTP...' : 'Verify OTP'}
-          </button>
+        <form onSubmit={handleSubmit(onVerifyOtp)} className="space-y-5" noValidate>
+          <Field label="Email" error={errors.email?.message}>
+            {(p) => <Input {...p} type="email" icon={Mail} autoComplete="email" placeholder="name@firm.com" className="h-11" {...register('email', { required: 'Email is required' })} />}
+          </Field>
+          <Field label="6-digit code" error={errors.otp?.message || (errors.otp && 'Enter the 6-digit code')}>
+            {(p) => (
+              <Input
+                {...p}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                placeholder="••••••"
+                className="h-12 text-center text-lg font-semibold tracking-[0.5em]"
+                {...register('otp', { required: 'OTP is required', minLength: 6, maxLength: 6 })}
+              />
+            )}
+          </Field>
+          <Button type="submit" variant="primary" size="lg" loading={isLoading} className="w-full">
+            Verify code
+          </Button>
         </form>
       ) : (
-        <form onSubmit={handleSubmit(onResetPassword)} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">New Password</label>
-            <input
-              type="password"
-              {...register('newPassword', { required: 'New password is required', minLength: 8 })}
-              placeholder="NewPassword@123"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Confirm New Password</label>
-            <input
-              type="password"
-              {...register('confirmPassword', {
-                required: 'Confirm password is required',
-                validate: (val) => val === newPassword || 'Passwords do not match',
-              })}
-              placeholder="NewPassword@123"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-indigo-500"
-            />
-            {errors.confirmPassword && (
-              <p className="text-xs text-rose-400 mt-1">{errors.confirmPassword.message}</p>
+        <form onSubmit={handleSubmit(onResetPassword)} className="space-y-5" noValidate>
+          <Field label="New password" error={errors.newPassword?.message || (errors.newPassword && 'Use at least 8 characters')}>
+            {(p) => <PasswordInput {...p} autoComplete="new-password" className="h-11" {...register('newPassword', { required: 'New password is required', minLength: 8 })} />}
+          </Field>
+          <Field label="Confirm new password" error={errors.confirmPassword?.message}>
+            {(p) => (
+              <PasswordInput
+                {...p}
+                icon={KeyRound}
+                autoComplete="new-password"
+                className="h-11"
+                {...register('confirmPassword', {
+                  required: 'Confirm password is required',
+                  validate: (val) => val === newPassword || 'Passwords do not match',
+                })}
+              />
             )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/25 transition-all"
-          >
-            {isLoading ? 'Resetting Password...' : 'Reset Password'}
-          </button>
+          </Field>
+          <Button type="submit" variant="primary" size="lg" loading={isLoading} className="w-full">
+            Save new password
+          </Button>
         </form>
       )}
 
-      <div className="text-center pt-2">
-        <Link to="/login" className="text-xs text-indigo-400 font-semibold hover:text-indigo-300">
-          Back to Login
+      <p className="text-center">
+        <Link to="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-fg">
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Back to sign in
         </Link>
-      </div>
+      </p>
     </div>
   );
 };

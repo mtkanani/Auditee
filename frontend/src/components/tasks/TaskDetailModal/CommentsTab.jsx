@@ -1,54 +1,64 @@
 import React from 'react';
-import { Paperclip, Send } from 'lucide-react';
+import { MessageSquare, Paperclip, Send } from 'lucide-react';
+import { Avatar } from '../../common/Avatar';
+import { Button, Field, Input, Textarea } from '../../ui';
 
-export const CommentsTab = ({ task, handleAddComment, commentText, setCommentText, commentFileUrl, setCommentFileUrl }) => (
-  <div className="space-y-6">
-    <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-1">
-      {task?.comments?.map((c) => (
-        <div key={c.id} className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-indigo-400">{c.commenterName} ({c.commenterRole})</span>
-            <span className="text-[10px] text-slate-500">{new Date(c.createdAt).toLocaleString()}</span>
-          </div>
-          <p className="text-xs text-slate-200">{c.comment}</p>
-          {c.fileUrl && (
-            <a href={c.fileUrl} target="_blank" rel="noreferrer" className="text-[10px] text-purple-400 hover:underline flex items-center gap-1 mt-1">
-              <Paperclip size="1em" /> View Attached File
-            </a>
-          )}
+const when = (d) => new Date(d).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const roleLabel = (r = '') => r.toLowerCase().replace(/_/g, ' ');
+
+export const CommentsTab = ({ task, handleAddComment, commentText, setCommentText, commentFileUrl, setCommentFileUrl }) => {
+  const comments = task?.comments || [];
+  return (
+    <div className="space-y-5">
+      {comments.length > 0 ? (
+        <ol className="space-y-3">
+          {comments.map((c) => {
+            const [first = '', last = ''] = (c.commenterName || '').split(' ');
+            return (
+              <li key={c.id} className="flex gap-3">
+                <Avatar firstName={first} lastName={last} size="sm" className="shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0 rounded-2xl rounded-tl-md border border-line bg-surface px-4 py-3 space-y-1">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                    <span className="text-sm font-medium text-fg">
+                      {c.commenterName} <span className="text-xs font-normal text-subtle capitalize">· {roleLabel(c.commenterRole)}</span>
+                    </span>
+                    <span className="text-xs text-subtle tabular-nums">{when(c.createdAt)}</span>
+                  </div>
+                  <p className="text-sm text-muted whitespace-pre-line">{c.comment}</p>
+                  {c.fileUrl && (
+                    <a href={c.fileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-accent-fg hover:underline">
+                      <Paperclip className="w-3.5 h-3.5" aria-hidden="true" /> Attached file
+                    </a>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <div className="flex flex-col items-center py-10 text-center rounded-2xl border border-dashed border-line">
+          <MessageSquare className="w-5 h-5 text-subtle mb-2" aria-hidden="true" />
+          <p className="text-sm text-muted">No comments yet. Ask a question or leave a note below.</p>
         </div>
-      ))}
-
-      {(!task?.comments || task.comments.length === 0) && (
-        <p className="text-xs text-slate-500 py-6 text-center">No comments yet. Post a question or note below.</p>
       )}
-    </div>
 
-    <form onSubmit={handleAddComment} className="space-y-3 pt-3 border-t border-slate-800">
-      <textarea
-        required
-        rows={2}
-        placeholder="Write a comment or discussion note..."
-        value={commentText}
-        onChange={(e) => setCommentText(e.target.value)}
-        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-purple-500"
-      />
-      <div className="flex items-center justify-between gap-3">
-        <input
-          type="text"
-          placeholder="Optional File URL attachment..."
-          value={commentFileUrl}
-          onChange={(e) => setCommentFileUrl(e.target.value)}
-          className="flex-1 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300"
-        />
-        <button
-          type="submit"
-          className="py-1.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5"
-        >
-          <Send size="1em" />
-          <span>Post Comment</span>
-        </button>
-      </div>
-    </form>
-  </div>
-);
+      <form onSubmit={handleAddComment} className="space-y-3 pt-4 border-t border-line">
+        <Field label="Add a comment">
+          {(p) => <Textarea {...p} required rows={2} placeholder="Write a comment or note" value={commentText} onChange={(e) => setCommentText(e.target.value)} />}
+        </Field>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1">
+            <Input
+              aria-label="File link (optional)"
+              icon={Paperclip}
+              placeholder="File link (optional)"
+              value={commentFileUrl}
+              onChange={(e) => setCommentFileUrl(e.target.value)}
+            />
+          </div>
+          <Button type="submit" variant="primary" icon={Send}>Post</Button>
+        </div>
+      </form>
+    </div>
+  );
+};

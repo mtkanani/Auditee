@@ -94,6 +94,11 @@ export const firmAdminService = {
     return res.data;
   },
 
+  getClientDocumentDownload: async (clientId, documentId) => {
+    const res = await axiosInstance.get(`/firm-admin/clients/${clientId}/documents/${documentId}/download`);
+    return res.data;
+  },
+
   deleteClientDocument: async (clientId, documentId) => {
     const res = await axiosInstance.delete(`/firm-admin/clients/${clientId}/documents/${documentId}`);
     return res.data;

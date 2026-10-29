@@ -32,10 +32,19 @@ export const useVaultDocuments = (scope, filters = {}) => {
 // MUTATIONS
 // ----------------------------------------------------
 
+/**
+ * Uploads a file to storage, then saves the vault record.
+ * mutate({ file, details, onProgress }): details are the form fields (title, category, clientId, ...).
+ */
 export const useUploadDocument = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data) => documentService.uploadDocument(data),
+    mutationFn: async ({ file, details, onProgress }) => {
+      const { data: signed } = await documentService.getUploadUrl({ fileName: file.name, fileSize: file.size });
+      const { storageKey, uploadUrl, contentType } = signed.data;
+      await documentService.putFile(uploadUrl, file, contentType, onProgress);
+      return documentService.uploadDocument({ ...details, storageKey, fileName: file.name, fileSize: file.size, mimeType: contentType });
+    },
     onSuccess: () => {
       toast.success('📁 Document uploaded to vault successfully!');
       queryClient.invalidateQueries({ queryKey: documentKeys.all });
@@ -46,6 +55,25 @@ export const useUploadDocument = () => {
     },
   });
 };
+
+/**
+ * Fetches a fresh download link and starts the download. The link is attachment-only, so
+ * pointing the page at it downloads the file without leaving the app. Outside links open in a new tab.
+ */
+export const useDownloadDocument = () =>
+  useMutation({
+    mutationFn: async (doc) => {
+      const { data } = await documentService.getDownloadUrl(doc.id);
+      return data.data;
+    },
+    onSuccess: ({ url, external }) => {
+      if (external) window.open(url, '_blank', 'noopener,noreferrer');
+      else window.location.assign(url);
+    },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || 'Could not download this file.');
+    },
+  });
 
 export const useDeleteDocument = () => {
   const queryClient = useQueryClient();

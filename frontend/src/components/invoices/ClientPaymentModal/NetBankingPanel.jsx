@@ -1,52 +1,60 @@
 import React from 'react';
+import { TriangleAlert } from 'lucide-react';
+import { Field, Input } from '../../ui';
+import { cn } from '../../../lib/cn';
+
+const BANKS = ['HDFC Bank', 'State Bank of India', 'ICICI Bank', 'Axis Bank', 'Punjab National', 'Kotak Bank'];
+
+const Row = ({ label, value }) => (
+  <div className="min-w-0">
+    <dt className="text-xs text-subtle">{label}</dt>
+    <dd className="text-sm font-medium text-fg truncate">{value || '—'}</dd>
+  </div>
+);
 
 export const NetBankingPanel = ({ selectedBank, setSelectedBank, bankDetails, utrNumber, setUtrNumber }) => (
-  <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
-    <div>
-      <label className="block text-xs font-semibold text-slate-300 mb-2">Select Your Bank</label>
-      <div className="grid grid-cols-3 gap-2">
-        {['HDFC Bank', 'State Bank of India', 'ICICI Bank', 'Axis Bank', 'Punjab National', 'Kotak Bank'].map((bank) => (
+  <div className="p-4 rounded-2xl bg-sunken/50 border border-line space-y-4">
+    <fieldset>
+      <legend className="block text-sm font-medium text-fg mb-2">Your bank</legend>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup">
+        {BANKS.map((bank) => (
           <button
             key={bank}
             type="button"
+            role="radio"
+            aria-checked={selectedBank === bank}
             onClick={() => setSelectedBank(bank)}
-            className={`p-3 rounded-xl border text-xs font-bold transition-all text-center ${
-              selectedBank === bank
-                ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
-            }`}
+            className={cn(
+              'h-10 px-2 rounded-xl border text-xs font-medium transition-colors truncate',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+              selectedBank === bank ? 'border-accent bg-accent-soft text-fg' : 'border-line bg-surface text-muted hover:text-fg'
+            )}
           >
             {bank}
           </button>
         ))}
       </div>
-    </div>
+    </fieldset>
 
-    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-1.5">
-      <span className="font-bold text-slate-200 block">Firm Bank Account Details (NEFT/RTGS):</span>
+    <div className="p-3 rounded-xl bg-surface border border-line">
+      <p className="text-sm font-medium text-fg mb-2">Firm account for NEFT / RTGS / IMPS</p>
       {bankDetails.bankName || bankDetails.accountNumber ? (
-        <div className="grid grid-cols-2 gap-2 text-slate-400 text-[11px]">
-          <div>Bank: <strong className="text-slate-200">{bankDetails.bankName || 'N/A'}</strong></div>
-          <div>Account #: <strong className="text-slate-200">{bankDetails.accountNumber || 'N/A'}</strong></div>
-          <div>IFSC Code: <strong className="text-slate-200">{bankDetails.ifscCode || 'N/A'}</strong></div>
-          <div>Branch: <strong className="text-slate-200">{bankDetails.branchName || 'N/A'}</strong></div>
-        </div>
+        <dl className="grid grid-cols-2 gap-3">
+          <Row label="Bank" value={bankDetails.bankName} />
+          <Row label="Account number" value={bankDetails.accountNumber} />
+          <Row label="IFSC" value={bankDetails.ifscCode} />
+          <Row label="Branch" value={bankDetails.branchName} />
+        </dl>
       ) : (
-        <p className="text-[11px] text-amber-400 italic">
-          ⚠️ Bank details have not been configured by your CA firm admin yet.
+        <p className="flex items-center gap-2 text-xs text-warning">
+          <TriangleAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
+          Your firm hasn't added its bank details yet.
         </p>
       )}
     </div>
 
-    <div>
-      <label className="block text-xs font-semibold text-slate-300 mb-1">Bank Reference / UTR Number</label>
-      <input
-        type="text"
-        placeholder="e.g. UTR-987654321"
-        value={utrNumber}
-        onChange={(e) => setUtrNumber(e.target.value)}
-        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-      />
-    </div>
+    <Field label="Bank reference (UTR)">
+      {(p) => <Input {...p} value={utrNumber} onChange={(e) => setUtrNumber(e.target.value)} />}
+    </Field>
   </div>
 );

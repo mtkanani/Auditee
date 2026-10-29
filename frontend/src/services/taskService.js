@@ -69,6 +69,12 @@ export const taskService = {
     return res.data;
   },
 
+  // Short-lived link for a stored attachment, after the API's access check
+  getDocumentDownload: async (taskId, documentId) => {
+    const res = await axiosInstance.get(`${getBaseUrl()}/${taskId}/documents/${documentId}/download`);
+    return res.data;
+  },
+
   // Audit Templates
   getTemplates: async () => {
     const res = await axiosInstance.get(`${getBaseUrl()}/templates`);
