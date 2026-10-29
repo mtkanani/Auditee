@@ -41,8 +41,11 @@ const allowedOrigins = [
   'https://auditee.vercel.app',
 ];
 
+// Origins compare without a trailing slash, so "https://app.example.com/" in FRONTEND_URL still matches.
+const normalizeOrigin = (o) => o.trim().replace(/\/+$/, '');
+
 if (process.env.FRONTEND_URL) {
-  const envOrigins = process.env.FRONTEND_URL.split(',').map((o) => o.trim());
+  const envOrigins = process.env.FRONTEND_URL.split(',').map(normalizeOrigin).filter(Boolean);
   allowedOrigins.push(...envOrigins);
 }
 
@@ -50,7 +53,10 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (e.g. mobile apps, curl, postman, same-origin)
     if (!origin) return callback(null, true);
-    return callback(null, origin);
+    if (allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, origin);
+    // Unknown site: send no CORS headers, so the browser blocks it. Add the site to FRONTEND_URL to allow it.
+    console.warn(`CORS: blocked request from origin ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
