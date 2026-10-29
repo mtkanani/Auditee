@@ -58,26 +58,26 @@ export const reportCategories = [
   {
     categoryName: 'Executive & Overview',
     tabs: [
-      { id: 'overview', label: 'Executive Overview', icon: Activity, color: 'text-indigo-400' },
-      { id: 'custom', label: 'Custom Builder', icon: SlidersVertical, color: 'text-indigo-400' },
+      { id: 'overview', label: 'Executive Overview', icon: Activity },
+      { id: 'custom', label: 'Custom Builder', icon: SlidersVertical },
     ],
   },
   {
     categoryName: 'Operations & Workload',
     tabs: [
-      { id: 'pending-tasks', label: 'Pending Tasks', icon: Clock, color: 'text-amber-400' },
-      { id: 'completed-tasks', label: 'Completed Tasks', icon: CircleCheckBig, color: 'text-emerald-400' },
-      { id: 'employee-performance', label: 'Staff Performance', icon: User, color: 'text-purple-400' },
-      { id: 'compliance-report', label: 'Compliance Audit', icon: TriangleAlert, color: 'text-amber-400' },
+      { id: 'pending-tasks', label: 'Pending Tasks', icon: Clock },
+      { id: 'completed-tasks', label: 'Completed Tasks', icon: CircleCheckBig },
+      { id: 'employee-performance', label: 'Staff Performance', icon: User },
+      { id: 'compliance-report', label: 'Compliance Audit', icon: TriangleAlert },
     ],
   },
   {
     categoryName: 'Finance & Clients',
     tabs: [
-      { id: 'client-report', label: 'Client Directory', icon: Briefcase, color: 'text-blue-400' },
-      { id: 'billing-report', label: 'Billing Invoices', icon: FileText, color: 'text-cyan-400' },
-      { id: 'revenue-report', label: 'Revenue Trends', icon: TrendingUp, color: 'text-emerald-400' },
-      { id: 'outstanding-payments', label: 'Outstanding Dues', icon: DollarSign, color: 'text-rose-400' },
+      { id: 'client-report', label: 'Client Directory', icon: Briefcase },
+      { id: 'billing-report', label: 'Billing Invoices', icon: FileText },
+      { id: 'revenue-report', label: 'Revenue Trends', icon: TrendingUp },
+      { id: 'outstanding-payments', label: 'Outstanding Dues', icon: DollarSign },
     ],
   },
 ];
@@ -94,17 +94,18 @@ export const DATE_RANGE_PILLS = [
 ];
 
 export const CUSTOM_ENTITIES = [
-  { id: 'tasks', label: 'Tasks & Workflow', desc: 'Audit tasks, assignees & deadlines', icon: Clock, color: 'text-amber-400' },
-  { id: 'clients', label: 'Client Directory', desc: 'Client profiles & status', icon: Briefcase, color: 'text-blue-400' },
-  { id: 'invoices', label: 'Invoices & Billing', desc: 'Financial invoices & balances', icon: FileText, color: 'text-cyan-400' },
-  { id: 'employees', label: 'Staff & Staffing', desc: 'Employee productivity & roles', icon: Users, color: 'text-purple-400' },
+  { id: 'tasks', label: 'Tasks & Workflow', desc: 'Audit tasks, assignees & deadlines', icon: Clock },
+  { id: 'clients', label: 'Client Directory', desc: 'Client profiles & status', icon: Briefcase },
+  { id: 'invoices', label: 'Invoices & Billing', desc: 'Financial invoices & balances', icon: FileText },
+  { id: 'employees', label: 'Staff & Staffing', desc: 'Employee productivity & roles', icon: Users },
 ];
 
+// Headline numbers above the report tabs. tone feeds StatCard.
 export const getKpiList = (summary) => [
-  { label: 'Pending Tasks', val: summary.totalPendingTasks, icon: Clock, color: 'from-amber-500/20 to-amber-500/5', border: 'border-amber-500/30', text: 'text-amber-400' },
-  { label: 'Completed', val: summary.totalCompletedTasks, icon: CircleCheckBig, color: 'from-emerald-500/20 to-emerald-500/5', border: 'border-emerald-500/30', text: 'text-emerald-400' },
-  { label: 'Active Clients', val: summary.totalClients, icon: Briefcase, color: 'from-blue-500/20 to-blue-500/5', border: 'border-blue-500/30', text: 'text-blue-400' },
-  { label: 'Firm Staff', val: summary.totalEmployees, icon: Users, color: 'from-purple-500/20 to-purple-500/5', border: 'border-purple-500/30', text: 'text-purple-400' },
-  { label: 'Total Billed', val: `₹${(summary.totalBilled || 0).toLocaleString()}`, icon: TrendingUp, color: 'from-cyan-500/20 to-cyan-500/5', border: 'border-cyan-500/30', text: 'text-cyan-400' },
-  { label: 'Outstanding', val: `₹${(summary.outstandingAmount || 0).toLocaleString()}`, icon: DollarSign, color: 'from-rose-500/20 to-rose-500/5', border: 'border-rose-500/30', text: 'text-rose-400' },
+  { label: 'Pending tasks', val: summary.totalPendingTasks, icon: Clock, tone: 'warning' },
+  { label: 'Completed tasks', val: summary.totalCompletedTasks, icon: CircleCheckBig, tone: 'success' },
+  { label: 'Active clients', val: summary.totalClients, icon: Briefcase, tone: 'accent' },
+  { label: 'Staff', val: summary.totalEmployees, icon: Users, tone: 'neutral' },
+  { label: 'Total billed', val: `₹${(summary.totalBilled || 0).toLocaleString('en-IN')}`, icon: TrendingUp, tone: 'accent' },
+  { label: 'Outstanding', val: `₹${(summary.outstandingAmount || 0).toLocaleString('en-IN')}`, icon: DollarSign, tone: 'danger' },
 ];
