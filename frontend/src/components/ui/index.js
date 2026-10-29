@@ -1,6 +1,7 @@
 // Auditee UI kit. Built on the theme tokens in src/index.css, so every piece works in light and dark.
 export { Button } from './Button';
 export { Field, Input, Select, Textarea } from './Field';
+export { PasswordInput } from './PasswordInput';
 export { controlClass } from './controlClass';
 export { Badge, StatusTag } from './Badge';
 export { Card, StatCard } from './Card';
