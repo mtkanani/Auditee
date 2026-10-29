@@ -6,7 +6,9 @@ Roles: SUPER_ADMIN, FIRM_ADMIN, USER/EMPLOYEE, CLIENT.
 ## Layout
 - `Backend/` — Node 18+, Express, Prisma (PostgreSQL). Entry `src/index.js`, app `src/app.js`. Feature modules in `src/modules/<module>/` (`*.routes.js`, `*.controller.js`, `*.service.js`, `*.repository.js`, `*.validation.js`).
 - `frontend/` — React 19, Vite 8, Tailwind 4 (`@tailwindcss/vite`), React Router 7, TanStack React Query 5.
-- Deploy: frontend on Vercel (`vercel.json`) or nginx (`frontend/nginx.conf`); backend on Railway.
+- Deploy: frontend on Vercel (`vercel.json`) or nginx (`frontend/nginx.conf`); backend on a Dokploy VPS, built from `Backend/Dockerfile` (port 8080). Domains go through Cloudflare.
+  - Backend env vars are set in Dokploy → app → Environment (redeploy after changes). The frontend needs `VITE_API_URL` set in Vercel (baked in at build time, so redeploy after changes); without it a deployed build cannot reach the API.
+  - There is no Railway setup any more; don't add Railway URLs or config back.
 
 ## Commands
 - Frontend: `cd frontend && npm run dev | npm run build | npx oxlint src`
