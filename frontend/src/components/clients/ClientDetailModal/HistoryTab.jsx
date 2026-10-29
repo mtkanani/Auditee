@@ -1,29 +1,34 @@
 import React from 'react';
+import { History } from 'lucide-react';
 
-export const HistoryTab = ({ client }) => (
-  <div className="space-y-4">
-    <h4 className="text-sm font-bold text-slate-200">Chronological Client Audit & Activity Timeline</h4>
+export const HistoryTab = ({ client }) => {
+  const logs = client.activityLogs || [];
 
-    <div className="space-y-3 relative border-l border-slate-800 ml-4 pl-6">
-      {client.activityLogs?.map((log) => (
-        <div key={log.id} className="relative group">
-          <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-indigo-500 border-2 border-slate-900" />
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-indigo-400">{log.action}</span>
-              <span className="text-[10px] text-slate-500">
-                {new Date(log.createdAt).toLocaleString()}
-              </span>
-            </div>
-            <p className="text-slate-300">{log.description}</p>
-            <p className="text-[10px] text-slate-500">By {log.performedName || 'System'}</p>
+  if (logs.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-line px-5 py-10 text-center">
+        <History className="w-6 h-6 text-subtle mx-auto mb-2" aria-hidden="true" />
+        <p className="text-sm font-medium text-fg">No activity yet</p>
+        <p className="text-sm text-muted">Changes to this client will be listed here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ol className="relative ml-2 border-l border-line space-y-5">
+      {logs.map((log) => (
+        <li key={log.id} className="relative pl-6">
+          <span className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-accent ring-4 ring-surface" aria-hidden="true" />
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+            <p className="text-sm font-medium text-fg">{log.action}</p>
+            <time className="text-xs text-subtle">
+              {new Date(log.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+            </time>
           </div>
-        </div>
+          {log.description && <p className="text-sm text-muted mt-0.5">{log.description}</p>}
+          <p className="text-xs text-subtle mt-0.5">by {log.performedName || 'System'}</p>
+        </li>
       ))}
-
-      {(!client.activityLogs || client.activityLogs.length === 0) && (
-        <p className="text-xs text-slate-500">No historical activity recorded yet.</p>
-      )}
-    </div>
-  </div>
-);
+    </ol>
+  );
+};
