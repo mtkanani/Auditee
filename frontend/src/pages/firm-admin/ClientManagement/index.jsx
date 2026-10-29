@@ -1,11 +1,11 @@
 import React from 'react';
-import { PageHeader } from '../../../components/common/PageHeader';
-import { DataTable } from '../../../components/common/DataTable';
+import { Plus, UserPlus } from 'lucide-react';
 import { Pagination } from '../../../components/common/Pagination';
 import { ConfirmationModal } from '../../../components/common/ConfirmationModal';
+import { EmptyState } from '../../../components/common/EmptyState';
 import { ClientDetailModal } from '../../../components/clients/ClientDetailModal';
 import { AddMasterClientModal } from '../../../components/clients/AddMasterClientModal';
-import { Plus } from 'lucide-react';
+import { Button, PageHeader, Table } from '../../../components/ui';
 import { useClientManagement } from './useClientManagement';
 import { getClientColumns } from './clientColumns';
 import { ClientStats } from './ClientStats';
@@ -23,6 +23,7 @@ export const ClientManagement = () => {
     totalRecords,
     setPage,
     selectedClient,
+    setSelectedClient,
     isDetailModalOpen,
     setIsDetailModalOpen,
     isCreateModalOpen,
@@ -33,66 +34,56 @@ export const ClientManagement = () => {
   } = view;
 
   const columns = getClientColumns(view);
+  const openClient = (client) => {
+    setSelectedClient(client);
+    setIsDetailModalOpen(true);
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <PageHeader
-        title="Client Master Management"
-        subtitle="360-degree client hub: Tax Identifiers (PAN, GST, TAN, CIN), Subscribed CA Services, Billing & Master Documents"
+        title="Clients"
+        description="Every client's tax IDs, services, billing and documents in one place."
         actions={
-          <button
-            onClick={() => {
-              setIsCreateModalOpen(true);
-            }}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-500/25 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4"  />
-            <span>Add Master Client</span>
-          </button>
+          <Button variant="primary" icon={Plus} onClick={() => setIsCreateModalOpen(true)}>
+            Add client
+          </Button>
         }
       />
 
-      {/* Top Metrics Cards */}
       <ClientStats {...view} />
 
-      {/* Filter Bar */}
       <ClientFilters {...view} />
 
-      {/* Main Client Table */}
-      <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-        <DataTable columns={columns} data={clients} isLoading={isLoading} />
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalRecords={totalRecords}
-          onPageChange={setPage}
-        />
-      </div>
-
-      {/* 360-Degree Client Detail Master Modal */}
-      <ClientDetailModal
-        clientId={selectedClient?.id}
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
+      <Table
+        columns={columns}
+        data={clients}
+        isLoading={isLoading}
+        onRowClick={openClient}
+        emptyState={
+          <EmptyState
+            icon={UserPlus}
+            title="No clients found"
+            description="Try a different search, or add your first client to start tracking their filings."
+            action={<Button variant="primary" icon={Plus} onClick={() => setIsCreateModalOpen(true)}>Add client</Button>}
+          />
+        }
+        footer={<Pagination currentPage={page} totalPages={totalPages} totalRecords={totalRecords} limit={10} onPageChange={setPage} />}
       />
 
-      {/* Create Master Client Gated Verification Modal */}
-      <AddMasterClientModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
+      <ClientDetailModal clientId={selectedClient?.id} isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} />
 
-      {/* Edit Client Modal */}
+      <AddMasterClientModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+
       <EditClientModal {...view} />
 
-      {/* Delete Confirmation Modal */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteClient}
         isLoading={deleteClientMutation.isPending}
-        title="Delete Client Master Account"
-        message={`Are you sure you want to delete client "${selectedClient?.clientName}"?`}
+        title="Delete client"
+        message={`Delete the client "${selectedClient?.clientName}"?`}
       />
     </div>
   );
