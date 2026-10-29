@@ -1,42 +1,52 @@
 import React from 'react';
+import { longDate } from './money';
+
+const Label = ({ children }) => <p className="text-xs font-medium text-subtle mb-1.5">{children}</p>;
 
 export const InvoiceSheetHeader = ({ invoice }) => (
   <>
-    <div className="flex justify-between items-start border-b border-slate-800 pb-6">
-      <div>
-        <h2 className="text-xl font-black text-indigo-400 tracking-tight">{invoice.firm?.firmName || 'CHARTERED ACCOUNTANTS FIRM'}</h2>
-        <p className="text-xs text-slate-400 mt-1">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 border-b border-line pb-6">
+      <div className="min-w-0">
+        <h2 className="text-lg font-semibold text-fg tracking-tight">{invoice.firm?.firmName || 'CHARTERED ACCOUNTANTS FIRM'}</h2>
+        <p className="text-sm text-muted mt-1">
           {invoice.firm?.address ? `${invoice.firm.address}, ` : ''}
           {invoice.firm?.city} {invoice.firm?.state}
         </p>
-        <p className="text-xs text-slate-400">Firm GSTIN: <strong className="text-slate-200">{invoice.firm?.gstNumber || '24ABCDE1234F1Z5'}</strong></p>
-        <p className="text-xs text-slate-400">Email: {invoice.firm?.email || 'admin@caworkstation.in'}</p>
+        <p className="text-sm text-muted">
+          GSTIN <span className="font-medium text-fg">{invoice.firm?.gstNumber || '24ABCDE1234F1Z5'}</span>
+        </p>
+        <p className="text-sm text-muted">{invoice.firm?.email || 'admin@caworkstation.in'}</p>
       </div>
 
-      <div className="text-right">
-        <span className="text-xl font-black uppercase text-indigo-400 block">
-          {invoice.invoiceType === 'PROFORMA' ? 'PROFORMA INVOICE' : 'TAX INVOICE'}
-        </span>
-        <p className="text-sm font-extrabold text-slate-100 mt-1">{invoice.invoiceNumber}</p>
-        <p className="text-xs text-slate-400">Issue Date: {new Date(invoice.issueDate).toLocaleDateString()}</p>
-        <p className="text-xs text-amber-400 font-bold">Due Date: {new Date(invoice.dueDate).toLocaleDateString()}</p>
+      <div className="sm:text-right shrink-0">
+        <p className="text-xs font-semibold uppercase tracking-wider text-accent-fg">
+          {invoice.invoiceType === 'PROFORMA' ? 'Proforma invoice' : 'Tax invoice'}
+        </p>
+        <p className="text-lg font-semibold text-fg tabular-nums mt-1">{invoice.invoiceNumber}</p>
+        <p className="text-sm text-muted">Issued {longDate(invoice.issueDate)}</p>
+        <p className="text-sm font-medium text-warning">Due {longDate(invoice.dueDate)}</p>
       </div>
     </div>
 
-    {/* Billed To / Client Details */}
-    <div className="grid grid-cols-2 gap-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800/80">
-      <div>
-        <span className="text-[10px] uppercase font-extrabold text-slate-500 block">Billed To (Client):</span>
-        <p className="text-sm font-extrabold text-slate-100 mt-1">{invoice.client?.companyName || invoice.client?.clientName}</p>
-        <p className="text-xs text-slate-400">{invoice.client?.email} • {invoice.client?.phone}</p>
-        <p className="text-xs text-slate-400">GSTIN: <strong className="text-slate-200">{invoice.client?.gstNumber || 'N/A'}</strong></p>
-        <p className="text-xs text-slate-400">PAN: <strong className="text-slate-200">{invoice.client?.panNumber || 'N/A'}</strong></p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="p-4 rounded-xl bg-sunken/60 border border-line">
+        <Label>Billed to</Label>
+        <p className="font-medium text-fg">{invoice.client?.companyName || invoice.client?.clientName}</p>
+        <p className="text-sm text-muted">{[invoice.client?.email, invoice.client?.phone].filter(Boolean).join(' · ')}</p>
+        <p className="text-sm text-muted">
+          GSTIN <span className="font-medium text-fg">{invoice.client?.gstNumber || 'N/A'}</span>
+          {' · '}PAN <span className="font-medium text-fg">{invoice.client?.panNumber || 'N/A'}</span>
+        </p>
       </div>
 
-      <div>
-        <span className="text-[10px] uppercase font-extrabold text-slate-500 block">Supply Details:</span>
-        <p className="text-xs text-slate-300 mt-1">Place of Supply: <strong>{invoice.placeOfSupply || '24-GUJARAT'}</strong></p>
-        <p className="text-xs text-slate-300">GST Type: <strong>{invoice.isInterState ? 'Inter-State (IGST)' : 'Intra-State (CGST + SGST)'}</strong></p>
+      <div className="p-4 rounded-xl bg-sunken/60 border border-line">
+        <Label>Supply</Label>
+        <p className="text-sm text-muted">
+          Place of supply <span className="font-medium text-fg">{invoice.placeOfSupply || '24-GUJARAT'}</span>
+        </p>
+        <p className="text-sm text-muted">
+          GST <span className="font-medium text-fg">{invoice.isInterState ? 'Inter-state (IGST)' : 'Intra-state (CGST + SGST)'}</span>
+        </p>
       </div>
     </div>
   </>

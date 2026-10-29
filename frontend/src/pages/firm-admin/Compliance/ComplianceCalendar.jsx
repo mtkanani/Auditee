@@ -1,98 +1,92 @@
 import React from 'react';
-import { Bell, Calendar, Clock, Zap } from 'lucide-react';
-import { CardSkeleton } from '../../../components/common/Skeleton';
+import { Bell, CalendarDays, ShieldCheck, TriangleAlert, Zap } from 'lucide-react';
+import { Badge, Button, Card, Select } from '../../../components/ui';
 import { EmptyState } from '../../../components/common/EmptyState';
+import { dueLabel } from '../../../utils/dueDate';
+import { STATUSES, categoryLabel, shortDate } from './options';
 
-export const ComplianceCalendar = ({
-  isLoading,
-  items,
-  handleStatusChange,
-  setSelectedItem,
-  setIsTaskModalOpen,
-  handleSendReminder,
-}) => (
-  <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 shadow-xl">
-    <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-      <Calendar size="1em" className="text-indigo-400"  />
-      <span>Statutory Compliance Calendar Grid</span>
-    </h3>
-
-    {isLoading ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <CardSkeleton key={i} />
-        ))}
+const DeadlineCard = ({ item, handleStatusChange, onConvert, handleSendReminder }) => {
+  const due = item.status === 'FILED' ? { text: 'Filed', tone: 'success' } : dueLabel(item.dueDate);
+  return (
+    <article className="flex flex-col rounded-2xl border border-line bg-surface p-4 shadow-card transition-all duration-150 hover:shadow-raised hover:border-line-strong">
+      <div className="flex items-center justify-between gap-2">
+        <Badge tone="accent">{categoryLabel(item.category)}</Badge>
+        <Badge tone={due.tone} dot>{due.text}</Badge>
       </div>
-    ) : items.length === 0 ? (
-      <EmptyState
-        title="No statutory compliance items found"
-        description="Click 'Generate Deadlines' above to auto-populate Indian tax due dates."
-      />
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/40 transition-all space-y-2.5 shadow-lg group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                {item.category}
-              </span>
-              <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                <Clock size="1em" /> {new Date(item.dueDate).toLocaleDateString()}
-              </span>
-            </div>
 
-            <h4 className="text-xs font-extrabold text-slate-100 group-hover:text-indigo-400 transition-colors line-clamp-2">
-              {item.title}
-            </h4>
-            <p className="text-[11px] text-slate-400">
-              {item.period || 'Period N/A'} • {item.client?.companyName || item.client?.clientName || 'All Clients'}
-            </p>
+      <h4 className="mt-3 text-sm font-semibold text-fg line-clamp-2">{item.title}</h4>
+      <p className="mt-0.5 text-xs text-subtle truncate">
+        {[item.period, item.client?.companyName || item.client?.clientName || 'All clients'].filter(Boolean).join(' · ')}
+      </p>
+      <p className="mt-2 flex items-center gap-1.5 text-xs text-muted">
+        <CalendarDays className="w-3.5 h-3.5" aria-hidden="true" /> {shortDate(item.dueDate)}
+      </p>
 
-            {item.penaltyDetails && (
-              <p className="text-[10px] text-rose-300 font-semibold p-2 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                ⚠️ {item.penaltyDetails}
-              </p>
-            )}
+      {item.penaltyDetails && (
+        <p className="mt-3 flex gap-1.5 rounded-lg bg-warning-soft px-2.5 py-2 text-xs text-warning">
+          <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-px" aria-hidden="true" />
+          {item.penaltyDetails}
+        </p>
+      )}
 
-            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-              <select
-                value={item.status || 'UPCOMING'}
-                onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                className="text-[10px] bg-slate-900 border border-slate-800 rounded-md px-2 py-1 text-slate-200 font-bold"
-              >
-                <option value="UPCOMING">UPCOMING</option>
-                <option value="IN_PROGRESS">IN PROGRESS</option>
-                <option value="FILED">FILED</option>
-                <option value="OVERDUE">OVERDUE</option>
-              </select>
+      <div className="mt-auto pt-4 flex items-center gap-2">
+        <Select
+          aria-label={`Status of ${item.title}`}
+          value={item.status || 'UPCOMING'}
+          onChange={(e) => handleStatusChange(item.id, e.target.value)}
+          options={STATUSES}
+          className="h-8 text-xs"
+        />
+        <Button size="sm" variant="soft" icon={Zap} onClick={() => onConvert(item)} className="shrink-0">
+          Make task
+        </Button>
+        <Button size="icon-sm" variant="ghost" aria-label={`Send reminder for ${item.title}`} title="Post a reminder on the notice board" onClick={() => handleSendReminder(item)} className="shrink-0">
+          <Bell className="w-4 h-4" />
+        </Button>
+      </div>
+    </article>
+  );
+};
 
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    setSelectedItem(item);
-                    setIsTaskModalOpen(true);
-                  }}
-                  className="py-1 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] flex items-center gap-1"
-                >
-                  <Zap size="1em" />
-                  <span>Convert Task</span>
-                </button>
+/** Card grid of filings, nearest deadline first (server order). */
+export const ComplianceCalendar = ({ isLoading, items, handleStatusChange, setSelectedItem, setIsTaskModalOpen, handleSendReminder }) => {
+  const onConvert = (item) => {
+    setSelectedItem(item);
+    setIsTaskModalOpen(true);
+  };
 
-                <button
-                  onClick={() => handleSendReminder(item)}
-                  className="p-1 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                  title="Send Reminder"
-                >
-                  <Bell className="w-3.5 h-3.5"  />
-                </button>
-              </div>
-            </div>
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-line bg-surface p-4 space-y-3">
+            <div className="flex justify-between"><div className="h-6 w-16 rounded-full bg-hover animate-pulse" /><div className="h-6 w-24 rounded-full bg-hover animate-pulse" /></div>
+            <div className="h-4 w-3/4 rounded-full bg-hover animate-pulse" />
+            <div className="h-3 w-1/2 rounded-full bg-hover animate-pulse" />
+            <div className="h-8 rounded-xl bg-hover animate-pulse" />
           </div>
         ))}
       </div>
-    )}
-  </div>
-);
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <Card>
+        <EmptyState
+          icon={ShieldCheck}
+          title="No filings here"
+          description="Use 'Generate statutory deadlines' above to add this month's GST, TDS and PF due dates, or change the filters."
+        />
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      {items.map((item) => (
+        <DeadlineCard key={item.id} item={item} handleStatusChange={handleStatusChange} onConvert={onConvert} handleSendReminder={handleSendReminder} />
+      ))}
+    </div>
+  );
+};

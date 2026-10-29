@@ -1,65 +1,39 @@
 import React from 'react';
-import { Inbox } from 'lucide-react';
-import { SearchBar } from '../../../components/common/SearchBar';
+import { Inbox, LayoutGrid, List } from 'lucide-react';
+import { FilterBar, SearchInput, Select, Tabs } from '../../../components/ui';
 
+const statusOptions = [
+  { value: '', label: 'All statuses' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'UNDER_REVIEW', label: 'Under review' },
+  { value: 'COMPLETED', label: 'Completed' },
+];
+
+/** View switch (board / list / client requests) plus search and status filter. */
 export const TaskViewTabs = ({ activeTab, setActiveTab, clientRequests, search, setSearch, statusFilter, setStatusFilter }) => (
-  <div className="flex items-center justify-between gap-4 p-2 rounded-2xl bg-slate-900/60 border border-slate-800">
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => setActiveTab('kanban')}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-          activeTab === 'kanban'
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-            : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        Kanban Board View
-      </button>
-
-      <button
-        onClick={() => setActiveTab('table')}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-          activeTab === 'table'
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-            : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        Detailed List View
-      </button>
-
-      <button
-        onClick={() => setActiveTab('requests')}
-        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-          activeTab === 'requests'
-            ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/20'
-            : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        <Inbox size="1em" />
-        <span>Client Work Requests ({clientRequests.length})</span>
-      </button>
-    </div>
-
-    {/* Filter Controls */}
-    <div className="flex items-center gap-3">
-      <SearchBar
-        value={search}
-        onChange={setSearch}
-        placeholder="Search tasks..."
-        className="w-48 sm:w-64"
-      />
-
-      <select
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-        className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200"
-      >
-        <option value="">All Statuses</option>
-        <option value="PENDING">PENDING</option>
-        <option value="IN_PROGRESS">IN PROGRESS</option>
-        <option value="UNDER_REVIEW">UNDER REVIEW</option>
-        <option value="COMPLETED">COMPLETED</option>
-      </select>
-    </div>
-  </div>
+  <FilterBar>
+    <Tabs
+      aria-label="Task views"
+      value={activeTab}
+      onChange={setActiveTab}
+      items={[
+        { value: 'kanban', label: 'Board', icon: LayoutGrid },
+        { value: 'table', label: 'List', icon: List },
+        { value: 'requests', label: 'Client requests', icon: Inbox, count: clientRequests.length },
+      ]}
+    />
+    {activeTab !== 'requests' && (
+      <div className="flex flex-col sm:flex-row gap-3 sm:ml-auto sm:items-center w-full sm:w-auto">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search tasks" className="sm:w-64" />
+        <Select
+          aria-label="Filter by status"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          options={statusOptions}
+          className="sm:w-44"
+        />
+      </div>
+    )}
+  </FilterBar>
 );

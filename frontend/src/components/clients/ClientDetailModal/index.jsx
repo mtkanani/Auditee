@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2, SearchX } from 'lucide-react';
 import { Modal } from '../../common/Modal';
 import { useClientDetailModal } from './useClientDetailModal';
 import { ClientHeader } from './ClientHeader';
@@ -16,41 +17,31 @@ export const ClientDetailModal = ({ clientId, isOpen, onClose, onRefresh }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={<ClientHeader client={client} />}
-      maxWidth="max-w-5xl"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title={<ClientHeader client={client} />} maxWidth="max-w-5xl">
       <div className="-m-6 flex flex-col min-h-0">
-        {/* Tab Navigation Header */}
-          <DetailTabs {...detail} />
+        <DetailTabs {...detail} />
 
-          {/* Modal Tab Body Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {isLoading ? (
-              <div className="p-12 text-center text-sm text-slate-500">Loading master details...</div>
-            ) : !client ? (
-              <div className="p-12 text-center text-sm text-rose-400">Client details not found</div>
-            ) : (
-              <>
-                {/* TAB 1: Profile & Tax Info */}
-                {activeTab === 'profile' && <ProfileTab client={client} />}
-
-                {/* TAB 2: Services Subscribed */}
-                {activeTab === 'services' && <ServicesTab {...detail} />}
-
-                {/* TAB 3: Billing & Financials */}
-                {activeTab === 'billing' && <BillingTab client={client} />}
-
-                {/* TAB 4: Master Documents */}
-                {activeTab === 'documents' && <DocumentsTab {...detail} />}
-
-                {/* TAB 5: Client History */}
-                {activeTab === 'history' && <HistoryTab client={client} />}
-              </>
-            )}
-          </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted">
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Loading client…
+            </div>
+          ) : !client ? (
+            <div className="flex flex-col items-center py-16 text-center">
+              <SearchX className="w-6 h-6 text-subtle mb-2" aria-hidden="true" />
+              <p className="text-sm font-medium text-fg">We couldn't load this client</p>
+              <p className="text-sm text-muted">It may have been deleted. Close this and refresh the list.</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'profile' && <ProfileTab client={client} />}
+              {activeTab === 'services' && <ServicesTab {...detail} />}
+              {activeTab === 'billing' && <BillingTab client={client} />}
+              {activeTab === 'documents' && <DocumentsTab {...detail} />}
+              {activeTab === 'history' && <HistoryTab client={client} />}
+            </>
+          )}
+        </div>
       </div>
     </Modal>
   );

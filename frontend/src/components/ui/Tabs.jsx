@@ -24,7 +24,8 @@ export const Tabs = ({ items, value, onChange, variant = 'pill', className, 'ari
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'flex items-center gap-1 overflow-x-auto',
+        // Scrolls sideways on narrow screens, without showing a scrollbar.
+        'flex items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
         pill ? 'p-1 rounded-xl bg-sunken border border-line w-fit max-w-full' : 'border-b border-line',
         className
       )}
