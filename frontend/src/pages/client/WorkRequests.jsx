@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
-import { PageHeader } from '../../components/common/PageHeader';
-import { FileUpload } from '../../components/common/FileUpload';
 import { useForm } from 'react-hook-form';
 import { Send } from 'lucide-react';
-import { useClientCreateTask } from '../../queries/useTasks';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { Button, Card, Field, Input, PageHeader, Select, Textarea } from '../../components/ui';
+import { DropZone } from '../../components/documents/UploadDocumentModal/DropZone';
+import { useClientCreateTask } from '../../queries/useTasks';
+
+const MAX_MB = 25;
+
+const PRIORITIES = [
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
+  { value: 'URGENT', label: 'Urgent' },
+];
 
 export const WorkRequests = () => {
   const navigate = useNavigate();
@@ -16,7 +26,16 @@ export const WorkRequests = () => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm();
+  } = useForm({ defaultValues: { priority: 'LOW' } });
+
+  const pickFile = (file) => {
+    if (!file) return;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast.error(`Files can be up to ${MAX_MB} MB`);
+      return;
+    }
+    setSelectedFile(file);
+  };
 
   const onSubmit = (data) => {
     const payload = {
@@ -35,74 +54,54 @@ export const WorkRequests = () => {
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <PageHeader
-        title="Create Work Request"
-        subtitle="Submit audit, GST filing, TDS, or tax consulting requests to your CA firm staff"
-      />
+      <PageHeader title="New request" description="Ask your CA firm for GST, TDS, income tax, audit or any other work." />
 
-      <div className="p-8 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-200 mb-1.5">Request Title / Service Name</label>
-            <input
-              type="text"
-              {...register('title', { required: 'Request title is required' })}
-              placeholder="e.g., GST Return Filing for Q2 / Income Tax Audit Document Review"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-            />
-            {errors.title && <p className="text-xs text-rose-400 mt-1">{errors.title.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-200 mb-1.5">Detailed Description</label>
-            <textarea
-              rows={4}
-              {...register('description', { required: 'Description is required' })}
-              placeholder="Provide context, invoice numbers, or specific requirements for your CA team..."
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
-            />
-            {errors.description && <p className="text-xs text-rose-400 mt-1">{errors.description.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Priority Level</label>
-              <select
-                {...register('priority')}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-              >
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-                <option value="URGENT">URGENT</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Desired Due Date</label>
-              <input
-                type="date"
-                {...register('dueDate')}
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+      <Card>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <Field label="What do you need?" required error={errors.title?.message}>
+            {(p) => (
+              <Input
+                {...p}
+                placeholder="e.g. GST return filing for Q2"
+                {...register('title', { required: 'Add a short title' })}
               />
-            </div>
+            )}
+          </Field>
+
+          <Field label="Details" required error={errors.description?.message}>
+            {(p) => (
+              <Textarea
+                {...p}
+                rows={4}
+                placeholder="Invoice numbers, periods, notices received, anything your team should know"
+                {...register('description', { required: 'Add a few details' })}
+              />
+            )}
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Priority">{(p) => <Select {...p} options={PRIORITIES} {...register('priority')} />}</Field>
+            <Field label="Needed by" hint="Optional">
+              {(p) => <Input {...p} type="date" {...register('dueDate')} />}
+            </Field>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-200 mb-1.5">Attach Invoices / Financial Records</label>
-            <FileUpload onFileSelect={setSelectedFile} />
-          </div>
+          <Field label="Attachment" hint="Optional. Invoices, statements or notices.">
+            {() => <DropZone fileName={selectedFile?.name} fileSize={selectedFile?.size} onFile={pickFile} />}
+          </Field>
 
-          <button
+          <Button
             type="submit"
-            disabled={clientCreateTaskMutation.isPending}
-            className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50"
+            variant="primary"
+            size="lg"
+            icon={Send}
+            loading={clientCreateTaskMutation.isPending}
+            className="w-full"
           >
-            <Send className="w-4 h-4"  />
-            <span>{clientCreateTaskMutation.isPending ? 'Submitting Request...' : 'Submit Work Request'}</span>
-          </button>
+            {clientCreateTaskMutation.isPending ? 'Sending…' : 'Send request'}
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -27,7 +27,7 @@ export const DataTable = ({
   }
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="relative w-full overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="bg-sunken/60 text-xs font-medium text-subtle border-b border-line">

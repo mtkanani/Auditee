@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
-import { PageHeader } from '../../components/common/PageHeader';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Briefcase, Save } from 'lucide-react';
+import { Button, Card, Field, Input, PageHeader } from '../../components/ui';
 import { useUpdateClientProfile } from '../../queries/useClients';
 
 export const ClientProfile = () => {
   const { user, updateUserState } = useAuth();
   const updateProfileMutation = useUpdateClientProfile();
 
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
     if (user) {
@@ -33,86 +33,44 @@ export const ClientProfile = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <PageHeader
-        title="Client Profile & Settings"
-        subtitle="Manage company GST information, business registration details, and contact numbers"
-      />
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <PageHeader title="Profile" description="Your business details, GSTIN and contact number." />
 
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
-        <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <Briefcase size="1em" className="text-indigo-400"  />
-          <span>Company Profile Details</span>
-        </h3>
-
+      <Card
+        title={
+          <span className="inline-flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-accent-fg" aria-hidden="true" />
+            Business details
+          </span>
+        }
+      >
         <form onSubmit={handleSubmit(onUpdateProfile)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Client Name</label>
-              <input
-                type="text"
-                {...register('clientName', { required: true })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Company Name</label>
-              <input
-                type="text"
-                {...register('companyName')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Name" required error={errors.clientName && 'Name is required'}>
+              {(p) => <Input {...p} autoComplete="name" {...register('clientName', { required: true })} />}
+            </Field>
+            <Field label="Company name">
+              {(p) => <Input {...p} autoComplete="organization" {...register('companyName')} />}
+            </Field>
+            <Field label="GSTIN">
+              {(p) => <Input {...p} className="uppercase" maxLength={15} {...register('gstNumber')} />}
+            </Field>
+            <Field label="Business type" hint="e.g. Private limited, LLP, proprietorship">
+              {(p) => <Input {...p} {...register('businessType')} />}
+            </Field>
+            <Field label="Phone">
+              {(p) => <Input {...p} type="tel" autoComplete="tel" {...register('phone')} />}
+            </Field>
+            <Field label="City">
+              {(p) => <Input {...p} autoComplete="address-level2" {...register('city')} />}
+            </Field>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">GST Number</label>
-              <input
-                type="text"
-                {...register('gstNumber')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Business Type</label>
-              <input
-                type="text"
-                {...register('businessType')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Phone</label>
-              <input
-                type="text"
-                {...register('phone')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">City</label>
-              <input
-                type="text"
-                {...register('city')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={updateProfileMutation.isPending}
-            className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2 disabled:opacity-50"
-          >
-            <Save className="w-4 h-4"  />
-            <span>{updateProfileMutation.isPending ? 'Saving...' : 'Save Profile Changes'}</span>
-          </button>
+          <Button type="submit" variant="primary" icon={Save} loading={updateProfileMutation.isPending}>
+            {updateProfileMutation.isPending ? 'Saving…' : 'Save changes'}
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };
