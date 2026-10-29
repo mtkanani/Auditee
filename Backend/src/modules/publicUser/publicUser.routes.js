@@ -27,6 +27,7 @@ router.get('/tasks', publicUserController.getMyTasks);
 router.get('/tasks/:taskId', taskIdParamValidation, validate, publicUserController.getTaskDetails);
 router.patch('/tasks/:taskId/status', updateTaskStatusValidation, validate, publicUserController.updateTaskStatus);
 router.post('/tasks/:taskId/documents', uploadDocumentValidation, validate, publicUserController.uploadTaskDocument);
+router.get('/tasks/:taskId/documents/:documentId/download', taskIdParamValidation, validate, publicUserController.getTaskDocumentDownload);
 router.post('/tasks/:taskId/time-entry', createTimeEntryValidation, validate, publicUserController.createTimeEntry);
 
 module.exports = router;

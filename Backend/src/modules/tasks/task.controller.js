@@ -186,6 +186,19 @@ class TaskController {
     }
   }
 
+  async getDocumentDownload(req, res, next) {
+    try {
+      const data = await taskService.getDocumentDownload(
+        parseInt(req.params.taskId, 10),
+        parseInt(req.params.documentId, 10),
+        req.user.firmId
+      );
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createTemplate(req, res, next) {
     try {
       const firmId = req.user.firmId;

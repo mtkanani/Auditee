@@ -222,7 +222,8 @@ class TaskRepository {
       data: {
         taskId,
         fileName: docData.fileName.trim(),
-        fileUrl: docData.fileUrl.trim(),
+        fileUrl: docData.fileUrl || null,
+        storageKey: docData.storageKey || null,
         fileType: docData.fileType || null,
         fileSize: docData.fileSize || null,
         uploadedBy: docData.uploadedBy || null,

@@ -177,11 +177,16 @@ class ClientRepository {
         clientId,
         documentName: docData.documentName.trim(),
         documentType: docData.documentType ? docData.documentType.trim() : 'OTHER',
-        fileUrl: docData.fileUrl.trim(),
+        fileUrl: docData.fileUrl || null,
+        storageKey: docData.storageKey || null,
         fileSize: docData.fileSize ? parseInt(docData.fileSize, 10) : null,
         uploadedBy: docData.uploadedBy || null,
       },
     });
+  }
+
+  async findDocument(documentId, clientId) {
+    return await prisma.clientDocument.findFirst({ where: { id: documentId, clientId } });
   }
 
   async deleteDocument(documentId, clientId) {

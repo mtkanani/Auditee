@@ -1,5 +1,6 @@
 const prisma = require('../../config/db');
 const { NotFoundError, ForbiddenError } = require('../../utils/errors');
+const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
 class PublicUserService {
   async getDashboard(userId, firmId) {
@@ -178,17 +179,25 @@ class PublicUserService {
 
   async uploadTaskDocument(taskId, docData, userId, firmId) {
     const task = await this.getTaskDetails(taskId, userId, firmId);
+    const file = await resolveAttachment(docData, firmId, 'tasks');
     return await prisma.taskDocument.create({
       data: {
         taskId: task.id,
         fileName: docData.fileName,
-        fileUrl: docData.fileUrl,
-        fileType: docData.fileType || null,
-        fileSize: docData.fileSize ? parseInt(docData.fileSize, 10) : null,
+        ...file,
         uploadedBy: userId,
         uploadedRole: 'USER',
       },
     });
+  }
+
+  /** Download link for an attachment on a task this employee can see. */
+  async getTaskDocumentDownload(taskId, documentId, userId, firmId) {
+    if (!Number.isInteger(documentId)) throw new NotFoundError('Attachment not found');
+    const task = await this.getTaskDetails(taskId, userId, firmId);
+    const doc = await prisma.taskDocument.findFirst({ where: { id: documentId, taskId: task.id } });
+    if (!doc) throw new NotFoundError('Attachment not found');
+    return attachmentDownload(doc, doc.fileName);
   }
 
   async createTimeEntry(taskId, timeData, userId, firmId) {

@@ -35,6 +35,7 @@ router.patch('/:taskId/subtasks/:subtaskId', taskController.toggleSubtask);
 // Discussion Comments & File Attachments
 router.post('/:taskId/comments', addCommentValidation, validate, taskController.addComment);
 router.post('/:taskId/documents', taskController.addDocument);
+router.get('/:taskId/documents/:documentId/download', authorizeRoles('FIRM_ADMIN'), taskController.getDocumentDownload);
 
 // Task Dependencies
 router.post('/:taskId/dependencies', authorizeRoles('FIRM_ADMIN'), taskController.addDependency);

@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const clientRepository = require('./client.repository');
 const { CLIENT_MESSAGES } = require('./client.constants');
 const { BadRequestError, NotFoundError } = require('../../utils/errors');
+const storage = require('../../utils/storage');
+const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
 class ClientService {
   async createClient(clientData, firmId, createdBy, performedName = 'Firm Admin') {
@@ -210,8 +212,13 @@ class ClientService {
       throw new NotFoundError(CLIENT_MESSAGES.NOT_FOUND);
     }
 
+    const file = await resolveAttachment(docData, firmId, 'clients');
     const doc = await clientRepository.addDocument(clientId, {
-      ...docData,
+      documentName: docData.documentName,
+      documentType: docData.documentType,
+      fileUrl: file.fileUrl,
+      storageKey: file.storageKey,
+      fileSize: file.fileSize,
       uploadedBy: performedBy,
     });
 
@@ -231,7 +238,9 @@ class ClientService {
       throw new NotFoundError(CLIENT_MESSAGES.NOT_FOUND);
     }
 
+    const doc = await clientRepository.findDocument(documentId, clientId);
     await clientRepository.deleteDocument(documentId, clientId);
+    await storage.deleteObjectQuietly(doc?.storageKey);
 
     await clientRepository.logActivity(clientId, {
       action: 'DOCUMENT_DELETED',
@@ -241,6 +250,18 @@ class ClientService {
     });
 
     return { message: 'Document deleted successfully' };
+  }
+
+  async getDocumentDownload(clientId, documentId, firmId) {
+    const client = await clientRepository.findByIdAndFirmId(clientId, firmId);
+    if (!client) {
+      throw new NotFoundError(CLIENT_MESSAGES.NOT_FOUND);
+    }
+    const doc = Number.isInteger(documentId) ? await clientRepository.findDocument(documentId, clientId) : null;
+    if (!doc) {
+      throw new NotFoundError('Document not found');
+    }
+    return attachmentDownload(doc, doc.documentName);
   }
 
   // --- Client History Log ---
