@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Button, Select } from '../../../components/ui';
-import { PriorityBadge } from './priority';
+import { PriorityBadge } from '../../../components/tasks/PriorityBadge';
 import { checklist } from './checklist';
 
 const statusOptions = [

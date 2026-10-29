@@ -1,7 +1,7 @@
 import React from 'react';
 import { CalendarDays, ListChecks } from 'lucide-react';
 import { cn } from '../../../lib/cn';
-import { PriorityBadge } from './priority';
+import { PriorityBadge } from '../../../components/tasks/PriorityBadge';
 import { checklist } from './checklist';
 
 const COLUMNS = [
