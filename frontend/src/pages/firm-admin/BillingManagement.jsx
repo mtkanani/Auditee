@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import { PageHeader } from '../../components/common/PageHeader';
 import { StatsCard } from '../../components/common/StatsCard';
@@ -24,7 +25,8 @@ export const BillingManagement = () => {
   // Modals
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(Boolean(location.state?.openCreate));
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
   const { invoices, pagination, summary, isLoading, error: invoicesError } = useFirmInvoices({
