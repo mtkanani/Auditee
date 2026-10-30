@@ -188,6 +188,12 @@
   --warning-soft: color-mix(in oklab, oklch(76.9% 0.188 70.08) 15%, transparent);
   --danger: oklch(71.2% 0.194 13.428);
   --danger-soft: color-mix(in oklab, oklch(64.5% 0.246 16.439) 15%, transparent);
+
+  /* Chart fills for task status. Darker than the text tokens so fills sit in the
+     chart lightness band; checked with the dataviz palette validator (dark surface). */
+  --chart-pending: #d97706;
+  --chart-progress: #6366f1;
+  --chart-done: #059669;
 }
 
 html.light {
@@ -270,6 +276,10 @@ html.light {
   --warning-soft: oklch(98.7% 0.022 95.277);
   --danger: oklch(51.4% 0.222 16.935);
   --danger-soft: oklch(96.9% 0.015 12.422);
+
+  --chart-pending: #b45309;
+  --chart-progress: #4f46e5;
+  --chart-done: #047857;
 }
 
 @layer base {

@@ -76,37 +76,6 @@ export const LeaveApprovals = ({ pendingLeave, loading }) => {
   );
 };
 
-/** Share of tasks in each status, from the dashboard counts. */
-export const TaskProgress = ({ metrics, isLoading }) => {
-  const parts = [
-    { key: 'completedTasks', label: 'Completed', className: 'bg-success' },
-    { key: 'inProgressTasks', label: 'In progress', className: 'bg-accent' },
-    { key: 'pendingTasks', label: 'Pending', className: 'bg-warning' },
-  ];
-  const total = parts.reduce((sum, p) => sum + (metrics[p.key] || 0), 0);
-  const pctDone = total ? Math.round(((metrics.completedTasks || 0) / total) * 100) : 0;
-
-  return (
-    <Card title="Task progress" description={isLoading ? 'Loading…' : `${pctDone}% of ${total} tasks completed`}>
-      <div className="flex h-2.5 rounded-full overflow-hidden bg-hover" role="img" aria-label={`${pctDone}% of tasks completed`}>
-        {total > 0 &&
-          parts.map((p) => (
-            <span key={p.key} className={p.className} style={{ width: `${((metrics[p.key] || 0) / total) * 100}%` }} />
-          ))}
-      </div>
-      <ul className="mt-4 space-y-2">
-        {parts.map((p) => (
-          <li key={p.key} className="flex items-center gap-2.5 text-sm">
-            <span className={`w-2 h-2 rounded-full ${p.className}`} aria-hidden="true" />
-            <span className="flex-1 text-muted">{p.label}</span>
-            <span className="font-medium text-fg tabular-nums">{isLoading ? '—' : metrics[p.key] || 0}</span>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-};
-
 /** Five most recently added employees. */
 export const NewTeamMembers = ({ recentUsers }) => {
   const navigate = useNavigate();

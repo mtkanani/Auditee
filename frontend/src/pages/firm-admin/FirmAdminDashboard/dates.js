@@ -1,14 +1,6 @@
 // daysUntil / dueLabel are shared with other pages.
 export { daysUntil, dueLabel } from '../../../utils/dueDate';
 
-export const greeting = () => {
-  const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-};
-
-export const todayLabel = () =>
-  new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-
 /** ₹ amount in Indian short form: 4,21,500 -> ₹4.2L, 1,25,00,000 -> ₹1.3Cr. */
 export const inrShort = (n = 0) => {
   const v = Number(n) || 0;
