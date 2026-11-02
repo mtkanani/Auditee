@@ -16,6 +16,16 @@ export const firmHomeQuery = {
   },
 };
 
+/** Charts on the firm admin home; history changes slowly, so it is kept for 5 minutes. */
+export const firmInsightsQuery = {
+  queryKey: dashboardKeys.firmInsights(),
+  queryFn: async () => {
+    const res = await firmAdminService.getHomeInsights();
+    return res.data || res;
+  },
+  staleTime: 5 * 60_000,
+};
+
 export const userHomeQuery = {
   queryKey: dashboardKeys.byRole('user'),
   queryFn: () => userService.getDashboard(),

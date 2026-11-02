@@ -13,6 +13,7 @@ import { KpiTiles } from './KpiTiles';
 import { FocusTimeline } from './FocusTimeline';
 import { FeesCollected, WorkByStatus } from './WorkAndFees';
 import { NewOnTeam, TeamToday } from './TeamToday';
+import { Insights } from './Insights';
 import { daysUntil, plural } from './format';
 
 const QUICK_ACTIONS = [
@@ -102,6 +103,8 @@ export const FirmAdminDashboard = () => {
           <FeesCollected invoices={invoices} i={7} />
         </div>
       </div>
+
+      <Insights />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start" style={{ '--i': 8 }}>
         <div className="xl:col-span-2">

@@ -120,4 +120,10 @@ export const firmAdminService = {
     const res = await axiosInstance.get('/firm-admin/home');
     return res.data;
   },
+
+  // Chart data for the firm admin home (trends over time)
+  getHomeInsights: async () => {
+    const res = await axiosInstance.get('/firm-admin/home/insights');
+    return res.data;
+  },
 };

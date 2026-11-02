@@ -49,7 +49,7 @@ export const StatusBar = ({ segments, isLoading, emptyText = 'Nothing here yet.'
         )}
       </div>
 
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className={cn('grid gap-2', segments.length === 4 ? 'grid-cols-2' : 'grid-cols-3')}>
         {segments.map((s) => (
           <div
             key={s.key}

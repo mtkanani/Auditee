@@ -194,6 +194,7 @@
   --chart-pending: #d97706;
   --chart-progress: #6366f1;
   --chart-done: #059669;
+  --chart-overdue: #e11d48;
 }
 
 html.light {
@@ -280,6 +281,7 @@ html.light {
   --chart-pending: #b45309;
   --chart-progress: #4f46e5;
   --chart-done: #047857;
+  --chart-overdue: #be123c;
 }
 
 @layer base {
@@ -381,6 +383,7 @@ html.light {
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 @keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 @keyframes indeterminate { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 @keyframes drift-a { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-60px, 40px) scale(1.15); } }
@@ -434,10 +437,12 @@ html.light {
 .ping-soft { animation: ping-soft 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
 .draw-ring { animation: draw-ring 1.1s cubic-bezier(0.16, 1, 0.3, 1) both 250ms; }
 
+.grow-y { animation: grow-y 800ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 60ms + 150ms); }
+
 .grow-x { transform-origin: left; animation: grow-x 900ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 90ms + 200ms); }
 
 @media (prefers-reduced-motion: reduce) {
-  .overlay, .dialog-panel, .drawer-panel, .rise, .shimmer, .grow-x, .aurora-a, .aurora-b, .ping-soft, .draw-ring, .indeterminate, .top-progress-run { animation: none !important; }
+  .overlay, .dialog-panel, .drawer-panel, .rise, .shimmer, .grow-x, .grow-y, .aurora-a, .aurora-b, .ping-soft, .draw-ring, .indeterminate, .top-progress-run { animation: none !important; }
   .top-progress-run { width: 90%; }
   .top-progress-done { animation-duration: 1ms !important; }
   .spin-slow { animation-duration: 3s !important; }

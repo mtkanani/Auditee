@@ -112,4 +112,81 @@ const getFirmHome = async (firmId) => {
   };
 };
 
-module.exports = { getFirmHome };
+const isoDay = (d) => d.toISOString().slice(0, 10);
+
+/**
+ * History for the home page charts: billed vs collected per month (last 6), people checked in per
+ * day (last 14), open compliance by status, and the five clients owing the most. Kept separate from
+ * getFirmHome so the home's numbers never wait for these.
+ */
+const getFirmInsights = async (firmId) => {
+  const fId = parseInt(firmId, 10);
+  const today = isoDay(todayDateOnly());
+
+  const [revenue, attendance, complianceGroups, owing, team] = await Promise.all([
+    prisma.$queryRaw`
+      WITH months AS (
+        SELECT generate_series(date_trunc('month', now()) - interval '5 months', date_trunc('month', now()), interval '1 month') AS m
+      )
+      SELECT
+        to_char(m, 'YYYY-MM') AS "month",
+        COALESCE((
+          SELECT SUM(i."totalAmount") FROM "invoices" i
+          WHERE i."firmId" = ${fId} AND i."deletedAt" IS NULL AND i."issueDate" >= m AND i."issueDate" < m + interval '1 month'
+        ), 0) AS "billed",
+        COALESCE((
+          SELECT SUM(p."amount") FROM "payment_records" p
+          JOIN "invoices" i ON i."id" = p."invoiceId"
+          WHERE i."firmId" = ${fId} AND i."deletedAt" IS NULL AND p."paymentDate" >= m AND p."paymentDate" < m + interval '1 month'
+        ), 0) AS "collected"
+      FROM months
+      ORDER BY m
+    `,
+    // Attendance days are stored as the local date at UTC midnight (see attendance.repository).
+    prisma.$queryRaw`
+      SELECT to_char(d, 'YYYY-MM-DD') AS "day", COUNT(a."id") AS "checkedIn"
+      FROM generate_series(${today}::timestamp - interval '13 days', ${today}::timestamp, interval '1 day') AS d
+      LEFT JOIN "attendance_records" a ON a."firmId" = ${fId} AND a."date" = d
+      GROUP BY d
+      ORDER BY d
+    `,
+    prisma.complianceItem.groupBy({ by: ['status'], where: { firmId: fId }, _count: { _all: true } }),
+    prisma.invoice.groupBy({
+      by: ['clientId'],
+      where: { firmId: fId, deletedAt: null, balanceAmount: { gt: 0 } },
+      _sum: { balanceAmount: true },
+      _count: { _all: true },
+      orderBy: { _sum: { balanceAmount: 'desc' } },
+      take: 5,
+    }),
+    prisma.user.count({ where: { firmId: fId, deletedAt: null, role: 'USER' } }),
+  ]);
+
+  const clients = owing.length
+    ? await prisma.client.findMany({
+        where: { id: { in: owing.map((o) => o.clientId) } },
+        select: { id: true, clientName: true, companyName: true },
+      })
+    : [];
+  const nameOf = Object.fromEntries(clients.map((c) => [c.id, c.companyName || c.clientName]));
+  const byStatus = Object.fromEntries(complianceGroups.map((g) => [g.status, g._count._all]));
+
+  return {
+    revenue: revenue.map((r) => ({ month: r.month, billed: Number(r.billed), collected: Number(r.collected) })),
+    attendance: { team, days: attendance.map((a) => ({ day: a.day, checkedIn: Number(a.checkedIn) })) },
+    compliance: {
+      overdue: byStatus.OVERDUE || 0,
+      upcoming: (byStatus.UPCOMING || 0) + (byStatus.EXTENDED || 0),
+      inProgress: byStatus.IN_PROGRESS || 0,
+      filed: byStatus.FILED || 0,
+    },
+    topOutstanding: owing.map((o) => ({
+      clientId: o.clientId,
+      name: nameOf[o.clientId] || 'Client',
+      balance: Number(o._sum.balanceAmount) || 0,
+      invoices: o._count._all,
+    })),
+  };
+};
+
+module.exports = { getFirmHome, getFirmInsights };
