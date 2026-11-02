@@ -629,7 +629,8 @@ model Invoice {
   firm          Firm            @relation(fields: [firmId], references: [id], onDelete: Cascade)
   payments      PaymentRecord[]
 
-  @@index([firmId, deletedAt, status])
+  // Also covers the amounts, so firm-wide totals (home page, billing summary) are index-only scans.
+  @@index([firmId, deletedAt, status, dueDate, totalAmount, paidAmount, balanceAmount])
   @@index([firmId, deletedAt, issueDate])
   @@index([clientId, deletedAt])
   @@index([firmId, invoiceType])

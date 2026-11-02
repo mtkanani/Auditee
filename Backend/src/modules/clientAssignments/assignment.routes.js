@@ -19,6 +19,8 @@ router.use(authenticateSession);
 
 // Base URL: /api/firm-admin/dashboard
 router.get('/dashboard', authorizeRoles('FIRM_ADMIN'), userController.getDashboard);
+// Base URL: /api/firm-admin/home (everything the firm admin home needs, one request)
+router.get('/home', authorizeRoles('FIRM_ADMIN'), userController.getHome.bind(userController));
 
 // Base URL: /api/firm-admin/client-assignments
 router.post('/client-assignments', authorizeRoles('FIRM_ADMIN'), createAssignmentValidation, validate, assignmentController.assignClient);
