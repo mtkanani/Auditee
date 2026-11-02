@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { PutObjectCommand, GetObjectCommand, HeadObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { s3, bucket, isStorageConfigured } = require('../config/storage');
-const { AppError } = require('./errors');
+const { AppError, BadRequestError, ForbiddenError } = require('./errors');
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 const UPLOAD_URL_TTL_SECONDS = 5 * 60;
@@ -83,6 +83,40 @@ const deleteObject = async (key) => {
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 };
 
+/** Folders under firms/{firmId}/ that uploads can go to. */
+const AREAS = ['vault', 'tasks', 'clients'];
+
+/**
+ * Checks a key the browser says it uploaded to: it must sit in this firm's area folder, exist, be at most
+ * 25 MB and have the Content-Type its extension allows. Bad objects are deleted. Returns { size, contentType }.
+ */
+const verifyUpload = async (key, firmId, area) => {
+  if (!keyBelongsToFirm(key, firmId) || (area && !key.startsWith(`firms/${firmId}/${area}/`))) {
+    throw new ForbiddenError('That file does not belong to your firm.');
+  }
+  // Through module.exports so tests can stand in for R2.
+  const object = await module.exports.headObject(key);
+  if (!object) {
+    throw new BadRequestError('The file has not finished uploading. Please try again.');
+  }
+  const expectedType = contentTypeFor(key);
+  if (object.size > MAX_FILE_BYTES || !expectedType || object.contentType !== expectedType) {
+    await module.exports.deleteObject(key);
+    throw new BadRequestError('That file is too large or not an allowed type.');
+  }
+  return { size: object.size, contentType: expectedType };
+};
+
+/** Deletes an object, logging instead of failing: the database row is already gone. */
+const deleteObjectQuietly = async (key) => {
+  if (!key) return;
+  try {
+    await module.exports.deleteObject(key);
+  } catch (error) {
+    console.error(`Storage: could not delete ${key}:`, error.message);
+  }
+};
+
 module.exports = {
   MAX_FILE_BYTES,
   UPLOAD_URL_TTL_SECONDS,
@@ -95,4 +129,7 @@ module.exports = {
   presignDownload,
   headObject,
   deleteObject,
+  deleteObjectQuietly,
+  verifyUpload,
+  AREAS,
 };

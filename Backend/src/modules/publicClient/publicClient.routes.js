@@ -26,5 +26,6 @@ router.post('/tasks', createWorkRequestValidation, validate, publicClientControl
 router.get('/tasks', publicClientController.getMyTasks);
 router.get('/tasks/:taskId', taskIdParamValidation, validate, publicClientController.getTaskDetails);
 router.post('/tasks/:taskId/documents', uploadDocumentValidation, validate, publicClientController.uploadTaskDocument);
+router.get('/tasks/:taskId/documents/:documentId/download', taskIdParamValidation, validate, publicClientController.getTaskDocumentDownload);
 
 module.exports = router;

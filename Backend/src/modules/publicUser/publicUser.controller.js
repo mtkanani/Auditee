@@ -107,6 +107,20 @@ class PublicUserController {
     }
   }
 
+  async getTaskDocumentDownload(req, res, next) {
+    try {
+      const data = await publicUserService.getTaskDocumentDownload(
+        parseInt(req.params.taskId, 10),
+        parseInt(req.params.documentId, 10),
+        req.user.id,
+        req.user.firmId
+      );
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async uploadTaskDocument(req, res, next) {
     try {
       const userId = req.user.id;

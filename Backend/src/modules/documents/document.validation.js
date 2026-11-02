@@ -10,6 +10,10 @@ const uploadUrlValidation = [
     .isInt({ min: 1 })
     .withMessage('File size is required')
     .toInt(),
+  body('area')
+    .optional()
+    .isIn(['vault', 'tasks', 'clients'])
+    .withMessage('Unknown upload area'),
 ];
 
 const documentIdValidation = [

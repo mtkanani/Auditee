@@ -65,10 +65,17 @@ const uploadDocumentValidation = [
     .trim()
     .notEmpty()
     .withMessage('fileName is required'),
+  // A pasted link (fileUrl) or a file uploaded through /api/documents/upload-url (storageKey).
   body('fileUrl')
-    .trim()
-    .notEmpty()
-    .withMessage('fileUrl is required'),
+    .optional({ nullable: true })
+    .trim(),
+  body('storageKey')
+    .optional({ nullable: true })
+    .isString(),
+  body().custom((b) => {
+    if (!b.fileUrl && !b.storageKey) throw new Error('Upload a file or give a file link');
+    return true;
+  }),
   body('fileType')
     .optional({ nullable: true })
     .trim(),

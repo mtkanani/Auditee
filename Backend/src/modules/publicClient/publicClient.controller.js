@@ -107,6 +107,20 @@ class PublicClientController {
     }
   }
 
+  async getTaskDocumentDownload(req, res, next) {
+    try {
+      const data = await publicClientService.getTaskDocumentDownload(
+        parseInt(req.params.taskId, 10),
+        parseInt(req.params.documentId, 10),
+        req.user.clientId || req.user.id,
+        req.user.firmId
+      );
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async uploadTaskDocument(req, res, next) {
     try {
       const clientId = req.user.clientId || req.user.id;

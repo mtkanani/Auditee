@@ -160,7 +160,8 @@ model ClientDocument {
   clientId     Int
   documentName String
   documentType String?
-  fileUrl      String
+  fileUrl      String?
+  storageKey   String?
   fileSize     Int?
   uploadedBy   Int?
   createdAt    DateTime @default(now())
@@ -334,7 +335,8 @@ model TaskDocument {
   id           Int      @id @default(autoincrement())
   taskId       Int
   fileName     String
-  fileUrl      String
+  fileUrl      String?
+  storageKey   String?
   fileType     String?
   fileSize     Int?
   uploadedBy   Int?

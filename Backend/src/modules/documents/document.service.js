@@ -23,7 +23,11 @@ const canDelete = (doc, user) => {
 
 class DocumentService {
   /** Step 1 of an upload: check the file and hand back a short-lived URL to PUT it to. */
-  async createUploadUrl({ fileName, fileSize }, user) {
+  async createUploadUrl({ fileName, fileSize, area = 'vault' }, user) {
+    // Client master documents are firm-only; tasks and the vault are open to every role.
+    if (area === 'clients' && !isAdmin(user)) {
+      throw new ForbiddenError('Only the firm can upload client records.');
+    }
     const contentType = storage.contentTypeFor(fileName);
     if (!contentType) {
       throw new BadRequestError(`This file type is not allowed. Use ${storage.ALLOWED_EXTENSIONS.join(', ')}.`);
@@ -32,7 +36,7 @@ class DocumentService {
       throw new BadRequestError('Files can be at most 25 MB.');
     }
 
-    const storageKey = storage.buildKey(user.firmId, 'vault', fileName);
+    const storageKey = storage.buildKey(user.firmId, area, fileName);
     const uploadUrl = await storage.presignUpload(storageKey, contentType);
     return { storageKey, uploadUrl, contentType, expiresIn: storage.UPLOAD_URL_TTL_SECONDS };
   }
@@ -43,20 +47,9 @@ class DocumentService {
     let { fileSize, mimeType } = data;
 
     if (data.storageKey) {
-      if (!storage.keyBelongsToFirm(data.storageKey, firmId)) {
-        throw new ForbiddenError('That file does not belong to your firm.');
-      }
-      const object = await storage.headObject(data.storageKey);
-      if (!object) {
-        throw new BadRequestError('The file has not finished uploading. Please try again.');
-      }
-      const expectedType = storage.contentTypeFor(data.storageKey);
-      if (object.size > storage.MAX_FILE_BYTES || !expectedType || object.contentType !== expectedType) {
-        await storage.deleteObject(data.storageKey);
-        throw new BadRequestError('That file is too large or not an allowed type.');
-      }
+      const object = await storage.verifyUpload(data.storageKey, firmId, 'vault');
       fileSize = object.size;
-      mimeType = expectedType;
+      mimeType = object.contentType;
     } else if (!data.fileUrl) {
       throw new BadRequestError('Upload a file or give a file link.');
     }

@@ -1,5 +1,6 @@
 const prisma = require('../../config/db');
 const { NotFoundError, ForbiddenError } = require('../../utils/errors');
+const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
 class PublicClientService {
   async getDashboard(clientId, firmId) {
@@ -182,17 +183,25 @@ class PublicClientService {
 
   async uploadTaskDocument(taskId, docData, clientId, firmId) {
     const task = await this.getTaskDetails(taskId, clientId, firmId);
+    const file = await resolveAttachment(docData, firmId, 'tasks');
     return await prisma.taskDocument.create({
       data: {
         taskId: task.id,
         fileName: docData.fileName,
-        fileUrl: docData.fileUrl,
-        fileType: docData.fileType || null,
-        fileSize: docData.fileSize ? parseInt(docData.fileSize, 10) : null,
+        ...file,
         uploadedBy: clientId,
         uploadedRole: 'CLIENT',
       },
     });
+  }
+
+  /** Download link for an attachment on a task this client can see. */
+  async getTaskDocumentDownload(taskId, documentId, clientId, firmId) {
+    if (!Number.isInteger(documentId)) throw new NotFoundError('Attachment not found');
+    const task = await this.getTaskDetails(taskId, clientId, firmId);
+    const doc = await prisma.taskDocument.findFirst({ where: { id: documentId, taskId: task.id } });
+    if (!doc) throw new NotFoundError('Attachment not found');
+    return attachmentDownload(doc, doc.fileName);
   }
 }
 

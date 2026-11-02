@@ -1,6 +1,7 @@
 const taskRepository = require('./task.repository');
 const prisma = require('../../config/db');
 const { NotFoundError, BadRequestError } = require('../../utils/errors');
+const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
 class TaskService {
   async createTask(taskData, firmId, createdBy, performedName = 'Firm Admin') {
@@ -207,8 +208,13 @@ class TaskService {
       throw new NotFoundError('Task not found');
     }
 
+    if (!docData.fileName || !String(docData.fileName).trim()) {
+      throw new BadRequestError('fileName is required');
+    }
+    const file = await resolveAttachment(docData, firmId, 'tasks');
     const doc = await taskRepository.addDocument(taskId, {
-      ...docData,
+      fileName: docData.fileName,
+      ...file,
       uploadedBy: performer.id,
       uploadedRole: performer.role,
     });
@@ -221,6 +227,19 @@ class TaskService {
     });
 
     return doc;
+  }
+
+  async getDocumentDownload(taskId, documentId, firmId) {
+    if (!Number.isInteger(taskId) || !Number.isInteger(documentId)) {
+      throw new NotFoundError('Attachment not found');
+    }
+    const doc = await prisma.taskDocument.findFirst({
+      where: { id: documentId, taskId, task: { firmId, deletedAt: null } },
+    });
+    if (!doc) {
+      throw new NotFoundError('Attachment not found');
+    }
+    return attachmentDownload(doc, doc.fileName);
   }
 
   // --- Client Requests ---

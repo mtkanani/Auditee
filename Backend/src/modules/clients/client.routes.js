@@ -35,6 +35,7 @@ router.post('/:clientId/services', addServiceValidation, validate, clientControl
 router.delete('/:clientId/services/:serviceId', clientIdParamValidation, validate, clientController.removeService);
 
 router.post('/:clientId/documents', addDocumentValidation, validate, clientController.addDocument);
+router.get('/:clientId/documents/:documentId/download', clientIdParamValidation, validate, clientController.getDocumentDownload);
 router.delete('/:clientId/documents/:documentId', clientIdParamValidation, validate, clientController.deleteDocument);
 
 router.get('/:clientId/history', clientIdParamValidation, validate, clientController.getClientHistory);
