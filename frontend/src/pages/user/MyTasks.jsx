@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
-import { PageHeader } from '../../components/common/PageHeader';
-import { SearchBar } from '../../components/common/SearchBar';
 import { KanbanBoard } from '../../components/tasks/KanbanBoard';
-import { DataTable } from '../../components/common/DataTable';
-import { StatusBadge } from '../../components/common/StatusBadge';
-import { PriorityBadge } from '../../components/common/PriorityBadge';
+import { PriorityBadge } from '../../components/tasks/PriorityBadge';
 import { TaskDetailModal } from '../../components/tasks/TaskDetailModal';
-import { Grid3x3, List } from 'lucide-react';
+import { EmptyState } from '../../components/common/EmptyState';
+import { FilterBar, PageHeader, SearchInput, StatusTag, Table, Tabs } from '../../components/ui';
+import { Columns3, List, ListTodo } from 'lucide-react';
 import { useMyTasks, useUpdateTaskStatus } from '../../queries/useTasks';
 import toast from 'react-hot-toast';
+
+const VIEWS = [
+  { value: 'kanban', label: 'Board', icon: Columns3 },
+  { value: 'table', label: 'List', icon: List },
+];
 
 export const MyTasks = () => {
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'table'
@@ -32,101 +35,62 @@ export const MyTasks = () => {
     updateStatusMutation.mutate({ taskId, status: newStatus });
   };
 
+  const openTask = (task) => {
+    setSelectedTaskId(task.id);
+    setIsTaskModalOpen(true);
+  };
+
   const columns = [
     {
-      header: 'Task Title',
+      header: 'Task',
       key: 'title',
       render: (r) => (
-        <div
-          onClick={() => {
-            setSelectedTaskId(r.id);
-            setIsTaskModalOpen(true);
-          }}
-          className="cursor-pointer group"
-        >
-          <p className="font-bold text-slate-100 group-hover:text-indigo-400 transition-colors">{r.title || r.name}</p>
-          <p className="text-xs text-slate-400 line-clamp-1">{r.description}</p>
+        <div className="min-w-0">
+          <p className="font-medium text-fg truncate">{r.title || r.name}</p>
+          {r.description && <p className="text-xs text-muted line-clamp-1 mt-0.5">{r.description}</p>}
         </div>
       ),
     },
-    { header: 'Client', key: 'client', render: (r) => r.client?.companyName || r.client?.clientName || 'Firm Task' },
-    { header: 'Priority', key: 'priority', render: (r) => <PriorityBadge priority={r.priority} /> },
-    { header: 'Status', key: 'status', render: (r) => <StatusBadge status={r.status} /> },
     {
-      header: 'Actions',
-      key: 'actions',
-      render: (r) => (
-        <button
-          onClick={() => {
-            setSelectedTaskId(r.id);
-            setIsTaskModalOpen(true);
-          }}
-          className="px-3 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-600/30 text-xs font-semibold"
-        >
-          Manage Task Hub
-        </button>
-      ),
+      header: 'Client',
+      key: 'client',
+      render: (r) => <span className="text-muted">{r.client?.companyName || r.client?.clientName || 'Firm task'}</span>,
     },
+    { header: 'Priority', key: 'priority', render: (r) => <PriorityBadge priority={r.priority} /> },
+    { header: 'Status', key: 'status', render: (r) => (r.status ? <StatusTag status={String(r.status).toUpperCase()} /> : '—') },
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="My Assigned Tasks & Checklist"
-        subtitle="Complete subtasks, collaborate on comments, attach files, and update task status"
-        actions={
-          <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                viewMode === 'kanban'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Grid3x3 className="w-3.5 h-3.5"  />
-              <span>Kanban</span>
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                viewMode === 'table'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <List className="w-3.5 h-3.5"  />
-              <span>Table</span>
-            </button>
-          </div>
-        }
+        title="My tasks"
+        description="Work through checklists, comment, attach files and move tasks along."
+        actions={<Tabs items={VIEWS} value={viewMode} onChange={setViewMode} aria-label="Task view" />}
       />
 
-      <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-        <SearchBar value={search} onChange={setSearch} placeholder="Search assigned tasks..." />
-      </div>
+      <FilterBar>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search my tasks" />
+      </FilterBar>
 
       {viewMode === 'kanban' ? (
-        <KanbanBoard
-          tasks={tasks}
-          onTaskClick={(t) => {
-            setSelectedTaskId(t.id);
-            setIsTaskModalOpen(true);
-          }}
-          onStatusChange={handleStatusChange}
-        />
+        <KanbanBoard tasks={tasks} onTaskClick={openTask} onStatusChange={handleStatusChange} />
       ) : (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          <DataTable columns={columns} data={tasks} isLoading={isLoading} />
-        </div>
+        <Table
+          columns={columns}
+          data={tasks}
+          isLoading={isLoading}
+          onRowClick={openTask}
+          emptyState={
+            <EmptyState
+              icon={ListTodo}
+              title={search ? 'No tasks match your search' : 'No tasks assigned yet'}
+              description={search ? 'Try a different word.' : 'Tasks your firm assigns to you will show up here.'}
+            />
+          }
+        />
       )}
 
-      {/* 360-Degree Task Detail Hub Modal */}
-      <TaskDetailModal
-        taskId={selectedTaskId}
-        isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
-      />
+      <TaskDetailModal taskId={selectedTaskId} isOpen={isTaskModalOpen} onClose={() => setIsTaskModalOpen(false)} />
     </div>
   );
 };

@@ -1,61 +1,38 @@
 import React from 'react';
 import { CreditCard, Landmark, QrCode, Wallet } from 'lucide-react';
+import { cn } from '../../../lib/cn';
+
+const METHODS = [
+  { value: 'UPI', label: 'UPI / QR', icon: QrCode },
+  { value: 'CARD', label: 'Card', icon: CreditCard },
+  { value: 'NET_BANKING', label: 'Bank transfer', icon: Landmark },
+  { value: 'WALLET', label: 'Wallet', icon: Wallet },
+];
 
 export const MethodSelector = ({ paymentMethod, setPaymentMethod }) => (
-  <div>
-    <label className="block text-xs font-semibold text-slate-300 mb-2">Select Payment Method</label>
-    <div className="grid grid-cols-4 gap-2">
-      <button
-        type="button"
-        onClick={() => setPaymentMethod('UPI')}
-        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-          paymentMethod === 'UPI'
-            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold shadow-md'
-            : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800/60'
-        }`}
-      >
-        <QrCode className="w-5 h-5 text-indigo-400" />
-        <span className="text-xs">UPI / QR</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setPaymentMethod('CARD')}
-        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-          paymentMethod === 'CARD'
-            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold shadow-md'
-            : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800/60'
-        }`}
-      >
-        <CreditCard className="w-5 h-5 text-teal-400" />
-        <span className="text-xs">Card Pay</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setPaymentMethod('NET_BANKING')}
-        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-          paymentMethod === 'NET_BANKING'
-            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold shadow-md'
-            : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800/60'
-        }`}
-      >
-        <Landmark className="w-5 h-5 text-emerald-400" />
-        <span className="text-xs">NetBanking</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setPaymentMethod('WALLET')}
-        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-          paymentMethod === 'WALLET'
-            ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold shadow-md'
-            : 'bg-slate-950 border-slate-800 text-slate-400 hover:bg-slate-800/60'
-        }`}
-      >
-        <Wallet className="w-5 h-5 text-amber-400" />
-        <span className="text-xs">Wallet</span>
-      </button>
+  <fieldset>
+    <legend className="block text-sm font-medium text-fg mb-2">Payment method</legend>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup">
+      {METHODS.map(({ value, label, icon: Icon }) => {
+        const active = paymentMethod === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => setPaymentMethod(value)}
+            className={cn(
+              'h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50',
+              active ? 'border-accent bg-accent-soft text-fg' : 'border-line bg-sunken/40 text-muted hover:text-fg hover:border-line-strong'
+            )}
+          >
+            <Icon className={cn('w-5 h-5', active ? 'text-accent-fg' : 'text-subtle')} aria-hidden="true" />
+            {label}
+          </button>
+        );
+      })}
     </div>
-  </div>
+  </fieldset>
 );

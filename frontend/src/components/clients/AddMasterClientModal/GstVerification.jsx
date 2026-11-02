@@ -1,5 +1,7 @@
 import React from 'react';
-import { CircleAlert, CircleCheckBig, RefreshCw, Shield } from 'lucide-react';
+import { CircleCheckBig, ShieldCheck } from 'lucide-react';
+import { Badge, Button, Field, Input } from '../../ui';
+import { Fact } from './StepCard';
 
 export const GstVerification = ({
   gstNumberInput,
@@ -12,94 +14,51 @@ export const GstVerification = ({
   isVerifying,
   verificationResult,
 }) => (
-  <div className="space-y-3">
-    <div>
-      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-        GSTIN (15-Digit Goods & Services Tax Identification Number) *
-      </label>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={gstNumberInput}
-          onChange={(e) => {
-            setGstNumberInput(e.target.value.toUpperCase());
-            if (isVerified) setVerificationResult(null);
-            if (fieldErrors.gstNumberInput) setFieldErrors((prev) => ({ ...prev, gstNumberInput: null }));
-          }}
-          placeholder="e.g. 24AAAAA0000A1Z5"
-          maxLength={15}
-          className={`flex-1 px-3.5 py-2.5 rounded-xl bg-slate-900 border text-xs font-mono text-slate-100 uppercase tracking-wider focus:outline-none transition-all ${
-            fieldErrors.gstNumberInput
-              ? 'border-rose-500 ring-2 ring-rose-500/20 bg-rose-950/20 text-rose-200'
-              : 'border-slate-800 focus:border-indigo-500'
-          }`}
-        />
-        <button
-          type="button"
-          onClick={handleVerifyGst}
-          disabled={isVerifying || !gstNumberInput.trim()}
-          className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20"
-        >
-          {isVerifying ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin"  />
-              <span>Verifying...</span>
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4"  />
-              <span>Verify GST</span>
-            </>
-          )}
-        </button>
-      </div>
-      {fieldErrors.gstNumberInput && (
-        <p className="text-[11px] font-semibold text-rose-400 flex items-center gap-1 mt-1.5 animate-fadeIn">
-          <CircleAlert className="w-3.5 h-3.5 text-rose-400 shrink-0"  />
-          <span>{fieldErrors.gstNumberInput}</span>
-        </p>
+  <div className="space-y-4">
+    <Field label="GSTIN" required error={fieldErrors.gstNumberInput} hint="15 characters, e.g. 24AAAAA0000A1Z5">
+      {(p) => (
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <Input
+              {...p}
+              value={gstNumberInput}
+              onChange={(e) => {
+                setGstNumberInput(e.target.value.toUpperCase());
+                if (isVerified) setVerificationResult(null);
+                if (fieldErrors.gstNumberInput) setFieldErrors((prev) => ({ ...prev, gstNumberInput: null }));
+              }}
+              placeholder="24AAAAA0000A1Z5"
+              maxLength={15}
+              className="font-mono uppercase tracking-wider"
+            />
+          </div>
+          <Button variant="primary" icon={ShieldCheck} loading={isVerifying} disabled={!gstNumberInput.trim()} onClick={handleVerifyGst}>
+            Verify
+          </Button>
+        </div>
       )}
-    </div>
+    </Field>
 
-    {/* GST Verification Status Result */}
     {verificationResult?.type === 'GST' && (
-      <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs space-y-2.5 animate-fadeIn">
-        <div className="flex items-center justify-between pb-2 border-b border-emerald-900/50">
-          <span className="font-extrabold text-emerald-400 flex items-center gap-1.5 text-xs">
-            <CircleCheckBig className="w-4 h-4"  />
-            GSTIN VERIFIED & ACTIVE ({verificationResult.data.gstNumber})
-          </span>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-            {verificationResult.data.gstStatus || 'ACTIVE'}
-          </span>
+      <div className="rounded-xl border border-success/30 bg-success-soft/60 p-4 space-y-3 animate-fade-in">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-2 text-sm font-medium text-success">
+            <CircleCheckBig className="w-4 h-4" aria-hidden="true" />
+            <span className="font-mono">{verificationResult.data.gstNumber}</span> is valid
+          </p>
+          <Badge tone="success">{verificationResult.data.gstStatus || 'Active'}</Badge>
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-slate-300">
-          <div>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Legal Business Name</p>
-            <p className="font-extrabold text-slate-100 text-xs mt-0.5">{verificationResult.data.legalName}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Trade / Brand Name</p>
-            <p className="font-bold text-slate-200 text-xs mt-0.5">{verificationResult.data.tradeName}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Auto-Extracted PAN</p>
-            <p className="font-mono font-extrabold text-purple-300 text-xs mt-0.5">{verificationResult.data.panNumber}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">State & Jurisdiction</p>
-            <p className="font-bold text-slate-200 text-xs mt-0.5">Code {verificationResult.data.stateCode} ({verificationResult.data.stateName})</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Constitution Entity</p>
-            <p className="font-bold text-indigo-300 text-xs mt-0.5">{verificationResult.data.constitution || 'PRIVATE LIMITED'}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Taxpayer Type</p>
-            <p className="font-bold text-emerald-400 text-xs mt-0.5">{verificationResult.data.taxpayerType || 'Regular'}</p>
-          </div>
-        </div>
+        <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+          <Fact label="Legal name" value={verificationResult.data.legalName} />
+          <Fact label="Trade name" value={verificationResult.data.tradeName} />
+          <Fact label="PAN" value={verificationResult.data.panNumber} mono />
+          <Fact label="State" value={`${verificationResult.data.stateCode || ''} ${verificationResult.data.stateName ? `(${verificationResult.data.stateName})` : ''}`.trim()} />
+          <Fact
+            label="Constitution"
+            value={(verificationResult.data.constitution || 'PRIVATE_LIMITED').toLowerCase().replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()).replace(/\bllp\b/i, 'LLP')}
+          />
+          <Fact label="Taxpayer type" value={verificationResult.data.taxpayerType || 'Regular'} />
+        </dl>
       </div>
     )}
   </div>

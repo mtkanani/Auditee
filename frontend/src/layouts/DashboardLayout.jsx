@@ -1,30 +1,103 @@
-import React, { useState, lazy, Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Sidebar } from '../components/common/Sidebar';
-import { Navbar } from '../components/common/Navbar';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
+import { Sidebar } from '../components/shell/Sidebar';
+import { TopBar } from '../components/shell/TopBar';
+import { CommandPalette } from '../components/shell/CommandPalette';
+import { TopProgress } from '../components/shell/TopProgress';
+import { useAuth } from '../context/AuthContext';
+import { getNavGroups } from './navigation';
+import { preloadRoute } from '../routes/pages';
+import { cn } from '../lib/cn';
 
 const AICopilotDrawer = lazy(() => import('../components/common/AICopilotDrawer').then(m => ({ default: m.AICopilotDrawer })));
 
+const COLLAPSE_KEY = 'auditee-sidebar-collapsed';
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+// Downloads every page in the user's menu in the background, one at a time while the browser is
+// idle, so opening any of them later needs no download.
+const usePreloadMenuPages = (role) => {
+  useEffect(() => {
+    const paths = getNavGroups(role).flatMap((g) => g.items.map((i) => i.path));
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 300));
+    const cancelIdle = window.cancelIdleCallback || clearTimeout;
+    let handle;
+    let cancelled = false;
+    const next = (i) => {
+      if (cancelled || i >= paths.length) return;
+      handle = idle(() => Promise.resolve(preloadRoute(paths[i])).then(() => next(i + 1)));
+    };
+    // Give the first screen a moment to finish before starting.
+    const start = setTimeout(() => next(0), 1500);
+    return () => {
+      cancelled = true;
+      clearTimeout(start);
+      cancelIdle(handle);
+    };
+  }, [role]);
+};
+
 export const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const { user } = useAuth();
+  usePreloadMenuPages(user?.role);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0');
+      } catch {
+        // storage blocked: the choice still applies for this visit
+      }
+      return next;
+    });
+  };
+
+  // Ctrl/Cmd+K opens the palette anywhere; Escape closes the mobile drawer.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      } else if (e.key === 'Escape') {
+        setMobileNavOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased overflow-x-hidden">
-      {/* Sidebar Navigation */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="min-h-screen bg-page text-fg font-sans antialiased overflow-x-hidden">
+      <TopProgress />
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapsed}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
+      />
 
-      {/* Main Content Area */}
-      <div className="lg:pl-64 flex flex-col flex-1 min-h-screen transition-all duration-300">
-        {/* Top Navbar */}
-        <Navbar onMenuClick={() => setSidebarOpen(true)} />
+      <div className={cn('flex flex-col min-h-screen transition-[padding] duration-300 ease-out', collapsed ? 'lg:pl-[72px]' : 'lg:pl-64')}>
+        <TopBar onMenuClick={() => setMobileNavOpen(true)} onSearchClick={() => setPaletteOpen(true)} />
 
-        {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <Outlet />
+          {/* "+ New" navigates with openCreate; re-key so the page re-mounts (and opens its form) even on the same route. */}
+          <Outlet key={location.state?.openCreate || location.state?.openApplyModal ? location.key : undefined} />
         </main>
       </div>
 
-      {/* Fixed Right-Side AI Copilot Drawer */}
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+
       <Suspense fallback={null}>
         <AICopilotDrawer />
       </Suspense>

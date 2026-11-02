@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
-import { PageHeader } from '../../components/common/PageHeader';
-import { StatsCard } from '../../components/common/StatsCard';
-import { StatusBadge } from '../../components/common/StatusBadge';
-import { TableSkeleton } from '../../components/common/Skeleton';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Pagination } from '../../components/common/Pagination';
-import { CircleAlert, CircleCheckBig, Clock, CreditCard, FileText, Printer, Search } from 'lucide-react';
+import { Badge, Button, FilterBar, PageHeader, SearchInput, Select, StatCard, StatusTag, Table } from '../../components/ui';
+import { CircleAlert, CircleCheckBig, Clock, CreditCard, FileText, ReceiptIndianRupee } from 'lucide-react';
 import { useClientInvoices } from '../../queries/useInvoices';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
 import { ClientPaymentModal } from '../../components/invoices/ClientPaymentModal';
+import { dueLabel } from '../../utils/dueDate';
+import { inr, shortDate } from '../firm-admin/BillingManagement/format';
 import toast from 'react-hot-toast';
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'All statuses' },
+  { value: 'UNPAID', label: 'Unpaid' },
+  { value: 'PARTIALLY_PAID', label: 'Partly paid' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'OVERDUE', label: 'Overdue' },
+];
 
 export const ClientBilling = () => {
   const [search, setSearch] = useState('');
@@ -41,7 +48,6 @@ export const ClientBilling = () => {
     }
   }, [invoicesError]);
 
-  // Compute billing summary metrics
   // Server-side totals over every matching invoice, not just this page
   const totalBilled = Number(summary?.totalAmount || 0);
   const totalPaid = Number(summary?.paidAmount || 0);
@@ -58,149 +64,106 @@ export const ClientBilling = () => {
     setIsDetailModalOpen(true);
   };
 
+  const columns = [
+    {
+      key: 'invoiceNumber',
+      header: 'Invoice',
+      render: (r) => (
+        <div className="space-y-1">
+          <p className="font-medium text-fg tabular-nums whitespace-nowrap">{r.invoiceNumber}</p>
+          {r.invoiceType === 'PROFORMA' && <Badge tone="neutral">Proforma</Badge>}
+        </div>
+      ),
+    },
+    { key: 'issueDate', header: 'Issued', render: (r) => <span className="text-muted tabular-nums">{shortDate(r.issueDate)}</span> },
+    {
+      key: 'dueDate',
+      header: 'Due',
+      render: (r) => {
+        const due = r.status === 'PAID' || !(r.balanceAmount > 0) ? null : dueLabel(r.dueDate);
+        return (
+          <div className="space-y-1">
+            <p className="text-fg tabular-nums">{shortDate(r.dueDate)}</p>
+            {due && <Badge tone={due.tone} dot>{due.text}</Badge>}
+          </div>
+        );
+      },
+    },
+    { key: 'totalAmount', header: 'Total', align: 'right', render: (r) => <span className="font-medium text-fg tabular-nums">{inr(r.totalAmount)}</span> },
+    {
+      key: 'balanceAmount',
+      header: 'Balance',
+      align: 'right',
+      render: (r) => (
+        <span className={`font-medium tabular-nums ${Number(r.balanceAmount) > 0 ? 'text-danger' : 'text-muted'}`}>{inr(r.balanceAmount)}</span>
+      ),
+    },
+    { key: 'status', header: 'Status', render: (r) => (r.status ? <StatusTag status={r.status} /> : '—') },
+    {
+      key: 'actions',
+      header: <span className="sr-only">Actions</span>,
+      align: 'right',
+      render: (r) => (
+        <div className="flex items-center justify-end gap-2">
+          {r.status !== 'PAID' && (
+            <Button size="sm" variant="primary" icon={CreditCard} onClick={() => handleOpenPayModal(r)}>
+              Pay
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" icon={FileText} onClick={() => handleOpenDetailModal(r.id)}>
+            View
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-6 pb-12">
-      {/* Page Header */}
-      <PageHeader
-        title="Billing & Online Payments"
-        subtitle="View your CA firm tax invoices, track payment status, and make online payments via QR Code, Cards, or NetBanking"
+    <div className="space-y-6">
+      <PageHeader title="Billing" description="Your invoices from the firm. Pay online by UPI, card or net banking." />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Billed" value={inr(totalBilled)} icon={FileText} tone="accent" />
+        <StatCard label="Paid" value={inr(totalPaid)} icon={CircleCheckBig} tone="success" />
+        <StatCard label="Outstanding" value={inr(totalOutstanding)} icon={CircleAlert} tone="danger" />
+        <StatCard label="Invoices to pay" value={pendingCount} icon={Clock} tone="warning" />
+      </div>
+
+      <FilterBar>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search invoice number" />
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          options={STATUS_OPTIONS}
+          aria-label="Payment status"
+          className="sm:w-44"
+        />
+      </FilterBar>
+
+      <Table
+        columns={columns}
+        data={invoices}
+        isLoading={isLoading}
+        emptyState={
+          <EmptyState
+            icon={ReceiptIndianRupee}
+            title={search || statusFilter ? 'No invoices match' : 'No invoices yet'}
+            description={search || statusFilter ? 'Try a different number or status.' : 'Invoices from your firm will show up here.'}
+          />
+        }
+        footer={
+          (pagination?.totalPages || 1) > 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={pagination?.totalPages || 1}
+              totalRecords={pagination?.totalRecords || 0}
+              limit={10}
+              onPageChange={setPage}
+            />
+          )
+        }
       />
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatsCard
-          title="Total Billed"
-          value={`₹${totalBilled.toLocaleString('en-IN')}`}
-          icon={FileText}
-          color="indigo"
-        />
-        <StatsCard
-          title="Total Paid"
-          value={`₹${totalPaid.toLocaleString('en-IN')}`}
-          icon={CircleCheckBig}
-          color="emerald"
-        />
-        <StatsCard
-          title="Outstanding Balance"
-          value={`₹${totalOutstanding.toLocaleString('en-IN')}`}
-          icon={CircleAlert}
-          color="rose"
-        />
-        <StatsCard
-          title="Pending Invoices"
-          value={`${pendingCount} Pending`}
-          icon={Clock}
-          color="amber"
-        />
-      </div>
-
-      {/* Filter & Search Toolbar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-900/60 p-4 border border-slate-800/80 rounded-2xl">
-        <div className="relative col-span-2">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500"  />
-          <input
-            type="text"
-            placeholder="Search by invoice number..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
-          />
-        </div>
-
-        <div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
-          >
-            <option value="">All Payment Statuses</option>
-            <option value="UNPAID">Unpaid</option>
-            <option value="PARTIALLY_PAID">Partially Paid</option>
-            <option value="PAID">Fully Paid</option>
-            <option value="OVERDUE">Overdue</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Invoices List Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        {isLoading ? (
-          <TableSkeleton rows={6} cols={8} />
-        ) : invoices.length === 0 ? (
-          <EmptyState
-            title="No billing invoices found"
-            description="You have no invoices or payment records at this time."
-          />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/80 text-slate-400 font-bold uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Invoice #</th>
-                  <th className="py-3.5 px-4">Issue Date</th>
-                  <th className="py-3.5 px-4">Due Date</th>
-                  <th className="py-3.5 px-4 text-right">Total (₹)</th>
-                  <th className="py-3.5 px-4 text-right">Paid (₹)</th>
-                  <th className="py-3.5 px-4 text-right">Balance Due (₹)</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-100">
-                      {inv.invoiceNumber}
-                      {inv.invoiceType === 'PROFORMA' && (
-                        <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">PROFORMA</span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-400">{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
-                    <td className="py-3.5 px-4 text-slate-400 font-medium">{new Date(inv.dueDate).toLocaleDateString('en-IN')}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-slate-100">₹{Number(inv.totalAmount).toLocaleString('en-IN')}</td>
-                    <td className="py-3.5 px-4 text-right font-semibold text-emerald-400">₹{Number(inv.paidAmount).toLocaleString('en-IN')}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-rose-400">₹{Number(inv.balanceAmount).toLocaleString('en-IN')}</td>
-                    <td className="py-3.5 px-4 text-center">
-                      <StatusBadge status={inv.status} />
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {inv.status !== 'PAID' && (
-                          <button
-                            onClick={() => handleOpenPayModal(inv)}
-                            className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1 cursor-pointer transition-all hover:scale-105"
-                          >
-                            <CreditCard className="w-3.5 h-3.5"  />
-                            <span>Pay Now</span>
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => handleOpenDetailModal(inv.id)}
-                          className="py-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                          title="View / Print Tax Invoice PDF"
-                        >
-                          <Printer className="w-3.5 h-3.5"  />
-                          <span>PDF</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        <Pagination
-          currentPage={page}
-          totalPages={pagination?.totalPages || 1}
-          totalRecords={pagination?.totalRecords || 0}
-          limit={10}
-          onPageChange={setPage}
-        />
-      </div>
-
-      {/* Invoice Detail PDF Modal */}
       {isDetailModalOpen && (
         <InvoiceDetailModal
           invoiceId={selectedDetailInvoiceId}
@@ -209,13 +172,8 @@ export const ClientBilling = () => {
         />
       )}
 
-      {/* Interactive Online Payment Modal */}
       {isPayModalOpen && (
-        <ClientPaymentModal
-          invoice={selectedPayInvoice}
-          isOpen={isPayModalOpen}
-          onClose={() => setIsPayModalOpen(false)}
-        />
+        <ClientPaymentModal invoice={selectedPayInvoice} isOpen={isPayModalOpen} onClose={() => setIsPayModalOpen(false)} />
       )}
     </div>
   );

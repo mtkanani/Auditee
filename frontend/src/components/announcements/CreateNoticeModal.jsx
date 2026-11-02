@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { Radio, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Modal } from '../common/Modal';
+import { Button, Field, Input, Select, Textarea } from '../ui';
+
+const CATEGORY_OPTIONS = [
+  { value: 'COMPLIANCE', label: 'Compliance' },
+  { value: 'POLICY', label: 'Policy' },
+  { value: 'DEADLINE', label: 'Deadline' },
+  { value: 'GENERAL', label: 'General' },
+];
+
+const PRIORITY_OPTIONS = [
+  { value: 'INFO', label: 'Info' },
+  { value: 'WARNING', label: 'Important' },
+  { value: 'URGENT', label: 'Urgent (shown as a banner)' },
+];
 
 export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
   const [form, setForm] = useState({
@@ -12,6 +26,8 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
     expiresAt: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,114 +61,34 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={
-        <span className="flex items-center gap-2">
-          <Radio size="1em" className="text-indigo-400" />
-          <span>Broadcast Firm Announcement</span>
-        </span>
-      }
-      maxWidth="max-w-lg"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="New notice" maxWidth="max-w-lg">
       <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Title */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
-                Notice Title <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Mandatory GSTR-3B Reconciliation Checklist / Office Holiday"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+        <Field label="Title" required>
+          {(p) => <Input {...p} required placeholder="e.g. GSTR-3B reconciliation checklist" value={form.title} onChange={set('title')} />}
+        </Field>
 
-            {/* Category & Priority Row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Category
-                </label>
-                <select
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="COMPLIANCE">COMPLIANCE</option>
-                  <option value="POLICY">POLICY</option>
-                  <option value="DEADLINE">DEADLINE</option>
-                  <option value="GENERAL">GENERAL</option>
-                </select>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Category">
+            {(p) => <Select {...p} value={form.category} onChange={set('category')} options={CATEGORY_OPTIONS} />}
+          </Field>
+          <Field label="Priority">
+            {(p) => <Select {...p} value={form.priority} onChange={set('priority')} options={PRIORITY_OPTIONS} />}
+          </Field>
+        </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">
-                  Priority Badge
-                </label>
-                <select
-                  value={form.priority}
-                  onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="INFO">INFO (Standard)</option>
-                  <option value="WARNING">WARNING (High)</option>
-                  <option value="URGENT">URGENT (Banner Alert)</option>
-                </select>
-              </div>
-            </div>
+        <Field label="Expires on" hint="Optional">
+          {(p) => <Input {...p} type="date" value={form.expiresAt} onChange={set('expiresAt')} />}
+        </Field>
 
-            {/* Expiration Date */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
-                Notice Expiration Date (Optional)
-              </label>
-              <input
-                type="date"
-                value={form.expiresAt}
-                onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+        <Field label="Message" required>
+          {(p) => <Textarea {...p} rows={5} required placeholder="What everyone needs to know or do" value={form.content} onChange={set('content')} />}
+        </Field>
 
-            {/* Content Textarea */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">
-                Notice Description & Instructions <span className="text-rose-400">*</span>
-              </label>
-              <textarea
-                rows={4}
-                required
-                placeholder="Detailed instructions or policy notes for all firm members..."
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-lg shadow-indigo-500/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
-              >
-                <Send className="w-3.5 h-3.5"  />
-                <span>{isSubmitting ? 'Broadcasting...' : 'Broadcast Notice'}</span>
-              </button>
-            </div>
-          </form>
+        <div className="pt-4 border-t border-line flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" icon={Send} loading={isSubmitting}>Post notice</Button>
+        </div>
+      </form>
     </Modal>
   );
 };

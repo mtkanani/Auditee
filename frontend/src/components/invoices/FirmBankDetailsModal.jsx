@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Modal } from '../common/Modal';
+import { Skeleton } from '../common/Skeleton';
+import { Button, Field, Input, Textarea } from '../ui';
 import { useBankDetails, useUpdateFirmBankDetails } from '../../queries/useInvoices';
 
 export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
@@ -48,129 +50,62 @@ export const FirmBankDetailsModal = ({ isOpen, onClose, onSaved }) => {
     });
   };
 
+  const set = (key) => (e) => setFormData({ ...formData, [key]: e.target.value });
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Firm Banking & Payment Settings"
-      maxWidth="max-w-xl"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Bank and payment details" maxWidth="max-w-xl">
       {loading ? (
-        <div className="p-12 text-center text-xs text-slate-400">Loading banking settings...</div>
+        <div className="space-y-4" aria-busy="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+          ))}
+        </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Account Holder Name & Bank Name */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Account Holder / Beneficiary Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Codelix CA Firm"
-                  value={formData.accountHolderName}
-                  onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <p className="text-sm text-muted">Printed on every invoice so clients know where to pay.</p>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Bank Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. ICICI Bank"
-                  value={formData.bankName}
-                  onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Account holder" required>
+              {(p) => <Input {...p} required placeholder="e.g. Codelix CA Firm" value={formData.accountHolderName} onChange={set('accountHolderName')} />}
+            </Field>
+            <Field label="Bank" required>
+              {(p) => <Input {...p} required placeholder="e.g. ICICI Bank" value={formData.bankName} onChange={set('bankName')} />}
+            </Field>
+            <Field label="Account number" required>
+              {(p) => <Input {...p} required placeholder="e.g. 987654321012" value={formData.accountNumber} onChange={set('accountNumber')} className="font-mono" />}
+            </Field>
+            <Field label="IFSC code" required>
+              {(p) => <Input {...p} required placeholder="e.g. ICIC0001234" value={formData.ifscCode} onChange={set('ifscCode')} className="font-mono uppercase" />}
+            </Field>
+            <Field label="Branch">
+              {(p) => <Input {...p} placeholder="e.g. Vejalpur, Ahmedabad" value={formData.branchName} onChange={set('branchName')} />}
+            </Field>
+            <Field label="UPI ID" required>
+              {(p) => <Input {...p} required placeholder="e.g. codelix.ca@okicici" value={formData.upiId} onChange={set('upiId')} className="font-mono" />}
+            </Field>
+          </div>
 
-            {/* Account Number & IFSC Code */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Bank Account Number *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 987654321012"
-                  value={formData.accountNumber}
-                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">IFSC Code *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. ICIC0001234"
-                  value={formData.ifscCode}
-                  onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs font-mono uppercase focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Branch Name & UPI ID */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Branch Location</label>
-                <input
-                  type="text"
-                  placeholder="e.g. PNTC Vejalpur, Ahmedabad Main"
-                  value={formData.branchName}
-                  onChange={(e) => setFormData({ ...formData, branchName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Firm UPI ID / VPA *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. codelix.ca@okicici"
-                  value={formData.upiId}
-                  onChange={(e) => setFormData({ ...formData, upiId: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-indigo-500/40 text-indigo-300 font-mono font-bold text-xs focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            {/* Payment Notes */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Payment Instructions / Notes for Clients</label>
-              <textarea
+          <Field label="Payment instructions for clients">
+            {(p) => (
+              <Textarea
+                {...p}
                 rows={2}
-                placeholder="e.g. Please quote invoice number on all NEFT/RTGS/UPI transfers."
+                placeholder="e.g. Please quote the invoice number on every NEFT, RTGS or UPI transfer."
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500"
+                onChange={set('notes')}
               />
-            </div>
+            )}
+          </Field>
 
-            {/* Modal Footer Controls */}
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={updateBankMutation.isPending}
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 disabled:opacity-50 transition-all flex items-center gap-1.5 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>{updateBankMutation.isPending ? 'Saving Settings...' : 'Save Bank Details'}</span>
-              </button>
-            </div>
-          </form>
-        )}
+          <div className="pt-4 border-t border-line flex justify-end gap-2">
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary" icon={Save} loading={updateBankMutation.isPending}>Save details</Button>
+          </div>
+        </form>
+      )}
     </Modal>
   );
 };

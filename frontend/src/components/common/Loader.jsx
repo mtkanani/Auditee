@@ -12,7 +12,7 @@ export const Loader = ({ size = 'md', message = 'Loading...' }) => {
       <div
         className={`${spinnerSize} border-indigo-500 border-t-transparent rounded-full animate-spin`}
       />
-      {message && <p className="text-xs font-medium text-slate-400">{message}</p>}
+      {message && <p className="text-xs font-medium text-muted">{message}</p>}
     </div>
   );
 };

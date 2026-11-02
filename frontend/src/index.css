@@ -188,6 +188,12 @@
   --warning-soft: color-mix(in oklab, oklch(76.9% 0.188 70.08) 15%, transparent);
   --danger: oklch(71.2% 0.194 13.428);
   --danger-soft: color-mix(in oklab, oklch(64.5% 0.246 16.439) 15%, transparent);
+
+  /* Chart fills for task status. Darker than the text tokens so fills sit in the
+     chart lightness band; checked with the dataviz palette validator (dark surface). */
+  --chart-pending: #d97706;
+  --chart-progress: #6366f1;
+  --chart-done: #059669;
 }
 
 html.light {
@@ -270,6 +276,10 @@ html.light {
   --warning-soft: oklch(98.7% 0.022 95.277);
   --danger: oklch(51.4% 0.222 16.935);
   --danger-soft: oklch(96.9% 0.015 12.422);
+
+  --chart-pending: #b45309;
+  --chart-progress: #4f46e5;
+  --chart-done: #047857;
 }
 
 @layer base {
@@ -356,4 +366,80 @@ html.light {
 .glow-card-container:hover::before {
   opacity: 0.3;
   filter: blur(12px);
+}
+
+/* ---------------------------------------------------------------------------
+   Motion. Pure CSS (no animation library), driven by data-state="open|closed"
+   from hooks/usePresence. Everything stops for people who ask for reduced motion.
+   --------------------------------------------------------------------------- */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(12px) scale(0.97); } }
+@keyframes slide-in-right { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes slide-out-right { from { transform: none; } to { transform: translateX(100%); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes indeterminate { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+@keyframes drift-a { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-60px, 40px) scale(1.15); } }
+@keyframes drift-b { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(50px, -30px) scale(0.9); } }
+@keyframes ping-soft { 0% { transform: scale(1); opacity: 0.7; } 80%, 100% { transform: scale(2.4); opacity: 0; } }
+@keyframes draw-ring { from { stroke-dashoffset: var(--ring-length); } }
+
+.overlay[data-state='open'] { animation: fade-in 180ms ease-out both; }
+.overlay[data-state='closed'] { animation: fade-out 160ms ease-in both; }
+.dialog-panel[data-state='open'] { animation: pop-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.dialog-panel[data-state='closed'] { animation: pop-out 160ms ease-in both; }
+.drawer-panel[data-state='open'] { animation: slide-in-right 280ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.drawer-panel[data-state='closed'] { animation: slide-out-right 200ms ease-in both; }
+
+/* Staggered entrance: set style="--i: n" on each block. */
+.rise { animation: rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 70ms); }
+
+/* Loading placeholder with a moving sheen. */
+.shimmer {
+  background: linear-gradient(90deg, var(--hover) 0%, color-mix(in oklab, var(--hover) 55%, var(--surface)) 50%, var(--hover) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Top progress bar: eases towards 90% while waiting, then fills and fades when done. */
+@keyframes top-progress-run { from { width: 0; } 20% { width: 45%; } 60% { width: 75%; } to { width: 90%; } }
+@keyframes top-progress-done { from { width: 90%; opacity: 1; } 60% { width: 100%; opacity: 1; } to { width: 100%; opacity: 0; } }
+.top-progress-run { animation: top-progress-run 8s cubic-bezier(0.1, 0.7, 0.3, 1) forwards; }
+.top-progress-done { animation: top-progress-done 380ms ease-out forwards; }
+
+/* Loading placeholders stay invisible for their first 250 ms and then fade in, so loads that finish
+   quickly never flash a skeleton. Their card outlines still hold the layout, so nothing jumps. */
+@keyframes skeleton-wait { from, to { opacity: 0; } }
+.animate-pulse.bg-hover, .shimmer {
+  animation-name: skeleton-wait, pulse;
+  animation-duration: 250ms, 2s;
+  animation-timing-function: step-end, cubic-bezier(0.4, 0, 0.6, 1);
+  animation-delay: 0ms, 250ms;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: backwards, none;
+}
+.shimmer { animation-name: skeleton-wait, shimmer; animation-duration: 250ms, 1.4s; animation-timing-function: step-end, linear; }
+
+/* Route loader: orbiting arc and a sliding progress bar. */
+.spin-slow { animation: spin-slow 1s linear infinite; }
+.indeterminate { animation: indeterminate 1.2s ease-in-out infinite; }
+
+/* Slowly drifting colour blobs behind the home hero. */
+.aurora-a { animation: drift-a 16s ease-in-out infinite; }
+.aurora-b { animation: drift-b 20s ease-in-out infinite; }
+.ping-soft { animation: ping-soft 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+.draw-ring { animation: draw-ring 1.1s cubic-bezier(0.16, 1, 0.3, 1) both 250ms; }
+
+.grow-x { transform-origin: left; animation: grow-x 900ms cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: calc(var(--i, 0) * 90ms + 200ms); }
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay, .dialog-panel, .drawer-panel, .rise, .shimmer, .grow-x, .aurora-a, .aurora-b, .ping-soft, .draw-ring, .indeterminate, .top-progress-run { animation: none !important; }
+  .top-progress-run { width: 90%; }
+  .top-progress-done { animation-duration: 1ms !important; }
+  .spin-slow { animation-duration: 3s !important; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }

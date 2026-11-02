@@ -1,17 +1,24 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { PageHeader } from '../../components/common/PageHeader';
 import { Avatar } from '../../components/common/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
 import { Lock, Save, TriangleAlert, User } from 'lucide-react';
+import { Badge, Button, Card, Field, Input, PageHeader, PasswordInput } from '../../components/ui';
 import { useUpdateUserProfile, useChangePassword } from '../../queries/useUsers';
+
+const SectionTitle = ({ icon: Icon, children }) => (
+  <span className="inline-flex items-center gap-2">
+    <Icon className="w-4 h-4 text-accent-fg" aria-hidden="true" />
+    {children}
+  </span>
+);
 
 export const UserProfile = () => {
   const { user, updateUserState } = useAuth();
 
-  const { register: regProfile, handleSubmit: handleSubmitProfile, reset: resetProfile } = useForm();
-  const { register: regPass, handleSubmit: handleSubmitPass, reset: resetPass } = useForm();
+  const { register: regProfile, handleSubmit: handleSubmitProfile, reset: resetProfile, formState: { errors: profileErrors } } = useForm();
+  const { register: regPass, handleSubmit: handleSubmitPass, reset: resetPass, formState: { errors: passErrors } } = useForm();
 
   const updateProfileMutation = useUpdateUserProfile();
   const changePasswordMutation = useChangePassword();
@@ -54,139 +61,78 @@ export const UserProfile = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <PageHeader
-        title="My Profile & Settings"
-        subtitle="Manage your personal details, designation, and security password"
-      />
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <PageHeader title="My profile" description="Your personal details and password." />
 
-      {/* User Info Header Card */}
-      <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex items-center gap-6">
-        <Avatar firstName={user?.firstName} lastName={user?.lastName} size="xl" />
-        <div>
-          <h2 className="text-xl font-bold text-slate-100">
-            {user?.firstName} {user?.lastName}
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">{user?.email}</p>
-          <span className="inline-block mt-2 text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            {user?.designation || 'Staff Accountant'}
-          </span>
+      <Card>
+        <div className="flex items-center gap-4 min-w-0">
+          <Avatar firstName={user?.firstName} lastName={user?.lastName} size="xl" />
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-fg truncate">
+              {user?.firstName} {user?.lastName}
+            </h2>
+            <p className="text-sm text-muted truncate">{user?.email}</p>
+            <Badge tone="accent" className="mt-2">{user?.designation || 'Employee'}</Badge>
+          </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Edit Profile Form */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
-        <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <User size="1em" className="text-indigo-400"  />
-          <span>Personal Information</span>
-        </h3>
-
+      <Card title={<SectionTitle icon={User}>Personal information</SectionTitle>}>
         <form onSubmit={handleSubmitProfile(onUpdateProfile)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">First Name</label>
-              <input
-                type="text"
-                {...regProfile('firstName', { required: true })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Last Name</label>
-              <input
-                type="text"
-                {...regProfile('lastName', { required: true })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="First name" required error={profileErrors.firstName && 'First name is required'}>
+              {(p) => <Input {...p} autoComplete="given-name" {...regProfile('firstName', { required: true })} />}
+            </Field>
+            <Field label="Last name" required error={profileErrors.lastName && 'Last name is required'}>
+              {(p) => <Input {...p} autoComplete="family-name" {...regProfile('lastName', { required: true })} />}
+            </Field>
+            <Field label="Mobile number">
+              {(p) => <Input {...p} type="tel" autoComplete="tel" {...regProfile('mobileNumber')} />}
+            </Field>
+            <Field label="City">
+              {(p) => <Input {...p} autoComplete="address-level2" {...regProfile('city')} />}
+            </Field>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Mobile Number</label>
-              <input
-                type="text"
-                {...regProfile('mobileNumber')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">City</label>
-              <input
-                type="text"
-                {...regProfile('city')}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="py-2.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
-          >
-            <Save className="w-4 h-4"  />
-            <span>{isLoading ? 'Saving...' : 'Save Profile Changes'}</span>
-          </button>
+          <Button type="submit" variant="primary" icon={Save} loading={isLoading}>
+            {isLoading ? 'Saving…' : 'Save changes'}
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      {/* Security & Change Password */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
-        <h3 className="text-lg font-bold text-slate-100 mb-6 flex items-center gap-2">
-          <Lock size="1em" className="text-purple-400"  />
-          <span>Security & Change Password</span>
-        </h3>
-
+      <Card title={<SectionTitle icon={Lock}>Password</SectionTitle>}>
         <form onSubmit={handleSubmitPass(onChangePassword)} className="space-y-4 max-w-md">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Current Password</label>
-            <input
-              type="password"
-              {...regPass('currentPassword', { required: true })}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">New Password</label>
-            <input
-              type="password"
-              {...regPass('newPassword', { required: true, minLength: 8 })}
-              placeholder="NewPassword@123"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isPasswordLoading}
-            className="py-2.5 px-6 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/25 transition-all"
+          <Field label="Current password" required error={passErrors.currentPassword && 'Enter your current password'}>
+            {(p) => <PasswordInput {...p} autoComplete="current-password" {...regPass('currentPassword', { required: true })} />}
+          </Field>
+          <Field
+            label="New password"
+            required
+            hint="At least 8 characters."
+            error={passErrors.newPassword && 'Use at least 8 characters'}
           >
-            {isPasswordLoading ? 'Updating Password...' : 'Update Password'}
-          </button>
+            {(p) => <PasswordInput {...p} autoComplete="new-password" {...regPass('newPassword', { required: true, minLength: 8 })} />}
+          </Field>
+          <Button type="submit" variant="secondary" loading={isPasswordLoading}>
+            {isPasswordLoading ? 'Updating…' : 'Update password'}
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      {/* Danger Zone */}
-      <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <section className="p-5 rounded-2xl bg-danger-soft border border-danger/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
-            <TriangleAlert size="1em" className="text-rose-400"  />
-            <span>Danger Zone</span>
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Permanently delete your account and personal user data.
-          </p>
+          <h2 className="text-sm font-semibold text-danger flex items-center gap-2">
+            <TriangleAlert className="w-4 h-4" aria-hidden="true" />
+            Delete account
+          </h2>
+          <p className="text-sm text-muted mt-1">Permanently delete your account and personal data.</p>
         </div>
         <Link
           to="/user/delete-account"
-          className="inline-flex items-center justify-center py-2 px-4 rounded-xl bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 hover:border-rose-500 text-rose-300 hover:text-white font-semibold text-xs transition-all w-fit"
+          className="inline-flex items-center justify-center h-9 px-4 rounded-xl bg-danger text-white text-sm font-medium hover:opacity-90 transition-opacity w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/50"
         >
-          Delete Account
+          Delete account
         </Link>
-      </div>
+      </section>
     </div>
   );
 };

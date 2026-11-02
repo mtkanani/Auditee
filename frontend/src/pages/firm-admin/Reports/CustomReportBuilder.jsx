@@ -1,7 +1,11 @@
 import React from 'react';
-import { SlidersVertical, Check, RefreshCw, CircleCheckBig, Download } from 'lucide-react';
+import { Check, Download, Play, SlidersVertical } from 'lucide-react';
+import { Button } from '../../../components/ui';
+import { cn } from '../../../lib/cn';
 import { CUSTOM_ENTITIES, entityFieldsMap } from './constants';
 import { ReportTable } from './ReportTable';
+
+const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50';
 
 export const CustomReportBuilder = ({
   customEntity,
@@ -33,122 +37,88 @@ export const CustomReportBuilder = ({
   const handleClearAll = () => {
     onFieldsChange([]);
   };
+
   return (
-    <div className="space-y-6">
-      <div className="p-6 md:p-8 rounded-3xl bg-slate-900/80 border border-slate-800/80 shadow-2xl backdrop-blur-md space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-black text-fg flex items-center gap-2">
-              <SlidersVertical className="w-5 h-5 text-indigo-400" />
-              <span>Custom Report Builder</span>
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Configure data entities, select custom column attributes, and generate exported datasets.
-            </p>
-          </div>
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-line bg-surface shadow-card p-5 sm:p-6 space-y-6">
+        <div>
+          <h3 className="flex items-center gap-2 text-base font-semibold text-fg">
+            <SlidersVertical className="w-4 h-4 text-accent-fg" aria-hidden="true" /> Build your own report
+          </h3>
+          <p className="text-sm text-muted mt-1">Pick what to report on, choose the columns, then generate and export.</p>
         </div>
 
-        {/* Step 1: Entity Cards */}
-        <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-            Step 1: Choose Primary Data Entity
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-fg mb-2">1. What to report on</legend>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {CUSTOM_ENTITIES.map((ent) => {
               const Icon = ent.icon;
-              const isSelected = customEntity === ent.id;
+              const on = customEntity === ent.id;
               return (
                 <button
                   key={ent.id}
+                  type="button"
+                  aria-pressed={on}
                   onClick={() => handleEntitySelect(ent.id)}
-                  className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
-                    isSelected
-                      ? 'bg-gradient-to-b from-indigo-600/30 to-indigo-950/60 border-indigo-500 shadow-xl shadow-indigo-600/20'
-                      : 'bg-slate-950/80 border-slate-800 hover:border-slate-700'
-                  }`}
+                  className={cn('p-4 rounded-xl border text-left transition-colors', focus, on ? 'border-accent bg-accent-soft/50' : 'border-line hover:border-line-strong')}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <div className={`p-2 rounded-xl bg-slate-900 ${ent.color}`}>
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    {isSelected && <Check className="w-4 h-4 text-indigo-400" />}
+                    <span className={cn('grid place-items-center w-8 h-8 rounded-lg', on ? 'bg-accent text-on-accent' : 'bg-hover text-muted')}>
+                      <Icon className="w-4 h-4" aria-hidden="true" />
+                    </span>
+                    {on && <Check className="w-4 h-4 text-accent-fg" aria-hidden="true" />}
                   </div>
-                  <p className="text-xs font-bold text-fg">{ent.label}</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">{ent.desc}</p>
+                  <p className="text-sm font-medium text-fg">{ent.label}</p>
+                  <p className="text-xs text-muted mt-0.5">{ent.desc}</p>
                 </button>
               );
             })}
           </div>
-        </div>
+        </fieldset>
 
-        {/* Step 2: Custom Columns Selector Chips */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Step 2: Select Attributes ({customFields.length} selected)
-            </label>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSelectAll}
-                className="text-xs text-indigo-400 font-bold hover:underline cursor-pointer"
-              >
-                Select All
-              </button>
-              <span className="text-slate-600">•</span>
-              <button
-                onClick={handleClearAll}
-                className="text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
-              >
-                Clear
-              </button>
+        <fieldset className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <legend className="text-sm font-medium text-fg">
+              2. Columns <span className="text-subtle font-normal">({customFields.length} selected)</span>
+            </legend>
+            <div className="flex items-center gap-3 text-sm">
+              <button type="button" onClick={handleSelectAll} className="font-medium text-accent-fg hover:underline underline-offset-4">Select all</button>
+              <button type="button" onClick={handleClearAll} className="text-muted hover:text-fg">Clear</button>
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-2.5 p-4 rounded-2xl bg-slate-950 border border-slate-800">
+          <div className="flex flex-wrap gap-2">
             {entityFieldsMap[customEntity]?.map((f) => {
-              const isChecked = customFields.includes(f.key);
+              const on = customFields.includes(f.key);
               return (
                 <button
                   key={f.key}
+                  type="button"
+                  aria-pressed={on}
                   onClick={() => handleToggleField(f.key)}
-                  className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer ${
-                    isChecked
-                      ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/40 shadow-sm'
-                      : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  {isChecked ? (
-                    <Check className="w-3.5 h-3.5 text-indigo-400" />
-                  ) : (
-                    <div className="w-3.5 h-3.5 rounded-full border border-slate-700" />
+                  className={cn(
+                    'inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-sm transition-colors',
+                    focus,
+                    on ? 'border-accent/40 bg-accent-soft text-accent-fg' : 'border-line text-muted hover:text-fg hover:border-line-strong'
                   )}
-                  <span>{f.label}</span>
+                >
+                  {on && <Check className="w-3.5 h-3.5" aria-hidden="true" />}
+                  {f.label}
                 </button>
               );
             })}
           </div>
-        </div>
+        </fieldset>
 
-        <div className="flex justify-end gap-3 pt-3">
-          <button
-            onClick={onRunCustomReport}
-            disabled={customLoading || customFields.length === 0}
-            className="py-3 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold shadow-xl shadow-indigo-600/25 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 transition-all flex items-center gap-2 cursor-pointer"
-          >
-            {customLoading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <CircleCheckBig className="w-4 h-4" />
-            )}
-            <span>Generate Custom Dataset</span>
-          </button>
+        <div className="flex justify-end pt-2">
+          <Button variant="primary" icon={Play} loading={customLoading} disabled={customFields.length === 0} onClick={onRunCustomReport}>
+            Generate report
+          </Button>
         </div>
-      </div>
+      </section>
 
-      {/* Reusable ReportTable for Custom Report Results */}
       {customReportData.length > 0 && (
         <ReportTable
-          title={`Custom Dataset (${customReportData.length} rows)`}
+          title={`Your report (${customReportData.length} rows)`}
           icon={SlidersVertical}
           data={customReportData}
           paginatedData={customReportData}
@@ -156,13 +126,9 @@ export const CustomReportBuilder = ({
           formatHeader={false}
           showPagination={false}
           headerActions={
-            <button
-              onClick={onExportCSV}
-              className="py-2 px-3 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 text-xs font-bold hover:bg-indigo-600/30 flex items-center gap-2 cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export Custom CSV</span>
-            </button>
+            <Button size="sm" variant="soft" icon={Download} onClick={onExportCSV}>
+              Export CSV
+            </Button>
           }
         />
       )}

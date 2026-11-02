@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useDebounce } from '../../../hooks/useDebounce';
 import {
@@ -22,7 +23,8 @@ export const useFirmTaskManagement = () => {
   const [page, setPage] = useState(1);
 
   // Modals state
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(Boolean(location.state?.openCreate));
   const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);

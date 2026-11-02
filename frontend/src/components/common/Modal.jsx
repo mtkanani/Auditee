@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useId } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { usePresence } from '../../hooks/usePresence';
 import { X } from 'lucide-react';
 
 // Module-level stack for managing open modal instances
@@ -51,6 +51,8 @@ export const Modal = ({
   const panelRef = useRef(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  // Stays mounted for the closing animation (CSS in index.css; no animation library).
+  const { mounted, state } = usePresence(isOpen, 160);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -115,8 +117,7 @@ export const Modal = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
+    mounted && (
         <div
           className="fixed inset-0 z-50 overflow-y-auto"
           role="dialog"
@@ -124,40 +125,36 @@ export const Modal = ({
           aria-labelledby={title ? titleId : undefined}
         >
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
+            data-state={state}
             onClick={closeOnBackdrop ? onClose : undefined}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
+            className="overlay fixed inset-0 bg-black/60 backdrop-blur-sm"
           />
 
           {/* Modal Container to ensure perfect centering without top clipping */}
           <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <motion.div
+            <div
               ref={panelRef}
               tabIndex={-1}
               onKeyDown={handleKeyDown}
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.2 }}
-              className={`relative w-full ${maxWidth} bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl overflow-hidden z-10 text-left my-8 outline-none`}
+              data-state={state}
+              className={`dialog-panel relative w-full ${maxWidth} bg-surface border border-line rounded-2xl shadow-raised overflow-hidden z-10 text-left my-8 outline-none`}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-20">
-                <h3 id={titleId} className="text-base font-extrabold text-slate-100 flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-line bg-surface/95 backdrop-blur-xl sticky top-0 z-20">
+                {/* min-w-0 lets long titles truncate instead of widening the dialog on phones */}
+                <h3 id={titleId} className="min-w-0 flex-1 text-base font-semibold text-fg flex items-center gap-2">
                   {title}
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {headerActions}
                   <button
                     type="button"
                     onClick={onClose}
                     aria-label="Close"
-                    className="p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
+                    className="grid place-items-center w-8 h-8 rounded-lg text-subtle hover:text-fg hover:bg-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -167,14 +164,13 @@ export const Modal = ({
 
               {/* Sticky Footer */}
               {footer && (
-                <div className="px-6 py-4 border-t border-slate-800 bg-slate-900/90 backdrop-blur-xl sticky bottom-0 z-20">
+                <div className="px-6 py-4 border-t border-line bg-surface/95 backdrop-blur-xl sticky bottom-0 z-20">
                   {footer}
                 </div>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
-      )}
-    </AnimatePresence>
+      )
   );
 };

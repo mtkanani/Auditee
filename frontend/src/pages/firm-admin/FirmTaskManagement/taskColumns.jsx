@@ -1,109 +1,88 @@
 import React from 'react';
-import { Eye } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { Button, Select } from '../../../components/ui';
+import { PriorityBadge } from '../../../components/tasks/PriorityBadge';
+import { checklist } from './checklist';
+
+const statusOptions = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'UNDER_REVIEW', label: 'Under review' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
+
+const assigneeNames = (r) => {
+  if (r.assignees?.length) return r.assignees.map((a) => `${a.user?.firstName || ''} ${a.user?.lastName || ''}`.trim()).join(', ');
+  if (r.user) return `${r.user.firstName} ${r.user.lastName}`;
+  return null;
+};
+
+// Inline controls shouldn't trigger the row's "open task" click.
+const stop = (e) => e.stopPropagation();
 
 export const getTaskColumns = ({ setSelectedTaskId, setIsDetailModalOpen, handleStatusChange }) => [
   {
-    header: 'Task Title & Client',
     key: 'title',
+    header: 'Task',
     render: (r) => (
-      <div
-        onClick={() => {
-          setSelectedTaskId(r.id);
-          setIsDetailModalOpen(true);
-        }}
-        className="cursor-pointer group"
-      >
-        <p className="font-extrabold text-slate-100 group-hover:text-indigo-400 transition-colors">
-          {r.title}
-        </p>
-        <p className="text-xs text-slate-400">
-          {r.client?.companyName || r.client?.clientName || 'Firm Internal Task'}
-        </p>
+      <div className="min-w-0">
+        <p className="font-medium text-fg truncate max-w-[320px]">{r.title}</p>
+        <p className="text-xs text-subtle truncate">{r.client?.companyName || r.client?.clientName || 'Internal task'}</p>
       </div>
     ),
   },
   {
-    header: 'Assigned Auditor(s)',
     key: 'assignees',
-    render: (r) => (
-      <div className="flex flex-wrap items-center gap-1 text-xs">
-        {r.assignees && r.assignees.length > 0 ? (
-          r.assignees.map((a) => (
-            <span key={a.id} className="px-2 py-0.5 rounded bg-slate-800 text-indigo-300 font-semibold">
-              {a.user?.firstName} {a.user?.lastName}
-            </span>
-          ))
-        ) : r.user ? (
-          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200 font-semibold">
-            {r.user.firstName} {r.user.lastName}
-          </span>
-        ) : (
-          <span className="text-slate-500 font-semibold">Unassigned</span>
-        )}
-      </div>
-    ),
-  },
-  {
-    header: 'Priority',
-    key: 'priority',
-    render: (r) => (
-      <span
-        className={`text-[10px] font-extrabold px-2 py-0.5 rounded ${
-          r.priority === 'URGENT'
-            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-            : r.priority === 'HIGH'
-            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-        }`}
-      >
-        {r.priority}
-      </span>
-    ),
-  },
-  {
-    header: 'Subtasks',
-    key: 'subtasks',
+    header: 'Assigned to',
     render: (r) => {
-      const total = r.subtasks?.length || r._count?.subtasks || 0;
-      const done = r.subtasks?.filter((s) => s.isCompleted)?.length || 0;
-      return (
-        <span className="text-xs font-bold text-slate-300">
-          {done}/{total} Items
-        </span>
-      );
+      const names = assigneeNames(r);
+      return names ? <span className="text-sm text-muted line-clamp-1 max-w-[220px]">{names}</span> : <span className="text-sm text-subtle">Unassigned</span>;
+    },
+  },
+  { key: 'priority', header: 'Priority', render: (r) => <PriorityBadge priority={r.priority} /> },
+  {
+    key: 'subtasks',
+    header: 'Checklist',
+    hideOnMobile: true,
+    render: (r) => {
+      const { done, total } = checklist(r);
+      return <span className="text-sm text-muted tabular-nums">{total ? `${done}/${total}` : '—'}</span>;
     },
   },
   {
-    header: 'Status',
     key: 'status',
+    header: 'Status',
     render: (r) => (
-      <select
-        value={r.status || 'PENDING'}
-        onChange={(e) => handleStatusChange(r.id, e.target.value)}
-        className="text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-semibold"
-      >
-        <option value="PENDING">PENDING</option>
-        <option value="IN_PROGRESS">IN PROGRESS</option>
-        <option value="UNDER_REVIEW">UNDER REVIEW</option>
-        <option value="COMPLETED">COMPLETED</option>
-        <option value="CANCELLED">CANCELLED</option>
-      </select>
+      <div onClick={stop} className="w-40">
+        <Select
+          aria-label={`Status of ${r.title}`}
+          value={r.status || 'PENDING'}
+          onChange={(e) => handleStatusChange(r.id, e.target.value)}
+          options={statusOptions}
+          className="h-8 text-xs"
+        />
+      </div>
     ),
   },
   {
-    header: 'Actions',
     key: 'actions',
+    header: '',
+    align: 'right',
+    hideOnMobile: true,
     render: (r) => (
-      <button
-        onClick={() => {
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        aria-label={`Open ${r.title}`}
+        onClick={(e) => {
+          stop(e);
           setSelectedTaskId(r.id);
           setIsDetailModalOpen(true);
         }}
-        className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-        title="Open Task Hub"
       >
-        <Eye className="w-4 h-4"  />
-      </button>
+        <ChevronRight className="w-4 h-4" />
+      </Button>
     ),
   },
 ];

@@ -36,12 +36,6 @@ export const userService = {
     return res.data;
   },
 
-  uploadTaskDocument: async (taskId, formData) => {
-    const res = await axiosInstance.post(`/user/tasks/${taskId}/documents`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return res.data;
-  },
 
   logTimeEntry: async (taskId, entryData) => {
     const res = await axiosInstance.post(`/user/tasks/${taskId}/time-entry`, entryData);

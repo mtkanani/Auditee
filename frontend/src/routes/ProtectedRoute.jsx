@@ -9,7 +9,7 @@ export const ProtectedRoute = ({ allowedRoles = [] }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-page flex items-center justify-center">
         <Loader size="lg" message="Verifying session authorization..." />
       </div>
     );

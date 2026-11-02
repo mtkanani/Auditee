@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, lazy, Suspense } from 'react';
 
-// Lazy so framer-motion (pulled in by Modal) stays out of the login bundle.
+// Lazy so the dialog code stays out of the login bundle.
 const ConfirmationModal = lazy(() =>
   import('./ConfirmationModal').then((m) => ({ default: m.ConfirmationModal }))
 );

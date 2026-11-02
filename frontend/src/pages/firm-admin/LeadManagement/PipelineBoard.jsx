@@ -1,69 +1,72 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
-import { pipelineStages } from './pipelineStages';
+import { Mail, Phone } from 'lucide-react';
+import { cn } from '../../../lib/cn';
+import { pipelineStages, inr } from './pipelineStages';
 
-export const PipelineBoard = ({ leads, setSelectedLeadId, setIsDetailModalOpen }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 overflow-x-auto pb-4">
-    {pipelineStages.map((stage) => {
-      const stageLeads = leads.filter((l) => l.stage === stage.key);
-      const totalStageValue = stageLeads.reduce((acc, curr) => acc + (curr.estimatedValue || 0), 0);
-
-      return (
-        <div key={stage.key} className="flex flex-col rounded-2xl bg-slate-900/60 border border-slate-800 p-3 min-h-[500px]">
-          {/* Column Header */}
-          <div className={`p-2.5 rounded-xl border mb-3 flex items-center justify-between ${stage.color}`}>
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">{stage.title}</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60">{stageLeads.length}</span>
-          </div>
-
-          <div className="text-[10px] text-slate-500 font-bold px-1 mb-2">
-            Total Value: ₹{totalStageValue.toLocaleString('en-IN')}
-          </div>
-
-          {/* Cards Container */}
-          <div className="space-y-3 flex-1 overflow-y-auto">
-            {stageLeads.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => {
-                  setSelectedLeadId(item.id);
-                  setIsDetailModalOpen(true);
-                }}
-                className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-indigo-500/40 cursor-pointer transition-all space-y-2 shadow-lg group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 font-semibold">{item.companyName || 'Individual'}</span>
-                  <span className="text-[10px] font-extrabold text-emerald-400">
-                    ₹{Number(item.estimatedValue || 0).toLocaleString('en-IN')}
-                  </span>
-                </div>
-
-                <h4 className="text-xs font-extrabold text-slate-100 group-hover:text-indigo-400 transition-colors">
-                  {item.leadName}
-                </h4>
-                <p className="text-[11px] text-indigo-300 line-clamp-1">{item.interestedServices || 'CA Audit Services'}</p>
-
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>📞 {item.phone || item.email}</span>
-                  {item.stage === 'WON' ? (
-                    <span className="text-emerald-400 font-bold">Converted</span>
-                  ) : (
-                    <span className="text-slate-500 group-hover:text-indigo-400 flex items-center gap-0.5">
-                      Manage <ArrowRight size="1em" />
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {stageLeads.length === 0 && (
-              <div className="h-32 flex items-center justify-center border border-dashed border-slate-800 rounded-xl text-[11px] text-slate-600">
-                No leads in this stage
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    })}
-  </div>
+const LeadCard = ({ lead, onOpen }) => (
+  <button
+    type="button"
+    onClick={() => onOpen(lead)}
+    className="w-full text-left p-3.5 rounded-xl bg-surface border border-line shadow-card space-y-2.5 transition-all duration-150 hover:border-line-strong hover:shadow-raised hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+  >
+    <div className="min-w-0">
+      <p className="text-sm font-medium text-fg truncate">{lead.leadName}</p>
+      <p className="text-xs text-subtle truncate">{lead.companyName || 'Individual'}</p>
+    </div>
+    <p className="text-xs text-muted line-clamp-2">{lead.interestedServices || 'CA Audit Services'}</p>
+    <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-line text-xs">
+      <span className="flex items-center gap-1.5 min-w-0 text-subtle">
+        {lead.phone ? <Phone className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> : <Mail className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
+        <span className="truncate">{lead.phone || lead.email}</span>
+      </span>
+      <span className="text-sm font-medium text-fg tabular-nums shrink-0">{inr(lead.estimatedValue)}</span>
+    </div>
+  </button>
 );
+
+/** Five stage columns. Columns scroll sideways on narrow screens instead of squashing. */
+export const PipelineBoard = ({ leads, isLoading, setSelectedLeadId, setIsDetailModalOpen }) => {
+  const open = (lead) => {
+    setSelectedLeadId(lead.id);
+    setIsDetailModalOpen(true);
+  };
+
+  return (
+    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2">
+      <div className="grid grid-flow-col auto-cols-[minmax(210px,1fr)] gap-3 min-w-full">
+        {pipelineStages.map((stage) => {
+          const stageLeads = leads.filter((l) => l.stage === stage.key);
+          const totalStageValue = stageLeads.reduce((acc, curr) => acc + (curr.estimatedValue || 0), 0);
+
+          return (
+            <section key={stage.key} aria-label={stage.title} className="rounded-2xl bg-sunken/70 border border-line p-3 min-h-[60vh] flex flex-col">
+              <header className="px-1 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className={cn('w-2 h-2 rounded-full', stage.dot)} aria-hidden="true" />
+                  <h3 className="text-sm font-medium text-fg">{stage.title}</h3>
+                  <span className="ml-auto text-xs font-medium text-subtle tabular-nums">{isLoading ? '' : stageLeads.length}</span>
+                </div>
+                {!isLoading && <p className="text-xs text-subtle mt-1 pl-4 tabular-nums">{inr(totalStageValue)}</p>}
+              </header>
+
+              <div className="space-y-2.5 flex-1">
+                {isLoading
+                  ? Array.from({ length: 2 }).map((_, i) => (
+                      <div key={i} className="p-3.5 rounded-xl bg-surface border border-line space-y-2.5">
+                        <div className="h-3.5 w-3/4 rounded-full bg-hover animate-pulse" />
+                        <div className="h-3 w-1/2 rounded-full bg-hover animate-pulse" />
+                      </div>
+                    ))
+                  : stageLeads.map((item) => <LeadCard key={item.id} lead={item} onOpen={open} />)}
+
+                {!isLoading && stageLeads.length === 0 && (
+                  <p className="text-xs text-subtle text-center py-8 border border-dashed border-line rounded-xl">No leads here</p>
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

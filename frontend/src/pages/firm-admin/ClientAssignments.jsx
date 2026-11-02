@@ -1,5 +1,5 @@
 import React from 'react';
-import { PageHeader } from '../../components/common/PageHeader';
+import { PageHeader } from '../../components/ui';
 import { DualPanelAssignment } from '../../components/assignments/DualPanelAssignment';
 import { useFirmUsers, useFirmClients } from '../../queries/useLookups';
 import { useFirmTasks, useCreateTask } from '../../queries/useTasks';
@@ -38,10 +38,10 @@ export const ClientAssignments = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <PageHeader
-        title="Client Assignment Workstation"
-        subtitle="Pair CA firm clients with staff members or assign direct tasks directly to dedicated auditors"
+        title="Assignments"
+        description="Decide who looks after which client, or hand an employee a task directly."
       />
 
       <DualPanelAssignment

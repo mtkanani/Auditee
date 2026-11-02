@@ -1,126 +1,122 @@
 import React from 'react';
-import { Eye, Pen, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Badge, Button, Select } from '../../../components/ui';
+import { cn } from '../../../lib/cn';
 
-export const getClientColumns = ({
-  setSelectedClient,
-  setIsDetailModalOpen,
-  handleStatusChange,
-  resetEdit,
-  setIsEditModalOpen,
-  setIsDeleteModalOpen,
-}) => [
+const TYPE_LABELS = {
+  INDIVIDUAL: 'Individual',
+  PRIVATE_LIMITED: 'Private limited',
+  PARTNERSHIP: 'Partnership',
+  LLP: 'LLP',
+  PROPRIETORSHIP: 'Proprietorship',
+  TRUST: 'Trust or NGO',
+};
+const typeLabel = (t = 'INDIVIDUAL') => TYPE_LABELS[t] || t.toLowerCase().replace(/_/g, ' ');
+const initials = (name = '') => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'C';
+
+// Inline controls shouldn't also trigger the row's "open client" click.
+const stop = (e) => e.stopPropagation();
+
+export const getClientColumns = ({ handleStatusChange, setSelectedClient, resetEdit, setIsEditModalOpen, setIsDeleteModalOpen }) => [
   {
-    header: 'Client & Company Profile',
     key: 'clientName',
+    header: 'Client',
     render: (r) => (
-      <div
-        onClick={() => {
-          setSelectedClient(r);
-          setIsDetailModalOpen(true);
-        }}
-        className="cursor-pointer group"
-      >
-        <div className="flex items-center gap-2">
-          <span className="font-extrabold text-slate-100 group-hover:text-indigo-400 transition-colors">
-            {r.clientName}
-          </span>
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300">
-            {r.clientType || 'INDIVIDUAL'}
-          </span>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="grid place-items-center w-9 h-9 rounded-xl bg-accent-soft text-accent-fg text-xs font-semibold shrink-0">
+          {initials(r.clientName)}
+        </span>
+        <div className="min-w-0">
+          <p className="font-medium text-fg truncate max-w-[240px]">{r.clientName}</p>
+          <p className="text-xs text-subtle truncate max-w-[240px]">
+            {typeLabel(r.clientType)}{r.companyName || r.email ? ` · ${r.companyName || r.email}` : ''}
+          </p>
         </div>
-        <p className="text-xs text-slate-400">{r.companyName || r.email}</p>
       </div>
     ),
   },
   {
-    header: 'Tax Identifiers (GST / PAN / TAN)',
     key: 'taxIds',
+    header: 'GSTIN / PAN',
     render: (r) => (
-      <div className="text-xs space-y-0.5 font-mono">
-        <p className="text-indigo-400 font-bold">GST: {r.gstNumber || 'Not Reg.'}</p>
-        <p className="text-purple-400">PAN: {r.panNumber || 'N/A'}</p>
-        {r.tanNumber && <p className="text-emerald-400 text-[10px]">TAN: {r.tanNumber}</p>}
+      <div className="text-sm leading-5">
+        <p className={cn('font-mono text-[13px]', r.gstNumber ? 'text-fg' : 'text-subtle')}>{r.gstNumber || 'Not registered'}</p>
+        <p className="font-mono text-xs text-subtle">{r.panNumber || '—'}</p>
       </div>
     ),
   },
   {
-    header: 'Primary Contact Person',
     key: 'contactPerson',
+    header: 'Contact',
+    hideOnMobile: true,
     render: (r) => (
-      <div className="text-xs">
-        <p className="font-bold text-slate-200">{r.contactPersonName || 'N/A'}</p>
-        <p className="text-[10px] text-slate-400">{r.contactPersonPhone || r.phone || 'N/A'}</p>
+      <div className="text-sm leading-5">
+        <p className="text-fg">{r.contactPersonName || '—'}</p>
+        <p className="text-xs text-subtle">{r.contactPersonPhone || r.phone || ''}</p>
       </div>
     ),
   },
   {
-    header: 'Subscribed Services',
     key: 'services',
-    render: (r) => (
-      <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
-        {r.services?.length || 0} Active Services
-      </span>
-    ),
+    header: 'Services',
+    hideOnMobile: true,
+    render: (r) => <Badge tone={r.services?.length ? 'accent' : 'neutral'}>{r.services?.length || 0} active</Badge>,
   },
   {
-    header: 'Outstanding Balance',
     key: 'balance',
+    header: 'Outstanding',
+    align: 'right',
     render: (r) => (
-      <span className={`text-xs font-extrabold ${r.outstandingBalance > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-        ₹{(r.outstandingBalance || 0).toLocaleString()}
+      <span className={cn('text-sm font-medium tabular-nums', r.outstandingBalance > 0 ? 'text-danger' : 'text-subtle')}>
+        ₹{(r.outstandingBalance || 0).toLocaleString('en-IN')}
       </span>
     ),
   },
   {
-    header: 'Status',
     key: 'status',
+    header: 'Status',
     render: (r) => (
-      <select
-        value={r.status || 'ACTIVE'}
-        onChange={(e) => handleStatusChange(r.id, e.target.value)}
-        className="text-xs bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-semibold"
-      >
-        <option value="ACTIVE">ACTIVE</option>
-        <option value="INACTIVE">INACTIVE</option>
-      </select>
+      <div onClick={stop} className="w-32">
+        <Select
+          aria-label={`Status of ${r.clientName}`}
+          value={r.status || 'ACTIVE'}
+          onChange={(e) => handleStatusChange(r.id, e.target.value)}
+          options={[{ value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }]}
+          className="h-8 text-xs"
+        />
+      </div>
     ),
   },
   {
-    header: 'Actions',
     key: 'actions',
+    header: '',
+    align: 'right',
     render: (r) => (
-      <div className="flex items-center gap-1.5">
-        <button
-          onClick={() => {
-            setSelectedClient(r);
-            setIsDetailModalOpen(true);
-          }}
-          className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
-          title="Open 360 Client Hub"
-        >
-          <Eye className="w-4 h-4"  />
-        </button>
-        <button
+      <div onClick={stop} className="flex justify-end gap-1">
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label={`Edit ${r.clientName}`}
           onClick={() => {
             setSelectedClient(r);
             resetEdit(r);
             setIsEditModalOpen(true);
           }}
-          className="p-2 rounded-xl text-purple-400 hover:bg-purple-500/10 transition-colors"
-          title="Edit Profile"
         >
-          <Pen className="w-4 h-4"  />
-        </button>
-        <button
+          <Pencil className="w-4 h-4" />
+        </Button>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          aria-label={`Delete ${r.clientName}`}
+          className="hover:text-danger hover:bg-danger-soft"
           onClick={() => {
             setSelectedClient(r);
             setIsDeleteModalOpen(true);
           }}
-          className="p-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors"
-          title="Delete Account"
         >
-          <Trash2 className="w-4 h-4"  />
-        </button>
+          <Trash2 className="w-4 h-4" />
+        </Button>
       </div>
     ),
   },

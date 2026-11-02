@@ -1,5 +1,6 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
+import { Button, Field, Input, Textarea } from '../../ui';
 
 export const MeetingsTab = ({
   lead,
@@ -13,55 +14,44 @@ export const MeetingsTab = ({
   addMeetingNoteMutation,
 }) => (
   <div className="space-y-4">
-    <form onSubmit={handleAddMeetingSubmit} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-      <h4 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-        <Calendar size="1em" className="text-purple-400"  /> Record Consultation Meeting Notes
-      </h4>
-      <div className="grid grid-cols-2 gap-3">
-        <input
-          type="text"
-          required
-          placeholder="Meeting Agenda / Title *"
-          value={meetingTitle}
-          onChange={(e) => setMeetingTitle(e.target.value)}
-          className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-        />
-        <input
-          type="text"
-          placeholder="Attendees (e.g. CA Rahul, Client CFO)"
-          value={meetingAttendees}
-          onChange={(e) => setMeetingAttendees(e.target.value)}
-          className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-        />
+    <form onSubmit={handleAddMeetingSubmit} className="rounded-2xl border border-line bg-surface p-5 space-y-4">
+      <h4 className="text-sm font-semibold text-fg">Add meeting notes</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Agenda" required>
+          {(p) => <Input {...p} required placeholder="e.g. Audit scope discussion" value={meetingTitle} onChange={(e) => setMeetingTitle(e.target.value)} />}
+        </Field>
+        <Field label="Attendees">
+          {(p) => <Input {...p} placeholder="e.g. CA Rahul, client CFO" value={meetingAttendees} onChange={(e) => setMeetingAttendees(e.target.value)} />}
+        </Field>
       </div>
-      <textarea
-        required
-        rows={2}
-        placeholder="Detailed meeting notes & client requirements..."
-        value={meetingNotes}
-        onChange={(e) => setMeetingNotes(e.target.value)}
-        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-      />
-      <button
-        type="submit"
-        disabled={addMeetingNoteMutation.isPending}
-        className="py-1.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg"
-      >
-        {addMeetingNoteMutation.isPending ? 'Saving Notes...' : 'Save Meeting Notes'}
-      </button>
+      <Field label="Notes" required>
+        {(p) => <Textarea {...p} required rows={3} placeholder="What was agreed, what they need next" value={meetingNotes} onChange={(e) => setMeetingNotes(e.target.value)} />}
+      </Field>
+      <div className="flex justify-end">
+        <Button type="submit" variant="primary" loading={addMeetingNoteMutation.isPending}>Save notes</Button>
+      </div>
     </form>
 
-    <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-      {lead.meetingNotes?.map((m) => (
-        <div key={m.id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-[10px] text-slate-400">
-            <span className="font-bold text-purple-400">{m.meetingTitle}</span>
-            <span>{new Date(m.meetingDate).toLocaleDateString()}</span>
-          </div>
-          <p className="text-xs text-slate-300">{m.meetingNotes}</p>
-          {m.attendees && <p className="text-[10px] text-slate-500">Attendees: {m.attendees}</p>}
-        </div>
-      ))}
-    </div>
+    {lead.meetingNotes?.length ? (
+      <ol className="space-y-3">
+        {lead.meetingNotes.map((m) => (
+          <li key={m.id} className="rounded-xl border border-line bg-surface p-4 space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium text-fg">{m.meetingTitle}</p>
+              <span className="text-xs text-subtle tabular-nums">
+                {new Date(m.meetingDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+            <p className="text-sm text-muted whitespace-pre-line">{m.meetingNotes}</p>
+            {m.attendees && <p className="text-xs text-subtle">With {m.attendees}</p>}
+          </li>
+        ))}
+      </ol>
+    ) : (
+      <div className="flex flex-col items-center py-10 text-center rounded-2xl border border-dashed border-line">
+        <CalendarDays className="w-5 h-5 text-subtle mb-2" aria-hidden="true" />
+        <p className="text-sm text-muted">No meetings recorded yet.</p>
+      </div>
+    )}
   </div>
 );

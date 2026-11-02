@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Activity } from 'lucide-react';
 import { useReportOverview, useReportData, useGenerateCustomReport, useDownloadReportCSV } from '../../../queries/useReports';
 import { useFirmUsers, useFirmClients } from '../../../queries/useLookups';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -124,7 +123,7 @@ export const Reports = () => {
   );
 
   return (
-    <div className="space-y-8 pb-16 min-h-screen text-slate-100">
+    <div className="space-y-6 pb-8">
       <ReportsHeader onPrint={handlePrint} onExportCSV={handleExportCSV} />
 
       {summary && <KpiCards summary={summary} />}
@@ -149,12 +148,9 @@ export const Reports = () => {
       )}
 
       {loading ? (
-        <div className="p-16 text-center text-slate-400 font-medium text-xs flex flex-col items-center justify-center gap-4 bg-slate-900/60 rounded-3xl border border-slate-800/80 backdrop-blur-md">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-            <Activity className="w-5 h-5 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          </div>
-          <p className="text-slate-300 font-semibold text-sm">Aggregating live report metrics & dataset...</p>
+        <div className="space-y-4" aria-busy="true" aria-label="Loading report">
+          <div className="h-12 rounded-2xl bg-hover animate-pulse" />
+          <div className="h-72 rounded-2xl bg-hover animate-pulse" />
         </div>
       ) : (
         <>

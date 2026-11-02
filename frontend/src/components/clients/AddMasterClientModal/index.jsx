@@ -1,6 +1,7 @@
 import React from 'react';
+import { Check, Lock } from 'lucide-react';
 import { Modal } from '../../common/Modal';
-import { Check, Lock, RefreshCw } from 'lucide-react';
+import { Button } from '../../ui';
 import { useAddMasterClientForm } from './useAddMasterClientForm';
 import { VerificationBanner } from './VerificationBanner';
 import { TaxVerificationSection } from './TaxVerificationSection';
@@ -12,53 +13,36 @@ export const AddMasterClientModal = ({ isOpen, onClose, onSuccess }) => {
   const { isVerified, handleCreateAccount, isCreating } = form;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add Master Client Account">
-      <div className="space-y-6 max-h-[78vh] overflow-y-auto pr-1">
-        {/* Verification Status Header Banner */}
+    <Modal isOpen={isOpen} onClose={onClose} title="Add client" maxWidth="max-w-3xl">
+      <div className="space-y-4">
         <VerificationBanner isVerified={isVerified} verificationResult={form.verificationResult} />
 
-        {/* Section 1: Tax Registration & Verification */}
         <TaxVerificationSection {...form} />
 
-        {/* Gating Lock Wrapper for Sections 2 & 3 */}
+        {/* Steps 2 and 3 stay locked until a tax ID is verified. */}
         <div className="relative">
           {!isVerified && (
-            <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px] z-20 rounded-2xl flex flex-col items-center justify-center p-6 text-center border border-slate-800">
-              <div className="p-3 rounded-full bg-slate-900 border border-slate-700 text-amber-400 mb-3 shadow-xl">
-                <Lock className="w-6 h-6"  />
+            <div className="absolute inset-0 z-20 flex justify-center items-start pt-20 rounded-2xl bg-page/70 backdrop-blur-[2px]">
+              <div className="flex flex-col items-center text-center px-6">
+                <span className="grid place-items-center w-11 h-11 rounded-2xl bg-surface border border-line shadow-card text-muted mb-2">
+                  <Lock className="w-5 h-5" aria-hidden="true" />
+                </span>
+                <p className="text-sm font-medium text-fg">Verify a tax ID first</p>
+                <p className="text-xs text-muted max-w-xs">The profile and contact details unlock once the GSTIN or PAN checks out.</p>
               </div>
-              <h4 className="text-sm font-bold text-slate-100 mb-1">Sections Locked</h4>
-              <p className="text-xs text-slate-400 max-w-sm">
-                Verify GSTIN or PAN in Section 1 above to unlock Client Profile & Contact Person details.
-              </p>
             </div>
           )}
 
-          <form onSubmit={handleCreateAccount} className="space-y-5">
-            {/* Section 2: Entity & Account Profile Details */}
+          <form onSubmit={handleCreateAccount} className="space-y-4">
             <ProfileSection {...form} />
-
-            {/* Section 3: Primary Contact & Address Details */}
             <ContactSection {...form} />
 
-            {/* Submit Action Button */}
-            <button
-              type="submit"
-              disabled={!isVerified || isCreating}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs shadow-xl shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all"
-            >
-              {isCreating ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin"  />
-                  <span>Creating Account...</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-4 h-4"  />
-                  <span>Create Master Client Account</span>
-                </>
-              )}
-            </button>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" onClick={onClose}>Cancel</Button>
+              <Button type="submit" variant="primary" icon={Check} loading={isCreating} disabled={!isVerified}>
+                Create client
+              </Button>
+            </div>
           </form>
         </div>
       </div>

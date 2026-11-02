@@ -1,55 +1,49 @@
 import React from 'react';
-import { ArrowLeft, Shield } from 'lucide-react';
-import InputField from '../../components/InputField';
-import Button from '../../components/Button';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { Field, Input } from '../../components/ui/Field';
 
 export const OtpStep = ({ errors, register, submitting, setStep, handleSendOTP, emailAddress }) => (
-  <div className="animate-fade-in space-y-4">
-    <InputField
-      label="Verification OTP"
-      name="otp"
-      type="text"
-      placeholder="Enter 6-digit OTP"
-      icon={Shield}
-      maxLength={6}
-      error={errors.otp}
-      {...register('otp', {
-        required: 'OTP code is required',
-        pattern: {
-          value: /^[0-9]{6}$/,
-          message: 'OTP must be exactly 6 digits',
-        },
-      })}
-    />
-            
-    <div className="flex gap-3 mt-6">
-      <Button
-        type="button"
-        variant="secondary"
-        disabled={submitting}
-        onClick={() => setStep(1)}
-      >
-        <ArrowLeft size={16} />
+  <>
+    <Field label="6-digit code" error={errors.otp?.message}>
+      {(p) => (
+        <Input
+          {...p}
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          placeholder="••••••"
+          className="h-12 text-center text-lg font-semibold tracking-[0.5em]"
+          {...register('otp', {
+            required: 'OTP code is required',
+            pattern: {
+              value: /^[0-9]{6}$/,
+              message: 'OTP must be exactly 6 digits',
+            },
+          })}
+        />
+      )}
+    </Field>
+
+    <div className="flex gap-2">
+      <Button size="lg" aria-label="Back to email" disabled={submitting} onClick={() => setStep(1)} className="w-12 px-0">
+        <ArrowLeft className="w-4 h-4" aria-hidden="true" />
       </Button>
-              
-      <Button
-        type="submit"
-        loading={submitting}
-      >
-        <span>Verify & Continue</span>
+      <Button type="submit" variant="primary" size="lg" loading={submitting} className="flex-1">
+        Verify and continue
       </Button>
     </div>
-            
-    <p className="text-center text-xs text-slate-500 mt-4">
-      Didn't receive a code?{' '}
+
+    <p className="text-center text-sm text-muted">
+      Didn't get it?{' '}
       <button
         type="button"
         disabled={submitting}
         onClick={() => handleSendOTP({ email: emailAddress })}
-        className="font-semibold text-brand-400 hover:text-brand-300 transition-colors focus:outline-none"
+        className="font-medium text-accent-fg hover:underline underline-offset-4 disabled:opacity-50"
       >
-        Resend OTP
+        Send a new code
       </button>
     </p>
-  </div>
+  </>
 );

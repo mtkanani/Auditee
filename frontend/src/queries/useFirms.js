@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { superAdminService } from '../services/superAdminService';
 import { firmAdminService } from '../services/firmAdminService';
 import { firmKeys, dashboardKeys } from './keys';
+import { firmHomeQuery, firmsListQuery } from './homeQueries';
 
 // ----------------------------------------------------
 // QUERIES
@@ -10,11 +11,7 @@ import { firmKeys, dashboardKeys } from './keys';
 
 export const useFirmsList = (params = {}) => {
   const query = useQuery({
-    queryKey: firmKeys.list(params),
-    queryFn: async () => {
-      const res = await superAdminService.getAllFirms(params);
-      return res;
-    },
+    ...firmsListQuery(params),
     placeholderData: keepPreviousData,
   });
 
@@ -41,21 +38,6 @@ export const useFirmDetail = (id) => {
 
   return {
     firm: query.data?.data || query.data?.firm || query.data,
-    ...query,
-  };
-};
-
-export const useFirmAdminDashboard = () => {
-  const query = useQuery({
-    queryKey: dashboardKeys.byRole('firm-admin'),
-    queryFn: async () => {
-      const res = await firmAdminService.getDashboard();
-      return res.data || res;
-    },
-  });
-
-  return {
-    dashboard: query.data,
     ...query,
   };
 };
@@ -137,3 +119,10 @@ export const useResetFirmAdminPassword = () => {
     },
   });
 };
+
+/** The firm admin home in one request (GET /firm-admin/home). */
+export const useFirmHome = () =>
+  useQuery({
+    ...firmHomeQuery,
+    refetchInterval: 60_000, // keeps "today" fresh while the page is open
+  });

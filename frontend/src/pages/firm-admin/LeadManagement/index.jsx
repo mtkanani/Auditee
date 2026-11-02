@@ -1,9 +1,9 @@
 import React from 'react';
-import { PageHeader } from '../../../components/common/PageHeader';
-import { DataTable } from '../../../components/common/DataTable';
+import { Plus, Target } from 'lucide-react';
 import { Pagination } from '../../../components/common/Pagination';
+import { EmptyState } from '../../../components/common/EmptyState';
 import { LeadDetailModal } from '../../../components/leads/LeadDetailModal';
-import { Plus } from 'lucide-react';
+import { Button, PageHeader, Table } from '../../../components/ui';
 import { useLeadManagement } from './useLeadManagement';
 import { getLeadColumns } from './leadColumns';
 import { LeadStats } from './LeadStats';
@@ -22,59 +22,63 @@ export const LeadManagement = () => {
     setPage,
     pagination,
     selectedLeadId,
+    setSelectedLeadId,
     isDetailModalOpen,
     setIsDetailModalOpen,
   } = view;
 
   const columns = getLeadColumns(view);
+  const addButton = (
+    <Button variant="primary" icon={Plus} onClick={() => setIsAddModalOpen(true)}>
+      Add lead
+    </Button>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-8">
       <PageHeader
-        title="Lead Management (CRM)"
-        subtitle="Track potential clients, log calls & meetings, issue proposals, and convert inquiries into Master Clients"
-        actions={
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4"  />
-            <span>Add New Lead</span>
-          </button>
-        }
+        title="Leads"
+        description="Track enquiries from first call to proposal, then convert the ones you win into clients."
+        actions={addButton}
       />
 
-      {/* Top Metrics Cards */}
       <LeadStats {...view} />
 
-      {/* Control Bar: View Toggle & Filters */}
       <LeadControlBar {...view} />
 
-      {/* VIEW 1: VISUAL CRM PIPELINE KANBAN BOARD */}
       {viewMode === 'kanban' && <PipelineBoard {...view} />}
 
-      {/* VIEW 2: MASTER TABLE VIEW */}
       {viewMode === 'table' && (
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          <DataTable columns={columns} data={leads} isLoading={isLoading} />
-          <Pagination
-            currentPage={page}
-            totalPages={pagination?.totalPages || 1}
-            totalRecords={pagination?.totalRecords || 0}
-            limit={10}
-            onPageChange={setPage}
-          />
-        </div>
+        <Table
+          columns={columns}
+          data={leads}
+          isLoading={isLoading}
+          onRowClick={(lead) => {
+            setSelectedLeadId(lead.id);
+            setIsDetailModalOpen(true);
+          }}
+          emptyState={
+            <EmptyState
+              icon={Target}
+              title="No leads found"
+              description="Try a different search or stage, or add the next enquiry that comes in."
+              action={addButton}
+            />
+          }
+          footer={
+            <Pagination
+              currentPage={page}
+              totalPages={pagination?.totalPages || 1}
+              totalRecords={pagination?.totalRecords || 0}
+              limit={10}
+              onPageChange={setPage}
+            />
+          }
+        />
       )}
 
-      {/* Lead 360 Detail CRM Hub Modal */}
-      <LeadDetailModal
-        leadId={selectedLeadId}
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-      />
+      <LeadDetailModal leadId={selectedLeadId} isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} />
 
-      {/* Add New Lead Modal */}
       <AddLeadModal {...view} />
     </div>
   );

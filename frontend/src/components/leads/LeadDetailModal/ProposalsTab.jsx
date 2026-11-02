@@ -1,5 +1,8 @@
 import React from 'react';
-import { DollarSign } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { Button, Field, Input, Textarea } from '../../ui';
+
+const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
 export const ProposalsTab = ({
   lead,
@@ -13,60 +16,44 @@ export const ProposalsTab = ({
   addProposalMutation,
 }) => (
   <div className="space-y-4">
-    <form onSubmit={handleAddProposalSubmit} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-      <h4 className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
-        <DollarSign size="1em" className="text-emerald-400"  /> Attach Fee Quotation / Proposal
-      </h4>
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2">
-          <input
-            type="text"
-            required
-            placeholder="Proposal Title (e.g. Annual Audit & Tax Filing Quotation)"
-            value={proposalTitle}
-            onChange={(e) => setProposalTitle(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-        <div>
-          <input
-            type="number"
-            required
-            placeholder="Proposed Fee (₹)"
-            value={proposedFee}
-            onChange={(e) => setProposedFee(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
+    <form onSubmit={handleAddProposalSubmit} className="rounded-2xl border border-line bg-surface p-5 space-y-4">
+      <div>
+        <h4 className="text-sm font-semibold text-fg">Add a fee proposal</h4>
+        <p className="text-xs text-subtle mt-0.5">Saving moves the lead to Proposal sent.</p>
       </div>
-      <textarea
-        rows={2}
-        placeholder="Scope of work & payment terms description..."
-        value={proposalScope}
-        onChange={(e) => setProposalScope(e.target.value)}
-        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-      />
-      <button
-        type="submit"
-        disabled={addProposalMutation.isPending}
-        className="py-1.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg"
-      >
-        {addProposalMutation.isPending ? 'Saving Proposal...' : 'Save & Update Stage to PROPOSAL SENT'}
-      </button>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Field label="Title" required className="sm:col-span-2">
+          {(p) => <Input {...p} required placeholder="e.g. Annual audit and tax filing" value={proposalTitle} onChange={(e) => setProposalTitle(e.target.value)} />}
+        </Field>
+        <Field label="Fee (₹)" required>
+          {(p) => <Input {...p} type="number" required placeholder="e.g. 60000" value={proposedFee} onChange={(e) => setProposedFee(e.target.value)} />}
+        </Field>
+      </div>
+      <Field label="Scope and payment terms">
+        {(p) => <Textarea {...p} rows={2} placeholder="What's included, billing frequency, payment terms" value={proposalScope} onChange={(e) => setProposalScope(e.target.value)} />}
+      </Field>
+      <div className="flex justify-end">
+        <Button type="submit" variant="primary" loading={addProposalMutation.isPending}>Save proposal</Button>
+      </div>
     </form>
 
-    <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-      {lead.proposals?.map((p) => (
-        <div key={p.id} className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="font-extrabold text-slate-100 text-xs">{p.proposalTitle}</span>
-            <span className="text-xs font-bold text-emerald-400">
-              ₹{Number(p.proposedFee || 0).toLocaleString('en-IN')}
-            </span>
-          </div>
-          <p className="text-xs text-slate-400">{p.scopeDescription || 'Standard CA engagement terms'}</p>
-        </div>
-      ))}
-    </div>
+    {lead.proposals?.length ? (
+      <ul className="space-y-3">
+        {lead.proposals.map((p) => (
+          <li key={p.id} className="rounded-xl border border-line bg-surface p-4 space-y-1">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-fg">{p.proposalTitle}</p>
+              <span className="text-sm font-semibold text-fg tabular-nums shrink-0">{inr(p.proposedFee)}</span>
+            </div>
+            <p className="text-sm text-muted">{p.scopeDescription || 'Standard CA engagement terms'}</p>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div className="flex flex-col items-center py-10 text-center rounded-2xl border border-dashed border-line">
+        <FileText className="w-5 h-5 text-subtle mb-2" aria-hidden="true" />
+        <p className="text-sm text-muted">No proposals sent yet.</p>
+      </div>
+    )}
   </div>
 );

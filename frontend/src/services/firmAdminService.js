@@ -94,6 +94,11 @@ export const firmAdminService = {
     return res.data;
   },
 
+  getClientDocumentDownload: async (clientId, documentId) => {
+    const res = await axiosInstance.get(`/firm-admin/clients/${clientId}/documents/${documentId}/download`);
+    return res.data;
+  },
+
   deleteClientDocument: async (clientId, documentId) => {
     const res = await axiosInstance.delete(`/firm-admin/clients/${clientId}/documents/${documentId}`);
     return res.data;
@@ -107,6 +112,12 @@ export const firmAdminService = {
   // Dashboard API
   getDashboard: async () => {
     const res = await axiosInstance.get('/firm-admin/dashboard');
+    return res.data;
+  },
+
+  // Everything the firm admin home shows, in one request
+  getHome: async () => {
+    const res = await axiosInstance.get('/firm-admin/home');
     return res.data;
   },
 };

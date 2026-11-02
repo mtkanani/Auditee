@@ -2,28 +2,32 @@ import React from 'react';
 import { InvoiceSheetHeader } from './InvoiceSheetHeader';
 import { InvoiceItemsTable } from './InvoiceItemsTable';
 import { InvoiceTotals } from './InvoiceTotals';
+import { inr, longDate } from './money';
+
+const MODE_LABELS = { BANK_TRANSFER: 'Bank transfer', UPI: 'UPI', CHEQUE: 'Cheque', CASH: 'Cash' };
 
 export const InvoiceSheet = ({ invoice }) => (
-  <div className="p-8 rounded-2xl bg-slate-950 text-slate-100 border border-slate-800 space-y-6 shadow-2xl print:bg-white print:text-black print:p-0 print:border-none">
-    {/* Invoice Top Brand Header */}
+  <div className="p-5 sm:p-8 rounded-2xl bg-surface border border-line shadow-card space-y-6 print:bg-white print:text-black print:p-0 print:border-none">
     <InvoiceSheetHeader invoice={invoice} />
 
-    {/* Line Items Table */}
     <InvoiceItemsTable invoice={invoice} />
 
-    {/* GST Summary & Totals */}
     <InvoiceTotals invoice={invoice} />
 
-    {/* Payment Logs History */}
     {invoice.payments?.length > 0 && (
-      <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs space-y-1">
-        <span className="font-bold text-slate-300 block">Recorded Payment History:</span>
-        {invoice.payments.map((p) => (
-          <div key={p.id} className="flex justify-between text-slate-400 text-[11px]">
-            <span>{new Date(p.paymentDate).toLocaleDateString()} • {p.paymentMode} ({p.referenceNumber || 'N/A'})</span>
-            <span className="font-bold text-emerald-400">₹{Number(p.amount).toLocaleString('en-IN')}</span>
-          </div>
-        ))}
+      <div className="rounded-xl border border-line overflow-hidden">
+        <p className="px-4 py-2.5 text-xs font-medium text-subtle bg-sunken/60 border-b border-line">Payments received</p>
+        <ul className="divide-y divide-line">
+          {invoice.payments.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+              <span className="text-muted min-w-0 truncate">
+                {longDate(p.paymentDate)} · {MODE_LABELS[p.paymentMode] || p.paymentMode}
+                {p.referenceNumber ? ` · ${p.referenceNumber}` : ''}
+              </span>
+              <span className="font-medium text-success tabular-nums shrink-0">{inr(p.amount)}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     )}
   </div>

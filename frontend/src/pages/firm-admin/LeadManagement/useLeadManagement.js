@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { useLeads, useCreateLead, useUpdateLeadStage } from '../../../queries/useLeads';
@@ -12,7 +13,8 @@ export const useLeadManagement = () => {
   const [stageFilter, setStageFilter] = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const location = useLocation();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(Boolean(location.state?.openCreate));
 
   // New Lead Form State
   const [leadName, setLeadName] = useState('');

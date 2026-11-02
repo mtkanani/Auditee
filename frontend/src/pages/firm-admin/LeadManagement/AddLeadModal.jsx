@@ -1,5 +1,13 @@
 import React from 'react';
 import { Modal } from '../../../components/common/Modal';
+import { Button, Field, Input, Select, Textarea } from '../../../components/ui';
+
+const SOURCE_OPTIONS = [
+  { value: 'DIRECT', label: 'Walk-in or direct' },
+  { value: 'REFERRAL', label: 'Client referral' },
+  { value: 'WEBSITE', label: 'Website or Google' },
+  { value: 'COLD_CALL', label: 'Cold call or email' },
+];
 
 export const AddLeadModal = ({
   isAddModalOpen,
@@ -25,123 +33,45 @@ export const AddLeadModal = ({
   setNotes,
   createLeadMutation,
 }) => (
-  <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Lead (Inquiry)">
+  <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add a lead" maxWidth="max-w-2xl">
     <form onSubmit={handleAddLeadSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Contact Name *</label>
-          <input
-            type="text"
-            required
-            placeholder="e.g. Rajesh Kumar"
-            value={leadName}
-            onChange={(e) => setLeadName(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Company / Entity Name</label>
-          <input
-            type="text"
-            placeholder="e.g. Apex Tech Solutions"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Contact name" required>
+          {(p) => <Input {...p} required placeholder="e.g. Rajesh Kumar" value={leadName} onChange={(e) => setLeadName(e.target.value)} />}
+        </Field>
+        <Field label="Company">
+          {(p) => <Input {...p} placeholder="e.g. Apex Tech Solutions" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />}
+        </Field>
+        <Field label="Email" required>
+          {(p) => <Input {...p} type="email" required placeholder="rajesh@apextech.com" value={email} onChange={(e) => setEmail(e.target.value)} />}
+        </Field>
+        <Field label="Phone">
+          {(p) => <Input {...p} placeholder="9876543210" value={phone} onChange={(e) => setPhone(e.target.value)} />}
+        </Field>
+        <Field label="Interested in">
+          {(p) => (
+            <Input {...p} placeholder="e.g. GST registration, tax audit" value={interestedServices} onChange={(e) => setInterestedServices(e.target.value)} />
+          )}
+        </Field>
+        <Field label="Estimated value (₹)">
+          {(p) => <Input {...p} type="number" placeholder="e.g. 45000" value={estimatedValue} onChange={(e) => setEstimatedValue(e.target.value)} />}
+        </Field>
+        <Field label="Source">
+          {(p) => <Select {...p} value={source} onChange={(e) => setSource(e.target.value)} options={SOURCE_OPTIONS} />}
+        </Field>
+        <Field label="Business type">
+          {(p) => <Input {...p} placeholder="e.g. Pvt Ltd, LLP, proprietorship" value={businessType} onChange={(e) => setBusinessType(e.target.value)} />}
+        </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address *</label>
-          <input
-            type="email"
-            required
-            placeholder="rajesh@apextech.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Phone Number</label>
-          <input
-            type="text"
-            placeholder="9876543210"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-      </div>
+      <Field label="Notes">
+        {(p) => <Textarea {...p} rows={2} placeholder="What they need, timeline, budget" value={notes} onChange={(e) => setNotes(e.target.value)} />}
+      </Field>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Interested CA Services</label>
-          <input
-            type="text"
-            placeholder="e.g. GST Reg + Tax Audit + Bookkeeping"
-            value={interestedServices}
-            onChange={(e) => setInterestedServices(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Estimated Deal Value (₹)</label>
-          <input
-            type="number"
-            placeholder="e.g. 45000"
-            value={estimatedValue}
-            onChange={(e) => setEstimatedValue(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
+      <div className="flex justify-end gap-2 pt-1">
+        <Button variant="ghost" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+        <Button type="submit" variant="primary" loading={createLeadMutation.isPending}>Add lead</Button>
       </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Lead Source</label>
-          <select
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          >
-            <option value="DIRECT">Direct Inquiry / Walk-in</option>
-            <option value="REFERRAL">Client Referral</option>
-            <option value="WEBSITE">Website / Google</option>
-            <option value="COLD_CALL">Cold Call / Email</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Business Type</label>
-          <input
-            type="text"
-            placeholder="e.g. Pvt Ltd, LLP, Sole Prop"
-            value={businessType}
-            onChange={(e) => setBusinessType(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-semibold text-slate-300 mb-1">Notes / Requirement Details</label>
-        <textarea
-          rows={2}
-          placeholder="Client requirement details, timeline..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={createLeadMutation.isPending}
-        className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg mt-2"
-      >
-        {createLeadMutation.isPending ? 'Creating Lead...' : 'Create Lead in CRM'}
-      </button>
     </form>
   </Modal>
 );

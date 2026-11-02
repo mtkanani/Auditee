@@ -1,45 +1,27 @@
 import React from 'react';
 import { Lock, LockOpen } from 'lucide-react';
+import { cn } from '../../../lib/cn';
 
+/** Tells the user whether the tax ID check has unlocked the rest of the form. */
 export const VerificationBanner = ({ isVerified, verificationResult }) => (
   <div
-    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-      isVerified
-        ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
-        : 'bg-indigo-950/40 border-indigo-500/30 text-indigo-300'
-    }`}
+    className={cn(
+      'flex items-center gap-3 rounded-2xl px-4 py-3 border',
+      isVerified ? 'bg-success-soft border-success/25' : 'bg-accent-soft border-accent/20'
+    )}
   >
-    <div className="flex items-center gap-3">
-      <div
-        className={`p-2 rounded-xl ${
-          isVerified ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'
-        }`}
-      >
-        {isVerified ? <LockOpen className="w-5 h-5"  /> : <Lock className="w-5 h-5"  />}
-      </div>
-      <div>
-        <h4 className="text-xs font-bold uppercase tracking-wider">
-          {isVerified ? 'Tax Identity Verified & Unlocked' : 'Step 1: Mandatory Tax Verification'}
-        </h4>
-        <p className="text-[11px] opacity-80">
-          {isVerified
-            ? `Verified via ${verificationResult.type} (${
-                verificationResult.type === 'GST'
-                  ? verificationResult.data.gstNumber
-                  : verificationResult.data.panNumber
-              })`
-            : 'Verify GSTIN or PAN below to unlock full account profile entry.'}
-        </p>
-      </div>
-    </div>
-    <span
-      className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide border ${
-        isVerified
-          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-          : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-      }`}
-    >
-      {isVerified ? 'Verified' : 'Gated / Locked'}
+    <span className={cn('grid place-items-center w-9 h-9 rounded-xl shrink-0', isVerified ? 'bg-success/15 text-success' : 'bg-accent/15 text-accent-fg')}>
+      {isVerified ? <LockOpen className="w-[18px] h-[18px]" aria-hidden="true" /> : <Lock className="w-[18px] h-[18px]" aria-hidden="true" />}
     </span>
+    <div className="min-w-0">
+      <p className={cn('text-sm font-medium', isVerified ? 'text-success' : 'text-accent-fg')}>
+        {isVerified ? 'Tax ID verified' : 'Start by verifying a tax ID'}
+      </p>
+      <p className="text-xs text-muted truncate">
+        {isVerified
+          ? `Checked via ${verificationResult.type}: ${verificationResult.type === 'GST' ? verificationResult.data.gstNumber : verificationResult.data.panNumber}`
+          : 'Verify the GSTIN (or PAN for unregistered clients) to fill in the rest.'}
+      </p>
+    </div>
   </div>
 );

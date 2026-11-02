@@ -1,10 +1,6 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 export const useFirmForm = ({ onSubmit, defaultValues, isEdit }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const {
     register,
     handleSubmit,
@@ -61,10 +57,6 @@ export const useFirmForm = ({ onSubmit, defaultValues, isEdit }) => {
   };
 
   return {
-    showPassword,
-    setShowPassword,
-    showConfirmPassword,
-    setShowConfirmPassword,
     register,
     handleSubmit,
     errors,

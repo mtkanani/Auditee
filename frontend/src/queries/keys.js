@@ -9,6 +9,7 @@ export const taskKeys = {
 export const dashboardKeys = {
   all: ['dashboard'],
   byRole: (role) => ['dashboard', role],
+  firmHome: () => ['dashboard', 'firm-home'],
 };
 
 export const lookupKeys = {

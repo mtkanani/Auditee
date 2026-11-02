@@ -19,9 +19,9 @@ export const DualPanelAssignment = ({
   const panel = useDualPanelAssignment({ clients, users, assignments, onAssign, onCreateTask });
 
   return (
-    <div className="space-y-8">
-      {/* Dual Panel Main Container */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+    <div className="space-y-6">
+      {/* Pick a client and an employee, then act */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Left Panel: Clients List (2 Cols) */}
         <ClientPanel {...panel} />
 

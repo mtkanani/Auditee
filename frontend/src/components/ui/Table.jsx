@@ -60,7 +60,7 @@ export const Table = ({
   return (
     <div className={cn('rounded-2xl bg-surface border border-line shadow-card overflow-hidden', className)}>
       {/* Desktop / tablet */}
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden sm:block relative overflow-x-auto">
         <table className="w-full">
           <thead className="bg-sunken/60">
             <tr>

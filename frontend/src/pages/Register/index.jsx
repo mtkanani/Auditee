@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import AuthLayout from '../../layouts/AuthLayout';
+import { StepTracker } from '../../components/ui/StepTracker';
 import { useRegister } from './useRegister';
-import { StepTracker } from './StepTracker';
 import { EmailStep } from './EmailStep';
 import { OtpStep } from './OtpStep';
 import { ProfileStep } from './ProfileStep';
@@ -13,42 +13,28 @@ const Register = () => {
 
   return (
     <AuthLayout
-      title={
-        step === 1 
-          ? 'Create Account' 
-          : step === 2 
-            ? 'Verify Email' 
-            : 'Complete Profile'
-      }
+      title={step === 1 ? 'Create your account' : step === 2 ? 'Check your email' : 'Your details'}
       subtitle={
         step === 1
-          ? 'Enter your email to verify and start registration'
+          ? "Start with your work email. We'll send a code to confirm it's yours."
           : step === 2
-            ? `We've sent a 6-digit OTP code to ${emailAddress}`
-            : 'Fill in your details to create your secure account'
+            ? `Enter the 6-digit code we sent to ${emailAddress}.`
+            : 'Almost done. Tell us who you are and choose a password.'
       }
     >
-      {/* Visual Stepper Tracker */}
-      <StepTracker step={step} />
+      <StepTracker step={step} steps={['Email', 'Code', 'Details']} />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Step 1: Email Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
         {step === 1 && <EmailStep {...form} />}
 
-        {/* Step 2: OTP Verification Form */}
         {step === 2 && <OtpStep {...form} />}
 
-        {/* Step 3: Registration Profile and Password Setup */}
         {step === 3 && <ProfileStep {...form} />}
 
-        {/* Redirect options (only visible on step 1 & 2) */}
         {step < 3 && (
-          <p className="text-center text-sm text-slate-400 mt-6 animate-fade-in">
+          <p className="text-center text-sm text-muted">
             Already have an account?{' '}
-            <Link
-              to="/login"
-              className="font-semibold text-brand-400 hover:text-brand-300 transition-colors"
-            >
+            <Link to="/login" className="font-medium text-accent-fg hover:underline underline-offset-4">
               Sign in
             </Link>
           </p>

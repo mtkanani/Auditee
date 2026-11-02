@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from '../../common/Modal';
+import { Skeleton } from '../../common/Skeleton';
 import { useInvoiceDetailModal } from './useInvoiceDetailModal';
 import { InvoiceActionToolbar } from './InvoiceActionToolbar';
 import { RecordPaymentForm } from './RecordPaymentForm';
@@ -15,20 +16,22 @@ export const InvoiceDetailModal = ({ invoiceId, isOpen, onClose, onRefresh }) =>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={invoice ? `${invoice.invoiceType === 'PROFORMA' ? 'PROFORMA' : 'TAX INVOICE'}: ${invoice.invoiceNumber}` : 'Loading Invoice...'}
+      title={invoice ? `${invoice.invoiceType === 'PROFORMA' ? 'Proforma' : 'Tax invoice'} ${invoice.invoiceNumber}` : 'Loading invoice'}
       maxWidth="max-w-4xl"
     >
       {isLoading ? (
-        <div className="p-8 text-center text-xs text-slate-400">Loading Invoice Details...</div>
+        <div className="space-y-4" aria-busy="true">
+          <Skeleton className="h-12" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-40" />
+        </div>
       ) : invoice ? (
-        <div className="space-y-6">
-          {/* Action Toolbar */}
+        <div className="space-y-5">
           <InvoiceActionToolbar {...detail} />
 
-          {/* Record Payment Form Collapse */}
           {isPaymentFormOpen && <RecordPaymentForm {...detail} />}
 
-          {/* Printable Invoice PDF Sheet Layout */}
+          {/* On-screen copy of the invoice; printing uses printInvoice.js */}
           <InvoiceSheet invoice={invoice} />
         </div>
       ) : null}

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Modal } from '../../../components/common/Modal';
+import { Button, Field, Input, Select } from '../../../components/ui';
 
+/** Quick edit of a client's tax IDs, balance and payment terms. Fields are registered with react-hook-form. */
 export const EditClientModal = ({
   isEditModalOpen,
   setIsEditModalOpen,
@@ -9,76 +11,47 @@ export const EditClientModal = ({
   regEdit,
   updateClientMutation,
 }) => (
-  <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Master Client Profile">
-    <form onSubmit={handleSubmitEdit(handleEditClient)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Client Name</label>
-          <input
-            type="text"
-            {...regEdit('clientName', { required: true })}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">GST Number</label>
-          <input
-            type="text"
-            {...regEdit('gstNumber')}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 uppercase"
-          />
-        </div>
+  <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit client">
+    <form onSubmit={handleSubmitEdit(handleEditClient)} className="space-y-4">
+      <Field label="Client name" required>
+        {(p) => <Input {...p} {...regEdit('clientName', { required: true })} />}
+      </Field>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Field label="GSTIN">
+          {(p) => <Input {...p} {...regEdit('gstNumber')} className="uppercase font-mono" placeholder="24ABCDE1234F1Z5" />}
+        </Field>
+        <Field label="PAN">
+          {(p) => <Input {...p} {...regEdit('panNumber')} className="uppercase font-mono" placeholder="ABCDE1234F" />}
+        </Field>
+        <Field label="TAN">
+          {(p) => <Input {...p} {...regEdit('tanNumber')} className="uppercase font-mono" placeholder="AHMA12345B" />}
+        </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">PAN Number</label>
-          <input
-            type="text"
-            {...regEdit('panNumber')}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 uppercase"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">TAN Number</label>
-          <input
-            type="text"
-            {...regEdit('tanNumber')}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100 uppercase"
-          />
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Outstanding balance (₹)">
+          {(p) => <Input {...p} type="number" {...regEdit('outstandingBalance')} />}
+        </Field>
+        <Field label="Payment terms">
+          {(p) => (
+            <Select
+              {...p}
+              {...regEdit('paymentTerms')}
+              options={[
+                { value: 'NET_15', label: 'Net 15 days' },
+                { value: 'NET_30', label: 'Net 30 days' },
+                { value: 'ON_RECEIPT', label: 'Due on receipt' },
+              ]}
+            />
+          )}
+        </Field>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Outstanding Balance (₹)</label>
-          <input
-            type="number"
-            {...regEdit('outstandingBalance')}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Payment Terms</label>
-          <select
-            {...regEdit('paymentTerms')}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-100"
-          >
-            <option value="NET_15">NET 15 Days</option>
-            <option value="NET_30">NET 30 Days</option>
-            <option value="ON_RECEIPT">Due on Receipt</option>
-          </select>
-        </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button variant="ghost" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+        <Button type="submit" variant="primary" loading={updateClientMutation.isPending}>Save changes</Button>
       </div>
-
-      <button
-        type="submit"
-        disabled={updateClientMutation.isPending}
-        className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {updateClientMutation.isPending ? 'Saving Client Changes...' : 'Save Client Changes'}
-      </button>
     </form>
   </Modal>
 );

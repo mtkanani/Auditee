@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -17,7 +18,8 @@ export const useClientManagement = () => {
   const [page, setPage] = useState(1);
 
   // Modals & Drawers
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const location = useLocation();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(Boolean(location.state?.openCreate));
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

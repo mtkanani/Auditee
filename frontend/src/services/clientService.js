@@ -36,10 +36,4 @@ export const clientService = {
     return res.data;
   },
 
-  uploadTaskDocument: async (taskId, formData) => {
-    const res = await axiosInstance.post(`/client/tasks/${taskId}/documents`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return res.data;
-  },
 };

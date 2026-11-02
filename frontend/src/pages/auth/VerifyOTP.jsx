@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
+import { Button } from '../../components/ui/Button';
+import { Field, Input } from '../../components/ui/Field';
 
 export const VerifyOTP = () => {
   const navigate = useNavigate();
@@ -29,40 +32,32 @@ export const VerifyOTP = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-xl font-bold text-slate-100">Verify Email OTP</h3>
-        <p className="text-xs text-slate-400 mt-1">Enter 6-digit OTP code sent to {email || 'your email'}</p>
+    <div className="space-y-7">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight text-fg">Verify your email</h2>
+        <p className="mt-1 text-sm text-muted">Enter the 6-digit code sent to {email || 'your email'}.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">Email</label>
-          <input
-            type="email"
-            {...register('email', { required: true })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 text-sm focus:outline-none focus:border-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1">OTP Code</label>
-          <input
-            type="text"
-            {...register('otp', { required: true, minLength: 6, maxLength: 6 })}
-            placeholder="123456"
-            maxLength={6}
-            className="w-full text-center tracking-widest text-lg font-bold px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-100 focus:outline-none focus:border-indigo-500"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm shadow-xl transition-all"
-        >
-          {isLoading ? 'Verifying...' : 'Submit OTP'}
-        </button>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <Field label="Email">
+          {(p) => <Input {...p} type="email" icon={Mail} autoComplete="email" className="h-11" {...register('email', { required: true })} />}
+        </Field>
+        <Field label="6-digit code">
+          {(p) => (
+            <Input
+              {...p}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="••••••"
+              className="h-12 text-center text-lg font-semibold tracking-[0.5em]"
+              {...register('otp', { required: true, minLength: 6, maxLength: 6 })}
+            />
+          )}
+        </Field>
+        <Button type="submit" variant="primary" size="lg" loading={isLoading} className="w-full">
+          Verify email
+        </Button>
       </form>
     </div>
   );

@@ -1,49 +1,37 @@
 import React from 'react';
+import { cn } from '../../lib/cn';
 import { TaskCard } from './TaskCard';
 
-export const KanbanBoard = ({ tasks = [], onTaskClick, onStatusChange }) => {
-  const columns = [
-    { key: 'PENDING', title: 'Pending', color: 'border-amber-500/40 bg-amber-500/5' },
-    { key: 'IN_PROGRESS', title: 'In Progress', color: 'border-indigo-500/40 bg-indigo-500/5' },
-    { key: 'COMPLETED', title: 'Completed', color: 'border-emerald-500/40 bg-emerald-500/5' },
-  ];
+const COLUMNS = [
+  { key: 'PENDING', title: 'Pending', dot: 'bg-warning' },
+  { key: 'IN_PROGRESS', title: 'In progress', dot: 'bg-accent' },
+  { key: 'COMPLETED', title: 'Completed', dot: 'bg-success' },
+];
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {columns.map((col) => {
+/** Three status columns for the employee views. Scrolls sideways on narrow screens. */
+export const KanbanBoard = ({ tasks = [], onTaskClick, onStatusChange }) => (
+  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 pb-2">
+    <div className="grid grid-flow-col auto-cols-[minmax(260px,1fr)] gap-4 min-w-full">
+      {COLUMNS.map((col) => {
         const colTasks = tasks.filter((t) => String(t.status).toUpperCase() === col.key);
-
         return (
-          <div
-            key={col.key}
-            className={`p-4 rounded-2xl bg-slate-900/60 border ${col.color} backdrop-blur-xl flex flex-col h-[600px]`}
-          >
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
-              <h3 className="font-bold text-slate-100 text-sm tracking-wide">{col.title}</h3>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-800 text-slate-300">
-                {colTasks.length}
-              </span>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+          <section key={col.key} aria-label={col.title} className="rounded-2xl bg-sunken/70 border border-line p-3 min-h-[50vh] flex flex-col">
+            <header className="flex items-center gap-2 px-1 pb-3">
+              <span className={cn('w-2 h-2 rounded-full', col.dot)} aria-hidden="true" />
+              <h3 className="text-sm font-medium text-fg">{col.title}</h3>
+              <span className="ml-auto text-xs font-medium text-subtle tabular-nums">{colTasks.length}</span>
+            </header>
+            <div className="space-y-2.5 flex-1">
               {colTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onClick={onTaskClick}
-                  onStatusChange={onStatusChange}
-                />
+                <TaskCard key={task.id} task={task} onClick={onTaskClick} onStatusChange={onStatusChange} />
               ))}
-
               {colTasks.length === 0 && (
-                <div className="flex items-center justify-center h-32 border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
-                  No tasks in {col.title}
-                </div>
+                <p className="text-xs text-subtle text-center py-8 border border-dashed border-line rounded-xl">Nothing here</p>
               )}
             </div>
-          </div>
+          </section>
         );
       })}
     </div>
-  );
-};
+  </div>
+);

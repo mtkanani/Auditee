@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 import { Modal } from '../../common/Modal';
 import { useTaskDetailModal } from './useTaskDetailModal';
 import { TaskModalTitle } from './TaskModalTitle';
@@ -26,35 +27,26 @@ export const TaskDetailModal = ({ taskId, isOpen, onClose, onRefresh }) => {
       maxWidth="max-w-4xl"
     >
       <div className="-m-6 flex flex-col min-h-0">
-        {/* Assignees & Description Header */}
-          <TaskSummary task={task} />
+        <TaskSummary task={task} />
 
-          {/* Subtask Progress Bar */}
-          {totalSubtasks > 0 && <ChecklistProgress {...detail} />}
+        {totalSubtasks > 0 && <ChecklistProgress {...detail} />}
 
-          {/* Navigation Tabs */}
-          <TaskTabs {...detail} />
+        <TaskTabs {...detail} />
 
-          {/* Modal Tab Body */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {isLoading ? (
-              <div className="p-12 text-center text-sm text-slate-500">Loading task hub details...</div>
-            ) : (
-              <>
-                {/* TAB 1: Subtasks Checklist */}
-                {activeTab === 'subtasks' && <SubtasksTab {...detail} />}
-
-                {/* TAB 2: Discussion Thread */}
-                {activeTab === 'comments' && <CommentsTab {...detail} />}
-
-                {/* TAB 3: Attachments */}
-                {activeTab === 'documents' && <AttachmentsTab {...detail} />}
-
-                {/* TAB 4: Audit History */}
-                {activeTab === 'history' && <HistoryTab task={task} />}
-              </>
-            )}
-          </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted">
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Loading task…
+            </div>
+          ) : (
+            <>
+              {activeTab === 'subtasks' && <SubtasksTab {...detail} />}
+              {activeTab === 'comments' && <CommentsTab {...detail} />}
+              {activeTab === 'documents' && <AttachmentsTab {...detail} />}
+              {activeTab === 'history' && <HistoryTab task={task} />}
+            </>
+          )}
+        </div>
       </div>
     </Modal>
   );

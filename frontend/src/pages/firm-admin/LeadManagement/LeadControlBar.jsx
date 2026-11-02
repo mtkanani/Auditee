@@ -1,44 +1,28 @@
 import React from 'react';
-import { Grid3x3, List } from 'lucide-react';
-import { SearchBar } from '../../../components/common/SearchBar';
+import { Columns3, List } from 'lucide-react';
+import { FilterBar, SearchInput, Select, Tabs } from '../../../components/ui';
+import { stageOptions } from './pipelineStages';
 
 export const LeadControlBar = ({ viewMode, setViewMode, search, setSearch, stageFilter, setStageFilter }) => (
-  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => setViewMode('kanban')}
-        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-          viewMode === 'kanban' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        <Grid3x3 size="1em" />
-        <span>Visual Pipeline Board</span>
-      </button>
-      <button
-        onClick={() => setViewMode('table')}
-        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-          viewMode === 'table' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
-        }`}
-      >
-        <List size="1em" />
-        <span>Lead Master Table</span>
-      </button>
-    </div>
-
-    <div className="flex items-center gap-3 w-full sm:w-auto">
-      <SearchBar value={search} onChange={setSearch} placeholder="Search lead, company, services..." className="w-full sm:w-64" />
-      <select
+  <FilterBar>
+    <Tabs
+      aria-label="View"
+      value={viewMode}
+      onChange={setViewMode}
+      items={[
+        { value: 'kanban', label: 'Pipeline', icon: Columns3 },
+        { value: 'table', label: 'List', icon: List },
+      ]}
+    />
+    <div className="grid grid-cols-1 sm:flex gap-3 sm:ml-auto sm:items-center w-full sm:w-auto">
+      <SearchInput value={search} onChange={setSearch} placeholder="Search lead, company, service" className="sm:w-64" />
+      <Select
+        aria-label="Stage"
         value={stageFilter}
         onChange={(e) => setStageFilter(e.target.value)}
-        className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 font-semibold"
-      >
-        <option value="">All Pipeline Stages</option>
-        <option value="NEW_LEAD">New Inquiry</option>
-        <option value="DISCUSSION">Discussion</option>
-        <option value="PROPOSAL_SENT">Proposal Sent</option>
-        <option value="WON">Won & Converted</option>
-        <option value="LOST">Lost</option>
-      </select>
+        options={[{ value: '', label: 'All stages' }, ...stageOptions]}
+        className="sm:w-44"
+      />
     </div>
-  </div>
+  </FilterBar>
 );

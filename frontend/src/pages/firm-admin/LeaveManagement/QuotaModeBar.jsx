@@ -1,33 +1,23 @@
 import React from 'react';
+import { Tabs } from '../../../components/ui';
 
+/** Heading for the balance cards, with the per-year / per-month switch. */
 export const QuotaModeBar = ({ displayQuotaMode, setDisplayQuotaMode, myLeaveData }) => (
-  <div className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-slate-900/40 border border-slate-800/80">
-    <div className="flex items-center gap-2">
-      <span className="text-xs font-bold text-slate-300">Quota Breakdown Display:</span>
-      <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
-        <button
-          onClick={() => setDisplayQuotaMode('YEARLY')}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-            displayQuotaMode === 'YEARLY' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Per Year (Annual Limit)
-        </button>
-        <button
-          onClick={() => setDisplayQuotaMode('MONTHLY')}
-          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-            displayQuotaMode === 'MONTHLY' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Per Month (Accrual Rate)
-        </button>
-      </div>
+  <div className="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h2 className="text-sm font-semibold text-fg">Leave balance</h2>
+      {myLeaveData.policy && (
+        <p className="text-xs text-subtle">Firm policy: {myLeaveData.policy.accrualMode?.toLowerCase()} accrual</p>
+      )}
     </div>
-
-    {myLeaveData.policy && (
-      <span className="text-[11px] text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
-        Default Firm Policy: <strong>{myLeaveData.policy.accrualMode}</strong> Accrual
-      </span>
-    )}
+    <Tabs
+      aria-label="Show balances"
+      value={displayQuotaMode}
+      onChange={setDisplayQuotaMode}
+      items={[
+        { value: 'YEARLY', label: 'Per year' },
+        { value: 'MONTHLY', label: 'Per month' },
+      ]}
+    />
   </div>
 );

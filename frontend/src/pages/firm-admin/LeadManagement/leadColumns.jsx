@@ -1,59 +1,66 @@
 import React from 'react';
+import { ArrowRight } from 'lucide-react';
+import { Button, Select } from '../../../components/ui';
+import { stageOptions, inr } from './pipelineStages';
+
+// Inline controls shouldn't also trigger the row's "open lead" click.
+const stop = (e) => e.stopPropagation();
 
 export const getLeadColumns = ({ setSelectedLeadId, setIsDetailModalOpen, handleStageUpdate }) => [
   {
-    header: 'Lead Name & Company',
     key: 'leadName',
+    header: 'Lead',
     render: (r) => (
-      <div
-        onClick={() => {
-          setSelectedLeadId(r.id);
-          setIsDetailModalOpen(true);
-        }}
-        className="cursor-pointer group"
-      >
-        <p className="font-extrabold text-slate-100 group-hover:text-indigo-400 transition-colors">{r.leadName}</p>
-        <p className="text-xs text-slate-400">{r.companyName || 'Individual'} • {r.email}</p>
+      <div className="min-w-0">
+        <p className="font-medium text-fg truncate max-w-[260px]">{r.leadName}</p>
+        <p className="text-xs text-subtle truncate max-w-[260px]">{[r.companyName || 'Individual', r.email].filter(Boolean).join(' · ')}</p>
       </div>
     ),
   },
-  { header: 'Phone', key: 'phone', render: (r) => r.phone || 'N/A' },
-  { header: 'Interested Services', key: 'interestedServices', render: (r) => r.interestedServices || 'General CA Audit' },
+  { key: 'phone', header: 'Phone', render: (r) => <span className="text-muted tabular-nums">{r.phone || '—'}</span> },
   {
-    header: 'Est. Value',
-    key: 'estimatedValue',
-    render: (r) => <span className="font-bold text-emerald-400">₹{Number(r.estimatedValue || 0).toLocaleString('en-IN')}</span>,
+    key: 'interestedServices',
+    header: 'Interested in',
+    render: (r) => <span className="text-muted line-clamp-1 max-w-[240px]">{r.interestedServices || 'General CA Audit'}</span>,
   },
   {
-    header: 'Stage',
+    key: 'estimatedValue',
+    header: 'Value',
+    align: 'right',
+    render: (r) => <span className="font-medium text-fg tabular-nums">{inr(r.estimatedValue)}</span>,
+  },
+  {
     key: 'stage',
+    header: 'Stage',
     render: (r) => (
-      <select
-        value={r.stage}
-        onChange={(e) => handleStageUpdate(r.id, e.target.value)}
-        className="text-xs font-bold bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-indigo-400 focus:outline-none"
-      >
-        <option value="NEW_LEAD">NEW LEAD</option>
-        <option value="DISCUSSION">DISCUSSION</option>
-        <option value="PROPOSAL_SENT">PROPOSAL SENT</option>
-        <option value="WON">WON</option>
-        <option value="LOST">LOST</option>
-      </select>
+      <div className="w-40" onClick={stop}>
+        <Select
+          aria-label={`Stage of ${r.leadName}`}
+          value={r.stage}
+          onChange={(e) => handleStageUpdate(r.id, e.target.value)}
+          options={stageOptions}
+          className="h-8 text-xs"
+        />
+      </div>
     ),
   },
   {
-    header: 'Actions',
     key: 'actions',
+    header: '',
+    align: 'right',
     render: (r) => (
-      <button
-        onClick={() => {
+      <Button
+        size="sm"
+        variant="soft"
+        iconRight={ArrowRight}
+        onClick={(e) => {
+          e.stopPropagation();
           setSelectedLeadId(r.id);
           setIsDetailModalOpen(true);
         }}
-        className="px-3 py-1 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-600/30 text-xs font-bold"
       >
-        Manage CRM
-      </button>
+        Open
+      </Button>
     ),
   },
 ];

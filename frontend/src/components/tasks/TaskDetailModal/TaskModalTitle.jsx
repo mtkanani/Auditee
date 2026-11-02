@@ -1,34 +1,25 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
+import { Badge } from '../../ui';
+import { PriorityBadge } from '../PriorityBadge';
 
+const isOverdue = (task) => task?.dueDate && task.status !== 'COMPLETED' && new Date(task.dueDate) < new Date(new Date().toDateString());
+
+/** Modal title: task number, priority, title, client and due date. */
 export const TaskModalTitle = ({ task }) => (
-  <div className="space-y-1">
-    <div className="flex items-center gap-3">
-      <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase">
-        Task #{task?.id}
-      </span>
-      <span
-        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded ${
-          task?.priority === 'URGENT'
-            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-            : task?.priority === 'HIGH'
-            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-        }`}
-      >
-        {task?.priority || 'MEDIUM'} PRIORITY
-      </span>
+  <div className="min-w-0 space-y-1.5">
+    <div className="flex flex-wrap items-center gap-2">
+      {task?.id && <Badge>Task #{task.id}</Badge>}
+      {task && <PriorityBadge priority={task.priority || 'MEDIUM'} />}
     </div>
-    <span className="block text-xl font-extrabold text-slate-100 tracking-tight">{task?.title}</span>
-    <span className="text-xs font-normal text-slate-400 flex items-center gap-3">
-      <span>Client: {task?.client?.companyName || task?.client?.clientName || 'Firm Internal'}</span>
+    <span className="block text-lg font-semibold text-fg tracking-tight">{task?.title || 'Task'}</span>
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-normal text-muted">
+      <span>{task?.client?.companyName || task?.client?.clientName || 'Internal task'}</span>
       {task?.dueDate && (
-        <>
-          <span>•</span>
-          <span className="flex items-center gap-1 text-amber-400">
-            <Calendar size="1em" /> Due: {new Date(task.dueDate).toLocaleDateString()}
-          </span>
-        </>
+        <span className={`flex items-center gap-1 ${isOverdue(task) ? 'text-danger font-medium' : ''}`}>
+          <CalendarDays className="w-3.5 h-3.5" aria-hidden="true" />
+          Due {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
       )}
     </span>
   </div>

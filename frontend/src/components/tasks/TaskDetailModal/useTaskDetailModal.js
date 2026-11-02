@@ -129,6 +129,7 @@ export const useTaskDetailModal = ({ taskId, isOpen, onRefresh }) => {
     handleToggleSubtask,
     handleAddComment,
     handleAddDocument,
+    taskId,
     totalSubtasks,
     completedSubtasks,
     progressPercent,

@@ -1,5 +1,13 @@
 import React from 'react';
-import { DollarSign } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { Button, Field, Input, Select } from '../../ui';
+
+const MODE_OPTIONS = [
+  { value: 'BANK_TRANSFER', label: 'Bank transfer (NEFT/RTGS)' },
+  { value: 'UPI', label: 'UPI or QR code' },
+  { value: 'CHEQUE', label: 'Cheque' },
+  { value: 'CASH', label: 'Cash' },
+];
 
 export const RecordPaymentForm = ({
   handleRecordPayment,
@@ -11,52 +19,23 @@ export const RecordPaymentForm = ({
   setRefNumber,
   recordPaymentMutation,
 }) => (
-  <form onSubmit={handleRecordPayment} className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-3 print:hidden">
-    <h4 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-      <DollarSign size="1em" /> Log Payment Received
-    </h4>
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div>
-        <label className="block text-[11px] text-slate-300 font-semibold mb-1">Amount Received (₹) *</label>
-        <input
-          type="number"
-          step="0.01"
-          required
-          value={paymentAmount}
-          onChange={(e) => setPaymentAmount(e.target.value)}
-          className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 font-bold"
-        />
-      </div>
-      <div>
-        <label className="block text-[11px] text-slate-300 font-semibold mb-1">Payment Mode</label>
-        <select
-          value={paymentMode}
-          onChange={(e) => setPaymentMode(e.target.value)}
-          className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-        >
-          <option value="BANK_TRANSFER">Bank Transfer (NEFT/RTGS)</option>
-          <option value="UPI">UPI / QR Code</option>
-          <option value="CHEQUE">Cheque</option>
-          <option value="CASH">Cash</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-[11px] text-slate-300 font-semibold mb-1">Transaction Ref #</label>
-        <input
-          type="text"
-          placeholder="e.g. UTR / URN 987654"
-          value={refNumber}
-          onChange={(e) => setRefNumber(e.target.value)}
-          className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100"
-        />
-      </div>
+  <form onSubmit={handleRecordPayment} className="p-4 rounded-2xl border border-success/30 bg-success-soft/40 space-y-4 print:hidden">
+    <h4 className="text-sm font-semibold text-fg">Record a payment received</h4>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <Field label="Amount (₹)" required>
+        {(p) => <Input {...p} type="number" step="0.01" required value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />}
+      </Field>
+      <Field label="Paid by">
+        {(p) => <Select {...p} value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} options={MODE_OPTIONS} />}
+      </Field>
+      <Field label="Reference">
+        {(p) => <Input {...p} placeholder="UTR or cheque number" value={refNumber} onChange={(e) => setRefNumber(e.target.value)} />}
+      </Field>
     </div>
-    <button
-      type="submit"
-      disabled={recordPaymentMutation.isPending}
-      className="py-1.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md"
-    >
-      {recordPaymentMutation.isPending ? 'Recording...' : 'Confirm Payment Entry'}
-    </button>
+    <div className="flex justify-end">
+      <Button type="submit" variant="primary" icon={Check} loading={recordPaymentMutation.isPending}>
+        Save payment
+      </Button>
+    </div>
   </form>
 );

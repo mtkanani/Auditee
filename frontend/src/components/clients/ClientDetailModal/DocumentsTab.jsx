@@ -1,5 +1,18 @@
-import React from 'react';
-import { ExternalLink, Folder, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, ExternalLink, FileText, Plus, Trash2 } from 'lucide-react';
+import { Button, Field, Input, Select } from '../../ui';
+import { AttachmentPicker } from '../../documents/AttachmentPicker';
+import { useOpenClientDocument, useUploadClientDocument } from '../../../queries/useAttachments';
+
+const TYPES = [
+  { value: 'GST_CERTIFICATE', label: 'GST certificate' },
+  { value: 'PAN_CARD', label: 'PAN card' },
+  { value: 'INCORPORATION_DEED', label: 'Incorporation deed or MOA' },
+  { value: 'BANK_STATEMENT', label: 'Bank statement' },
+  { value: 'AUDIT_REPORT', label: 'Past audit report' },
+  { value: 'OTHER', label: 'Other' },
+];
+const typeLabel = (v) => TYPES.find((t) => t.value === v)?.label || v;
 
 export const DocumentsTab = ({
   client,
@@ -9,113 +22,121 @@ export const DocumentsTab = ({
   setDocForm,
   handleAddDocument,
   handleDeleteDocument,
-}) => (
-  <div className="space-y-6">
-    <div className="flex items-center justify-between">
-      <h4 className="text-sm font-bold text-slate-200">Client Master Legal & Tax Documents Repository</h4>
-      <button
-        onClick={() => setIsAddingDoc(true)}
-        className="py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-colors flex items-center gap-1.5"
-      >
-        <Plus size="1em" />
-        <span>Add Document Record</span>
-      </button>
-    </div>
+}) => {
+  const set = (key) => (e) => setDocForm({ ...docForm, [key]: e.target.value });
+  const docs = client.documents || [];
+  const [mode, setMode] = useState('file');
+  const [file, setFile] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const upload = useUploadClientDocument();
+  const openDoc = useOpenClientDocument();
 
-    {/* Add Document Form */}
-    {isAddingDoc && (
-      <form onSubmit={handleAddDocument} className="p-4 rounded-2xl bg-slate-950 border border-amber-500/30 space-y-4">
-        <h5 className="text-xs font-bold text-amber-300 uppercase tracking-wider">New Master Document</h5>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <input
-            type="text"
-            required
-            placeholder="Document Name (e.g. GST Registration Certificate)"
-            value={docForm.documentName}
-            onChange={(e) => setDocForm({ ...docForm, documentName: e.target.value })}
-            className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
-          />
+  const pickFile = (f) => {
+    setFile(f);
+    // Suggest the file name when no name has been typed yet.
+    if (f && !docForm.documentName.trim()) setDocForm({ ...docForm, documentName: f.name.replace(/\.[^.]+$/, '') });
+  };
 
-          <select
-            value={docForm.documentType}
-            onChange={(e) => setDocForm({ ...docForm, documentType: e.target.value })}
-            className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
-          >
-            <option value="GST_CERTIFICATE">GST CERTIFICATE</option>
-            <option value="PAN_CARD">PAN CARD</option>
-            <option value="INCORPORATION_DEED">INCORPORATION DEED / MOA</option>
-            <option value="BANK_STATEMENT">BANK STATEMENT</option>
-            <option value="AUDIT_REPORT">PAST AUDIT REPORT</option>
-            <option value="OTHER">OTHER</option>
-          </select>
+  const submit = (e) => {
+    if (mode === 'link') return handleAddDocument(e);
+    e.preventDefault();
+    if (!file || !docForm.documentName.trim()) return;
+    upload.mutate(
+      {
+        clientId: client.id,
+        file,
+        details: { documentName: docForm.documentName, documentType: docForm.documentType },
+        onProgress: setProgress,
+      },
+      {
+        onSuccess: () => {
+          setFile(null);
+          setIsAddingDoc(false);
+          setDocForm({ documentName: '', documentType: 'GST_CERTIFICATE', fileUrl: '' });
+        },
+        onSettled: () => setProgress(0),
+      }
+    );
+  };
 
-          <input
-            type="text"
-            required
-            placeholder="File URL / Cloud Drive Link"
-            value={docForm.fileUrl}
-            onChange={(e) => setDocForm({ ...docForm, fileUrl: e.target.value })}
-            className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
-          />
-        </div>
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted">Registration certificates, deeds and statements for this client.</p>
+        {!isAddingDoc && (
+          <Button size="sm" variant="soft" icon={Plus} onClick={() => setIsAddingDoc(true)}>Add document</Button>
+        )}
+      </div>
 
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => setIsAddingDoc(false)}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-1.5 rounded-xl bg-amber-600 text-white text-xs font-semibold"
-          >
-            Upload Metadata
-          </button>
-        </div>
-      </form>
-    )}
-
-    {/* Documents List */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {client.documents?.map((doc) => (
-        <div key={doc.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Folder className="w-5 h-5"  />
-            </div>
-            <div>
-              <h5 className="text-xs font-bold text-slate-100">{doc.documentName}</h5>
-              <span className="text-[10px] text-amber-400 font-semibold uppercase">{doc.documentType}</span>
-              <p className="text-[10px] text-slate-500 mt-0.5">Uploaded {new Date(doc.createdAt).toLocaleDateString()}</p>
-            </div>
+      {isAddingDoc && (
+        <form onSubmit={submit} className="rounded-2xl border border-accent/30 bg-accent-soft/40 p-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Document name" required>
+              {(p) => <Input {...p} required placeholder="GST registration certificate" value={docForm.documentName} onChange={set('documentName')} />}
+            </Field>
+            <Field label="Type">
+              {(p) => <Select {...p} value={docForm.documentType} onChange={set('documentType')} options={TYPES} />}
+            </Field>
           </div>
-
-          <div className="flex items-center gap-2">
-            <a
-              href={doc.fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="p-2 rounded-xl bg-slate-900 text-indigo-400 hover:text-indigo-300"
-              title="View Document"
-            >
-              <ExternalLink size="1em" />
-            </a>
-            <button
-              onClick={() => handleDeleteDocument(doc.id)}
-              className="p-2 rounded-xl bg-slate-900 text-rose-400 hover:text-rose-300"
-              title="Delete"
-            >
-              <Trash2 size="1em" />
-            </button>
+          <AttachmentPicker
+            mode={mode}
+            onModeChange={setMode}
+            file={file}
+            onFile={pickFile}
+            url={docForm.fileUrl}
+            onUrl={(v) => setDocForm({ ...docForm, fileUrl: v })}
+            progress={progress}
+            disabled={upload.isPending}
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsAddingDoc(false)} disabled={upload.isPending}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={upload.isPending} disabled={mode === 'file' && !file}>
+              {mode === 'file' ? 'Upload document' : 'Save document'}
+            </Button>
           </div>
-        </div>
-      ))}
+        </form>
+      )}
 
-      {(!client.documents || client.documents.length === 0) && (
-        <p className="text-xs text-slate-500 col-span-2">No master documents uploaded for this client yet.</p>
+      {docs.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-line px-5 py-10 text-center">
+          <FileText className="w-6 h-6 text-subtle mx-auto mb-2" aria-hidden="true" />
+          <p className="text-sm font-medium text-fg">No documents yet</p>
+          <p className="text-sm text-muted">Keep a client's key certificates here so the team can find them.</p>
+        </div>
+      ) : (
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {docs.map((doc) => (
+            <li key={doc.id} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3.5">
+              <span className="grid place-items-center w-10 h-10 rounded-xl bg-warning-soft text-warning shrink-0">
+                <FileText className="w-5 h-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-fg truncate">{doc.documentName}</p>
+                <p className="text-xs text-subtle truncate">
+                  {typeLabel(doc.documentType)} · {new Date(doc.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                icon={doc.storageKey ? Download : ExternalLink}
+                aria-label={`${doc.storageKey ? 'Download' : 'Open'} ${doc.documentName}`}
+                disabled={!doc.storageKey && !doc.fileUrl}
+                onClick={() => openDoc.mutate({ clientId: client.id, doc })}
+              />
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Delete ${doc.documentName}`}
+                className="hover:text-danger hover:bg-danger-soft"
+                onClick={() => handleDeleteDocument(doc.id)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
-  </div>
-);
+  );
+};
