@@ -1,4 +1,5 @@
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, CalendarDays, UserCheck } from 'lucide-react';
 import { Avatar } from '../../../components/common/Avatar';
@@ -10,10 +11,13 @@ const humanize = (s = '') => s.toLowerCase().replace(/_/g, ' ');
 const shortDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 /** Who's checked in today, and leave requests to approve right here. */
-export const TeamToday = ({ attendance, leave }) => {
+export const TeamToday = ({ attendance, leave, sample = false }) => {
   const navigate = useNavigate();
   const review = useReviewLeave();
   const busyId = review.isPending ? review.variables?.id : null;
+  // Sample leave requests aren't real, so reviewing them must never reach the server.
+  const decide = (id, status) =>
+    sample ? toast('Sample data: nothing was changed.') : review.mutate({ id, status, adminRemarks: '' });
   const pct = attendance.team ? Math.round((attendance.checkedIn / attendance.team) * 100) : 0;
 
   return (
@@ -74,7 +78,7 @@ export const TeamToday = ({ attendance, leave }) => {
                     className="flex-1"
                     loading={busyId === r.id && review.variables?.status === 'APPROVED'}
                     disabled={busyId === r.id}
-                    onClick={() => review.mutate({ id: r.id, status: 'APPROVED', adminRemarks: '' })}
+                    onClick={() => decide(r.id, 'APPROVED')}
                   >
                     Approve
                   </Button>
@@ -84,7 +88,7 @@ export const TeamToday = ({ attendance, leave }) => {
                     className="flex-1"
                     loading={busyId === r.id && review.variables?.status === 'REJECTED'}
                     disabled={busyId === r.id}
-                    onClick={() => review.mutate({ id: r.id, status: 'REJECTED', adminRemarks: '' })}
+                    onClick={() => decide(r.id, 'REJECTED')}
                   >
                     Reject
                   </Button>

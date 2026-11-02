@@ -14,6 +14,8 @@ import { FocusTimeline } from './FocusTimeline';
 import { FeesCollected, WorkByStatus } from './WorkAndFees';
 import { NewOnTeam, TeamToday } from './TeamToday';
 import { Insights } from './Insights';
+import { sampleHome } from './sampleHome';
+import { SampleBanner, SampleButton, useSampleMode } from './SampleMode';
 import { daysUntil, plural } from './format';
 
 const QUICK_ACTIONS = [
@@ -25,12 +27,17 @@ const QUICK_ACTIONS = [
   { label: 'Attendance', hint: "See who's in today", icon: CalendarCheck, to: '/firm-admin/attendance' },
 ];
 
-/** Firm admin home: today's numbers, deadlines and team, from one request (GET /firm-admin/home). */
+/** Firm admin home: today's numbers, deadlines and team, from one request (GET /firm-admin/home), or sample data. */
 export const FirmAdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
-  const { data, isLoading, isError, isFetching, refetch } = useFirmHome();
+  const [sample, setSample] = useSampleMode();
+  const real = useFirmHome();
+  const data = sample ? sampleHome() : real.data;
+  const isLoading = !sample && real.isLoading;
+  const isError = !sample && real.isError;
+  const { isFetching, refetch } = real;
 
   useEffect(() => {
     if (isError) toast.error('Could not load your home page. Try again in a moment.');
@@ -40,9 +47,12 @@ export const FirmAdminDashboard = () => {
     return isError ? (
       <div className="rounded-2xl border border-line bg-surface p-10 text-center space-y-3">
         <p className="text-sm text-muted">We couldn't load today's overview.</p>
-        <Button icon={RefreshCw} onClick={() => refetch()}>
-          Try again
-        </Button>
+        <div className="flex justify-center gap-2">
+          <SampleButton onClick={() => setSample(true)} />
+          <Button icon={RefreshCw} onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
       </div>
     ) : (
       <HomeSkeleton />
@@ -70,6 +80,7 @@ export const FirmAdminDashboard = () => {
 
   return (
     <div className="space-y-6 pb-8">
+      {sample && <SampleBanner onOff={() => setSample(false)} />}
       <HomeHero
         firstName={user?.firstName}
         summary={summary}
@@ -87,7 +98,8 @@ export const FirmAdminDashboard = () => {
             <Button size="sm" variant="ghost" icon={MapPin} onClick={() => setIsGeofenceModalOpen(true)}>
               Office geofence
             </Button>
-            {isFetching && <span className="self-center text-xs text-subtle" aria-live="polite">Updating…</span>}
+            {!sample && <SampleButton onClick={() => setSample(true)} />}
+            {!sample && isFetching && <span className="self-center text-xs text-subtle" aria-live="polite">Updating…</span>}
           </>
         }
       />
@@ -104,7 +116,7 @@ export const FirmAdminDashboard = () => {
         </div>
       </div>
 
-      <Insights />
+      <Insights sample={sample} onSample={() => setSample(true)} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start" style={{ '--i': 8 }}>
         <div className="xl:col-span-2">
@@ -113,7 +125,7 @@ export const FirmAdminDashboard = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-6">
-          <TeamToday attendance={attendance} leave={leave} />
+          <TeamToday attendance={attendance} leave={leave} sample={sample} />
           <NewOnTeam people={data.recentUsers} />
         </div>
       </div>

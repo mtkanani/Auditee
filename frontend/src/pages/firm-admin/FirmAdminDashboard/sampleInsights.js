@@ -1,6 +1,6 @@
 // TEMPORARY: made-up chart data so the home charts can be tried before a firm has real history.
 // Only used when someone turns on "Show sample data", and always shown with a "Sample data" banner.
-// To remove: delete this file and the sample-data switch in Insights.jsx.
+// To remove: see sampleHome.js.
 
 const pad = (n) => String(n).padStart(2, '0');
 
