@@ -124,7 +124,7 @@ class UserController {
   /** Charts for the firm admin home (trends over time), loaded after the home itself. */
   async getHomeInsights(req, res, next) {
     try {
-      const data = await getFirmInsights(req.user.firmId);
+      const data = await getFirmInsights(req.user.firmId, { months: Number(req.query.months) === 12 ? 12 : 6 });
       return res.status(200).json({ success: true, data });
     } catch (error) {
       next(error);

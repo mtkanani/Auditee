@@ -17,14 +17,14 @@ export const firmHomeQuery = {
 };
 
 /** Charts on the firm admin home; history changes slowly, so it is kept for 5 minutes. */
-export const firmInsightsQuery = {
-  queryKey: dashboardKeys.firmInsights(),
+export const firmInsightsQuery = (months = 6) => ({
+  queryKey: dashboardKeys.firmInsights(months),
   queryFn: async () => {
-    const res = await firmAdminService.getHomeInsights();
+    const res = await firmAdminService.getHomeInsights(months);
     return res.data || res;
   },
   staleTime: 5 * 60_000,
-};
+});
 
 export const userHomeQuery = {
   queryKey: dashboardKeys.byRole('user'),

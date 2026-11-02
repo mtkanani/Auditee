@@ -10,7 +10,7 @@ export const dashboardKeys = {
   all: ['dashboard'],
   byRole: (role) => ['dashboard', role],
   firmHome: () => ['dashboard', 'firm-home'],
-  firmInsights: () => ['dashboard', 'firm-insights'],
+  firmInsights: (months = 6) => ['dashboard', 'firm-insights', months],
 };
 
 export const lookupKeys = {

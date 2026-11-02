@@ -33,3 +33,65 @@ export const barPath = (x, y, w, h, r = 4) => {
   const rr = Math.min(r, w / 2, h);
   return `M${x},${y + h} V${y + rr} Q${x},${y} ${x + rr},${y} H${x + w - rr} Q${x + w},${y} ${x + w},${y + rr} V${y + h} Z`;
 };
+
+/**
+ * Smooth line through points [[x, y], ...] that never overshoots the data (monotone cubic,
+ * Fritsch-Carlson), so a wave never dips below zero or above the real values.
+ */
+export const monotonePath = (pts) => {
+  const n = pts.length;
+  if (n === 0) return '';
+  if (n === 1) return `M${pts[0][0]},${pts[0][1]}`;
+  const dx = [], dy = [], m = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx.push(pts[i + 1][0] - pts[i][0]);
+    dy.push(pts[i + 1][1] - pts[i][1]);
+    m.push(dy[i] / dx[i]);
+  }
+  const t = [m[0]];
+  for (let i = 1; i < n - 1; i++) t.push(m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2);
+  t.push(m[n - 2]);
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) {
+      t[i] = 0;
+      t[i + 1] = 0;
+      continue;
+    }
+    const a = t[i] / m[i];
+    const b = t[i + 1] / m[i];
+    const s = a * a + b * b;
+    if (s > 9) {
+      const k = 3 / Math.sqrt(s);
+      t[i] = k * a * m[i];
+      t[i + 1] = k * b * m[i];
+    }
+  }
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += ` C${pts[i][0] + h},${pts[i][1] + h * t[i]} ${pts[i + 1][0] - h},${pts[i + 1][1] - h * t[i + 1]} ${pts[i + 1][0]},${pts[i + 1][1]}`;
+  }
+  return d;
+};
+
+const MODE_KEY = 'auditee-chart-mode';
+
+/** Bar or wave, remembered per chart in this browser. */
+export const useChartMode = (chartId, fallback = 'bar') => {
+  const [mode, setMode] = useState(() => {
+    try {
+      return localStorage.getItem(`${MODE_KEY}:${chartId}`) || fallback;
+    } catch {
+      return fallback;
+    }
+  });
+  const change = (next) => {
+    setMode(next);
+    try {
+      localStorage.setItem(`${MODE_KEY}:${chartId}`, next);
+    } catch {
+      // storage blocked: the choice still applies for this visit
+    }
+  };
+  return [mode, change];
+};

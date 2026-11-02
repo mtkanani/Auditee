@@ -106,7 +106,8 @@ const getFirmHome = async (firmId) => {
       overdueCount: Number(invoiceTotals.overdueCount),
     },
     leave: { pendingCount: pendingLeaveCount, pending: pendingLeave },
-    attendance: { checkedIn, team: totalUsers },
+    // Everyone who can check in: the employees plus the firm admin (whose own check-ins count too).
+    attendance: { checkedIn, team: totalUsers + 1 },
     recentUsers,
     generatedAt: now.toISOString(),
   };
@@ -115,18 +116,19 @@ const getFirmHome = async (firmId) => {
 const isoDay = (d) => d.toISOString().slice(0, 10);
 
 /**
- * History for the home page charts: billed vs collected per month (last 6), people checked in per
+ * History for the home page charts: billed vs collected per month (last 6 or 12), people checked in per
  * day (last 14), open compliance by status, and the five clients owing the most. Kept separate from
  * getFirmHome so the home's numbers never wait for these.
  */
-const getFirmInsights = async (firmId) => {
+const getFirmInsights = async (firmId, { months = 6 } = {}) => {
   const fId = parseInt(firmId, 10);
+  const span = months === 12 ? 12 : 6;
   const today = isoDay(todayDateOnly());
 
   const [revenue, attendance, complianceGroups, owing, team] = await Promise.all([
     prisma.$queryRaw`
       WITH months AS (
-        SELECT generate_series(date_trunc('month', now()) - interval '5 months', date_trunc('month', now()), interval '1 month') AS m
+        SELECT generate_series(date_trunc('month', now()) - (${span - 1}::int * interval '1 month'), date_trunc('month', now()), interval '1 month') AS m
       )
       SELECT
         to_char(m, 'YYYY-MM') AS "month",
@@ -173,7 +175,8 @@ const getFirmInsights = async (firmId) => {
 
   return {
     revenue: revenue.map((r) => ({ month: r.month, billed: Number(r.billed), collected: Number(r.collected) })),
-    attendance: { team, days: attendance.map((a) => ({ day: a.day, checkedIn: Number(a.checkedIn) })) },
+    // Employees plus the firm admin, matching who is counted in attendance.
+    attendance: { team: team + 1, days: attendance.map((a) => ({ day: a.day, checkedIn: Number(a.checkedIn) })) },
     compliance: {
       overdue: byStatus.OVERDUE || 0,
       upcoming: (byStatus.UPCOMING || 0) + (byStatus.EXTENDED || 0),

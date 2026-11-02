@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChartColumn, ChartSpline } from 'lucide-react';
 
 /** Legend: one swatch + label per series (text stays in text colours; the swatch carries identity). */
 export const Legend = ({ items }) => (
@@ -50,3 +51,48 @@ export const SrTable = ({ caption, columns, rows }) => (
 );
 
 export const ChartSkeleton = ({ height = 220 }) => <div className="animate-pulse bg-hover rounded-xl" style={{ height }} aria-hidden="true" />;
+
+/** Bar / wave switch for a chart (a small segmented control with icons). */
+export const ChartModeToggle = ({ mode, onChange, label = 'Chart style' }) => (
+  <div className="flex items-center p-0.5 rounded-lg bg-sunken border border-line" role="radiogroup" aria-label={label}>
+    {[
+      { value: 'bar', text: 'Bars', Icon: ChartColumn },
+      { value: 'wave', text: 'Wave', Icon: ChartSpline },
+    ].map(({ value, text, Icon }) => (
+      <button
+        key={value}
+        type="button"
+        role="radio"
+        aria-checked={mode === value}
+        aria-label={text}
+        title={text}
+        onClick={() => onChange(value)}
+        className={`grid place-items-center w-7 h-7 rounded-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+          mode === value ? 'bg-surface text-accent-fg shadow-card' : 'text-subtle hover:text-fg'
+        }`}
+      >
+        <Icon className="w-4 h-4" aria-hidden="true" />
+      </button>
+    ))}
+  </div>
+);
+
+/** Small segmented control for a range such as 6M / 12M. */
+export const RangeToggle = ({ value, options, onChange, label = 'Range' }) => (
+  <div className="flex items-center p-0.5 rounded-lg bg-sunken border border-line" role="radiogroup" aria-label={label}>
+    {options.map((o) => (
+      <button
+        key={o.value}
+        type="button"
+        role="radio"
+        aria-checked={value === o.value}
+        onClick={() => onChange(o.value)}
+        className={`h-7 px-2 rounded-md text-xs font-medium tabular-nums transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 ${
+          value === o.value ? 'bg-surface text-fg shadow-card' : 'text-muted hover:text-fg'
+        }`}
+      >
+        {o.label}
+      </button>
+    ))}
+  </div>
+);

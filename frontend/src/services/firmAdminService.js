@@ -122,8 +122,8 @@ export const firmAdminService = {
   },
 
   // Chart data for the firm admin home (trends over time)
-  getHomeInsights: async () => {
-    const res = await axiosInstance.get('/firm-admin/home/insights');
+  getHomeInsights: async (months = 6) => {
+    const res = await axiosInstance.get('/firm-admin/home/insights', { params: { months } });
     return res.data;
   },
 };
