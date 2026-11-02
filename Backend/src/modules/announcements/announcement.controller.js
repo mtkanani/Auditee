@@ -63,7 +63,7 @@ class AnnouncementController {
     try {
       const firmId = req.user.firmId || 1;
       const userId = req.user.id;
-      const data = await announcementService.getUserActiveNotices(firmId, userId);
+      const data = await announcementService.getUserActiveNotices(firmId, userId, Boolean(req.user.isClient));
       return res.status(200).json({
         success: true,
         message: 'Active firm notices fetched successfully',

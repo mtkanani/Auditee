@@ -1,5 +1,6 @@
 const documentRepository = require('./document.repository');
 const storage = require('../../utils/storage');
+const notify = require('../notifications/notify');
 const { AppError, BadRequestError, ForbiddenError, NotFoundError } = require('../../utils/errors');
 
 const isAdmin = (user) => ['FIRM_ADMIN', 'ADMIN'].includes((user.role || '').toUpperCase());
@@ -57,7 +58,7 @@ class DocumentService {
     // Clients can only file documents against themselves.
     const clientId = user.isClient ? user.clientId : data.clientId ? parseInt(data.clientId, 10) : null;
 
-    return await documentRepository.createDocument({
+    const doc = await documentRepository.createDocument({
       firmId,
       clientId,
       taskId: data.taskId ? parseInt(data.taskId, 10) : null,
@@ -73,6 +74,8 @@ class DocumentService {
       isConfidential: user.isClient ? false : Boolean(data.isConfidential),
       notes: data.notes ? data.notes.trim() : null,
     });
+    if (user.isClient) notify.clientDocument(doc, user);
+    return doc;
   }
 
   /** Short-lived link to the file, after the same access check as the lists. */

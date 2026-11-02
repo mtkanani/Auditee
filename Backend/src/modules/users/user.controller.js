@@ -1,6 +1,7 @@
 const userService = require('./user.service');
 const { USER_MESSAGES } = require('./user.constants');
 const { getFirmHome, getFirmInsights } = require('./firmHome.service');
+const { getFirmWorkspace, setBillingTarget } = require('./firmWorkspace.service');
 
 class UserController {
   async createUser(req, res, next) {
@@ -125,6 +126,25 @@ class UserController {
   async getHomeInsights(req, res, next) {
     try {
       const data = await getFirmInsights(req.user.firmId, { months: Number(req.query.months) === 12 ? 12 : 6 });
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** Firm admin home, below the first screen: billing, workload, calendar, agenda, leads, activity. */
+  async getHomeWorkspace(req, res, next) {
+    try {
+      const data = await getFirmWorkspace(req.user.firmId);
+      return res.status(200).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async setHomeTarget(req, res, next) {
+    try {
+      const data = await setBillingTarget(req.user.firmId, req.body.monthlyTarget ?? null);
       return res.status(200).json({ success: true, data });
     } catch (error) {
       next(error);

@@ -1,5 +1,6 @@
 const taskRepository = require('./task.repository');
 const prisma = require('../../config/db');
+const notify = require('../notifications/notify');
 const { NotFoundError, BadRequestError } = require('../../utils/errors');
 const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
@@ -42,6 +43,7 @@ class TaskService {
       performedName,
     });
 
+    notify.taskAssigned({ firmId, title: payload.title, dueDate: payload.dueDate }, targetUserIds, createdBy);
     return task;
   }
 
@@ -76,6 +78,7 @@ class TaskService {
       performedBy,
       performedName,
     });
+    if (task.status !== status) notify.taskStatus(tId, status, { id: performedBy, firstName: performedName });
 
     return await this.getTaskById(tId, fId);
   }
@@ -116,6 +119,8 @@ class TaskService {
       performedBy,
       performedName,
     });
+    notify.taskAssigned({ firmId: task.firmId, title: task.title, dueDate: payload.dueDate }, targetUserIds, performedBy);
+    notify.workRequestDecided(task, true);
 
     return await this.getTaskById(taskId, firmId);
   }
@@ -134,6 +139,7 @@ class TaskService {
       performedBy,
       performedName,
     });
+    notify.workRequestDecided(task, false);
 
     return { id: taskId, status: 'CANCELLED' };
   }
@@ -198,6 +204,7 @@ class TaskService {
       performedName: comment.commenterName,
     });
 
+    notify.taskComment(task.id, performer, comment.comment);
     return comment;
   }
 

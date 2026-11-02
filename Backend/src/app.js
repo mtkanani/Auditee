@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
+const { corsOptions } = require('./config/cors');
+const { broadcastChanges } = require('./realtime/changeFeed');
 
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./modules/events/event.routes');
@@ -25,6 +27,8 @@ const documentRoutes = require('./modules/documents/document.routes');
 const aiRoutes = require('./modules/ai/ai.routes');
 const meetingRoutes = require('./modules/meetings/meeting.routes');
 const reportRoutes = require('./modules/reports/report.routes');
+const notificationRoutes = require('./modules/notifications/notification.routes');
+const documentRequestRoutes = require('./modules/documentRequests/documentRequest.routes');
 
 const errorHandler = require('./middlewares/errorHandler');
 const { setupSwagger } = require('./utils/swagger');
@@ -32,50 +36,13 @@ const { NotFoundError } = require('./utils/errors');
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5000',
-  'http://localhost:5001',
-  'http://localhost:8080',
-  'http://localhost:3000',
-  'https://auditee.vercel.app',
-];
-
-// Every Vercel deployment and preview of this project gets its own address, e.g.
-// https://auditee-git-main-meet-kananis-projects.vercel.app or https://auditee-a1b2c3-meet-kananis-projects.vercel.app.
-// Only the Vercel team "meet-kananis-projects" can create addresses with that suffix. Another team can be set
-// with VERCEL_TEAM_SLUG.
-const vercelTeam = (process.env.VERCEL_TEAM_SLUG || 'meet-kananis-projects').replace(/[^a-z0-9-]/gi, '');
-const vercelProjectOrigin = new RegExp(`^https://auditee(-[a-z0-9-]+)?-${vercelTeam}\\.vercel\\.app$`);
-
-// Origins compare without a trailing slash, so "https://app.example.com/" in FRONTEND_URL still matches.
-const normalizeOrigin = (o) => o.trim().replace(/\/+$/, '');
-
-if (process.env.FRONTEND_URL) {
-  const envOrigins = process.env.FRONTEND_URL.split(',').map(normalizeOrigin).filter(Boolean);
-  allowedOrigins.push(...envOrigins);
-}
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g. mobile apps, curl, postman, same-origin)
-    if (!origin) return callback(null, true);
-    const o = normalizeOrigin(origin);
-    if (allowedOrigins.includes(o) || vercelProjectOrigin.test(o)) return callback(null, origin);
-    // Unknown site: send no CORS headers, so the browser blocks it. Add the site to FRONTEND_URL to allow it.
-    console.warn(`CORS: blocked request from origin ${origin}`);
-    return callback(null, false);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  optionsSuccessStatus: 200,
-};
-
 app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// After any successful change, tell everyone in the firm (over the socket) which data to refresh.
+app.use(broadcastChanges);
 
 // Initialize Swagger Documentation
 setupSwagger(app);
@@ -106,6 +73,8 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/document-requests', documentRequestRoutes);
 app.use('/api/user', publicUserRoutes);
 app.use('/api/client', publicClientRoutes);
 

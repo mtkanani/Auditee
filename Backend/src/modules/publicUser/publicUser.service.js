@@ -1,4 +1,5 @@
 const prisma = require('../../config/db');
+const notify = require('../notifications/notify');
 const { NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
@@ -166,8 +167,9 @@ class PublicUserService {
     return task;
   }
 
-  async updateTaskStatus(taskId, status, userId, firmId) {
+  async updateTaskStatus(taskId, status, userId, firmId, actor = { id: userId }) {
     const task = await this.getTaskDetails(taskId, userId, firmId);
+    if (task.status !== status) notify.taskStatus(task.id, status, actor);
     return await prisma.task.update({
       where: { id: task.id },
       data: { status },

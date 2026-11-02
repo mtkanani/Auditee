@@ -1,9 +1,10 @@
 const prisma = require('../../config/db');
 const leaveRepository = require('./leave.repository');
+const notify = require('../notifications/notify');
 const { BadRequestError, NotFoundError } = require('../../utils/errors');
 
 class LeaveService {
-  async applyLeave(data, userId, firmId) {
+  async applyLeave(data, userId, firmId, user = null) {
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
 
@@ -36,7 +37,7 @@ class LeaveService {
       }
     }
 
-    return await leaveRepository.createLeaveRequest({
+    const request = await leaveRepository.createLeaveRequest({
       firmId,
       userId,
       leaveType: data.leaveType,
@@ -46,6 +47,8 @@ class LeaveService {
       reason: data.reason.trim(),
       status: 'PENDING',
     });
+    notify.leaveApplied(request, user);
+    return request;
   }
 
   async reviewLeave(id, status, adminRemarks, firmId, reviewerId) {
@@ -76,7 +79,9 @@ class LeaveService {
       }
     }
 
-    return await leaveRepository.updateLeaveRequestStatus(id, firmId, status, adminRemarks, reviewerId);
+    const reviewed = await leaveRepository.updateLeaveRequestStatus(id, firmId, status, adminRemarks, reviewerId);
+    notify.leaveReviewed(reviewed);
+    return reviewed;
   }
 
   async getMyLeaveData(userId, firmId) {

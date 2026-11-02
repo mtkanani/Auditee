@@ -619,6 +619,7 @@ const sendCredentialsEmail = async (toEmail, tempPassword, firmName) => {
 };
 
 module.exports = {
+  sendEmail,
   sendOtpEmail,
   sendForgotPasswordEmail,
   sendDeleteAccountEmail,

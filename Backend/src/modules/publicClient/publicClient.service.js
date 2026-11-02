@@ -1,4 +1,5 @@
 const prisma = require('../../config/db');
+const notify = require('../notifications/notify');
 const { NotFoundError, ForbiddenError } = require('../../utils/errors');
 const { resolveAttachment, attachmentDownload } = require('../../utils/attachments');
 
@@ -152,6 +153,7 @@ class PublicClientService {
       },
     });
 
+    notify.workRequested(task);
     return task;
   }
 

@@ -23,6 +23,15 @@ const createAnnouncementValidation = [
     .optional({ nullable: true })
     .isISO8601()
     .withMessage('expiresAt must be a valid ISO date string'),
+  body('audience')
+    .optional({ nullable: true })
+    .isIn(['ALL', 'SELECTED'])
+    .withMessage('Audience must be ALL or SELECTED'),
+  body('recipientIds')
+    .if(body('audience').equals('SELECTED'))
+    .isArray({ min: 1 })
+    .withMessage('Choose at least one person to send this notice to'),
+  body('recipientIds.*').optional().isInt({ min: 1 }).toInt(),
 ];
 
 const announcementIdParamValidation = [

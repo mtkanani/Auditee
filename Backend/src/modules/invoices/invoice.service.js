@@ -2,6 +2,7 @@ const invoiceRepository = require('./invoice.repository');
 const emailService = require('../../services/emailService');
 const { NotFoundError, BadRequestError } = require('../../utils/errors');
 const prisma = require('../../config/db');
+const notify = require('../notifications/notify');
 
 class InvoiceService {
   async createInvoice(data, firmId) {
@@ -60,7 +61,9 @@ class InvoiceService {
       terms: data.terms ? data.terms.trim() : 'Payment due within 15 days of invoice issue.',
     };
 
-    return await invoiceRepository.createInvoice(invoiceData, itemsData);
+    const invoice = await invoiceRepository.createInvoice(invoiceData, itemsData);
+    notify.invoiceCreated(invoice);
+    return invoice;
   }
 
   async getAllInvoices(queryParams, firmId) {
@@ -105,6 +108,7 @@ class InvoiceService {
       status: newStatus,
     });
 
+    if (clientId) notify.paymentByClient(invoice, paymentAmount);
     return await this.getInvoiceById(id, firmId);
   }
 
@@ -153,7 +157,7 @@ class InvoiceService {
     `;
 
     try {
-      await emailService.sendMail({
+      await emailService.sendEmail({
         to: clientEmail,
         subject,
         html,

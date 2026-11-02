@@ -1,5 +1,6 @@
 const meetingRepository = require('./meeting.repository');
 const prisma = require('../../config/db');
+const notify = require('../notifications/notify');
 const { sendEmail } = require('../../services/emailService');
 
 class MeetingService {
@@ -129,6 +130,7 @@ class MeetingService {
     this.sendInvitationEmails(meeting).catch((err) => {
       console.warn('⚠️ Meeting invitation email warning:', err.message);
     });
+    notify.meetingInvite(meeting, user.isClient ? null : user.id);
 
     return meeting;
   }

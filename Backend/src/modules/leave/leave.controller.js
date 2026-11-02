@@ -5,7 +5,7 @@ class LeaveController {
     try {
       const firmId = req.user.firmId;
       const userId = req.user.id;
-      const request = await leaveService.applyLeave(req.body, userId, firmId);
+      const request = await leaveService.applyLeave(req.body, userId, firmId, req.user);
       return res.status(201).json({
         success: true,
         message: 'Leave application submitted successfully',

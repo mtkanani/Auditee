@@ -16,7 +16,6 @@ model Otp {
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
-
   @@map("otps")
 }
 
@@ -26,67 +25,67 @@ model OtpRequestLog {
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
-
   @@map("otp_request_logs")
 }
 
 model User {
-  firstName            String
-  lastName             String
-  mobileNumber         String?            @unique
-  email                String             @unique
-  password             String
-  city                 String?
-  role                 Role               @default(USER)
-  isVerified           Boolean            @default(true)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  passwordChangedAt    DateTime?
-  firmId               Int?
-  phone                String?
-  id                   Int                @id @default(autoincrement())
-  createdBy            Int?
-  deletedAt            DateTime?
-  designation          String?
-  joiningDate          DateTime?
-  profileImage         String?
-  status               UserStatus         @default(ACTIVE)
-  announcementReads    AnnouncementRead[]
-  createdAnnouncements Announcement[]     @relation("AnnouncementCreator")
-  attendanceRecords    AttendanceRecord[]
-  createdAssignments   ClientAssignment[] @relation("AssignmentCreatedBy")
-  clientAssignments    ClientAssignment[] @relation("UserClientAssignments")
-  documentVaults       DocumentVault[]
-  events               Event[]            @relation("UserEvents")
-  administeredFirm     Firm?              @relation("FirmAdmin")
-  leaveBalances        LeaveBalance[]
-  leaveRequests        LeaveRequest[]
-  taskAssignees        TaskAssignee[]
-  createdTasks         Task[]             @relation("TaskCreatedByUser")
-  assignedTasks        Task[]             @relation("TaskAssignedUser")
-  timeEntries          TimeEntry[]
-  sessions             UserSession[]
-  firm                 Firm?              @relation("FirmUsers", fields: [firmId], references: [id])
-  createdMeetings      Meeting[]          @relation("CreatedMeetings")
+  firstName              String
+  lastName               String
+  mobileNumber           String?                 @unique
+  email                  String                  @unique
+  password               String
+  city                   String?
+  role                   Role                    @default(USER)
+  isVerified             Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  passwordChangedAt      DateTime?
+  firmId                 Int?
+  phone                  String?
+  id                     Int                     @id @default(autoincrement())
+  createdBy              Int?
+  deletedAt              DateTime?
+  designation            String?
+  joiningDate            DateTime?
+  profileImage           String?
+  status                 UserStatus              @default(ACTIVE)
+  announcementReads      AnnouncementRead[]
+  createdAnnouncements   Announcement[]          @relation("AnnouncementCreator")
+  attendanceRecords      AttendanceRecord[]
+  createdAssignments     ClientAssignment[]      @relation("AssignmentCreatedBy")
+  clientAssignments      ClientAssignment[]      @relation("UserClientAssignments")
+  documentVaults         DocumentVault[]
+  events                 Event[]                 @relation("UserEvents")
+  administeredFirm       Firm?                   @relation("FirmAdmin")
+  leaveBalances          LeaveBalance[]
+  leaveRequests          LeaveRequest[]
+  taskAssignees          TaskAssignee[]
+  createdTasks           Task[]                  @relation("TaskCreatedByUser")
+  assignedTasks          Task[]                  @relation("TaskAssignedUser")
+  timeEntries            TimeEntry[]
+  sessions               UserSession[]
+  notifications          Notification[]
+  noticeRecipients       AnnouncementRecipient[]
+  firm                   Firm?                   @relation("FirmUsers", fields: [firmId], references: [id])
+  createdMeetings        Meeting[]               @relation("CreatedMeetings")
   meetingParticipantLogs MeetingParticipant[]
-  meetingAttendanceLogs MeetingAttendance[]
-  meetingNoteLogs      MeetingNote[]
-  meetingFileLogs      MeetingFile[]
-  meetingChatLogs      MeetingChat[]
+  meetingAttendanceLogs  MeetingAttendance[]
+  meetingNoteLogs        MeetingNote[]
+  meetingFileLogs        MeetingFile[]
+  meetingChatLogs        MeetingChat[]
 
   @@index([firmId, deletedAt, role])
   @@index([firmId, status])
-
   @@map("users")
 }
 
 model Client {
-  id                       Int                 @id @default(autoincrement())
+  id                       Int                  @id @default(autoincrement())
   firmId                   Int
-  clientType               String              @default("INDIVIDUAL")
+  clientType               String               @default("INDIVIDUAL")
   clientName               String
   companyName              String?
-  email                    String              @unique
+  email                    String               @unique
   phone                    String?
   password                 String?
   gstNumber                String?
@@ -97,10 +96,10 @@ model Client {
   state                    String?
   country                  String?
   pincode                  String?
-  status                   ClientStatus        @default(ACTIVE)
+  status                   ClientStatus         @default(ACTIVE)
   createdBy                Int?
-  createdAt                DateTime            @default(now())
-  updatedAt                DateTime            @updatedAt
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
   deletedAt                DateTime?
   alternatePhone           String?
   billingAddress           String?
@@ -111,30 +110,31 @@ model Client {
   contactPersonName        String?
   contactPersonPhone       String?
   industryCategory         String?
-  outstandingBalance       Float               @default(0.0)
-  paymentTerms             String?             @default("NET_30")
+  outstandingBalance       Float                @default(0.0)
+  paymentTerms             String?              @default("NET_30")
   tanNumber                String?
-  taxRegistrationType      String?             @default("REGULAR")
+  taxRegistrationType      String?              @default("REGULAR")
   website                  String?
   activityLogs             ClientActivityLog[]
   assignments              ClientAssignment[]
   documents                ClientDocument[]
   services                 ClientServiceItem[]
-  firm                     Firm                @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  firm                     Firm                 @relation(fields: [firmId], references: [id], onDelete: Cascade)
   complianceItems          ComplianceItem[]
-  documentVaults           DocumentVault[]     @relation("DocumentVaultClient")
-  uploadedDocumentVaults   DocumentVault[]     @relation("DocumentVaultClientUploader")
+  documentVaults           DocumentVault[]      @relation("DocumentVaultClient")
+  uploadedDocumentVaults   DocumentVault[]      @relation("DocumentVaultClientUploader")
   invoices                 Invoice[]
   convertedLead            Lead?
   tasks                    Task[]
   sessions                 UserSession[]
+  notifications            Notification[]
+  documentRequests         DocumentRequest[]
   meetingParticipantLogs   MeetingParticipant[]
   meetingAttendanceLogs    MeetingAttendance[]
   meetingChatLogs          MeetingChat[]
 
   @@index([firmId, deletedAt, createdAt])
   @@index([firmId, status])
-
   @@map("clients")
 }
 
@@ -151,7 +151,6 @@ model ClientServiceItem {
   client           Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
-
   @@map("client_service_items")
 }
 
@@ -168,7 +167,6 @@ model ClientDocument {
   client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
-
   @@map("client_documents")
 }
 
@@ -183,7 +181,7 @@ model ClientActivityLog {
   client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
-
+  @@index([createdAt])
   @@map("client_activity_logs")
 }
 
@@ -199,7 +197,6 @@ model ClientAssignment {
 
   @@unique([clientId, userId])
   @@index([userId])
-
   @@map("client_assignments")
 }
 
@@ -239,7 +236,6 @@ model Task {
   @@index([clientId, deletedAt])
   @@index([userId])
   @@index([createdBy])
-
   @@map("tasks")
 }
 
@@ -253,7 +249,6 @@ model TaskAssignee {
 
   @@unique([taskId, userId])
   @@index([userId])
-
   @@map("task_assignees")
 }
 
@@ -268,7 +263,6 @@ model TaskSubtask {
   task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
-
   @@map("task_subtasks")
 }
 
@@ -285,7 +279,6 @@ model TaskComment {
   task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
-
   @@map("task_comments")
 }
 
@@ -300,7 +293,7 @@ model TaskHistory {
   task          Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
-
+  @@index([createdAt])
   @@map("task_history")
 }
 
@@ -327,7 +320,6 @@ model TaskDependency {
 
   @@unique([taskId, dependsOnTaskId])
   @@index([dependsOnTaskId])
-
   @@map("task_dependencies")
 }
 
@@ -345,7 +337,6 @@ model TaskDocument {
   task         Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
-
   @@map("task_documents")
 }
 
@@ -363,7 +354,6 @@ model TimeEntry {
 
   @@index([taskId])
   @@index([userId, createdAt])
-
   @@map("time_entries")
 }
 
@@ -384,7 +374,6 @@ model UserSession {
   @@index([userId])
   @@index([clientId])
   @@index([refreshTokenExpiresAt])
-
   @@map("user_sessions")
 }
 
@@ -397,7 +386,6 @@ model ForgotPasswordOtp {
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
-
   @@map("forgot_password_otps")
 }
 
@@ -410,25 +398,24 @@ model DeleteAccountOtp {
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
-
   @@map("delete_account_otps")
 }
 
 model Firm {
-  id                Int                @id @default(autoincrement())
-  firmName          String
-  email             String             @unique
-  phone             String
-  address           String?
-  city              String?
-  state             String?
-  country           String?
-  pincode           String?
-  status            FirmStatus         @default(ACTIVE)
-  firmAdminId       Int                @unique
-  deletedAt         DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id          Int        @id @default(autoincrement())
+  firmName    String
+  email       String     @unique
+  phone       String
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  pincode     String?
+  status      FirmStatus @default(ACTIVE)
+  firmAdminId Int        @unique
+  deletedAt   DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   // Bank Details for Online Payments
   bankName          String?
@@ -440,13 +427,17 @@ model Firm {
   bankNotes         String?
 
   // GPS Geofence Attendance Settings
-  geofenceEnabled      Boolean  @default(false)
+  geofenceEnabled      Boolean @default(false)
   officeLat            Float?
   officeLng            Float?
   officeAddress        String?
-  geofenceRadiusMeters Int      @default(100)
+  geofenceRadiusMeters Int     @default(100)
+
+  /// Monthly billing goal shown on the firm admin home (null = not set)
+  monthlyBillingTarget Float?
 
   announcements     Announcement[]
+  documentRequests  DocumentRequest[]
   attendanceRecords AttendanceRecord[]
   clients           Client[]
   complianceItems   ComplianceItem[]
@@ -485,28 +476,29 @@ model ComplianceItem {
   @@index([firmId, status])
   @@index([firmId, dueDate])
   @@index([clientId])
-
   @@map("compliance_items")
 }
 
 model Announcement {
-  id        Int                @id @default(autoincrement())
-  firmId    Int
-  title     String
-  content   String
-  category  String             @default("GENERAL")
-  priority  NoticePriority     @default(INFO)
-  createdBy Int
-  expiresAt DateTime?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  deletedAt DateTime?
-  reads     AnnouncementRead[]
-  creator   User               @relation("AnnouncementCreator", fields: [createdBy], references: [id], onDelete: Cascade)
-  firm      Firm               @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  id         Int                     @id @default(autoincrement())
+  firmId     Int
+  title      String
+  content    String
+  category   String                  @default("GENERAL")
+  priority   NoticePriority          @default(INFO)
+  createdBy  Int
+  expiresAt  DateTime?
+  /// ALL = every staff member (and clients); SELECTED = only the people in recipients
+  audience   String                  @default("ALL")
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  deletedAt  DateTime?
+  reads      AnnouncementRead[]
+  recipients AnnouncementRecipient[]
+  creator    User                    @relation("AnnouncementCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  firm       Firm                    @relation(fields: [firmId], references: [id], onDelete: Cascade)
 
   @@index([firmId, deletedAt, createdAt])
-
   @@map("announcements")
 }
 
@@ -521,8 +513,67 @@ model AnnouncementRead {
 
   @@unique([announcementId, userId])
   @@index([userId])
-
   @@map("announcement_reads")
+}
+
+/// Who a SELECTED-audience notice was sent to.
+model AnnouncementRecipient {
+  id             Int          @id @default(autoincrement())
+  announcementId Int
+  userId         Int
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+  @@index([userId])
+  @@map("announcement_recipients")
+}
+
+/// In-app notification for one staff member (userId) or one client (clientId). Pushed live over the socket.
+model Notification {
+  id        Int       @id @default(autoincrement())
+  firmId    Int?
+  userId    Int?
+  clientId  Int?
+  /// e.g. NOTICE, TASK_ASSIGNED, TASK_STATUS, LEAVE_REQUESTED, LEAVE_REVIEWED, DOCUMENT_REQUESTED
+  type      String
+  title     String
+  body      String?
+  /// App path to open when the notification is clicked
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client    Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([clientId, createdAt])
+  @@index([clientId, readAt])
+  @@map("notifications")
+}
+
+/// A document the firm has asked a client for, until it arrives.
+model DocumentRequest {
+  id             Int       @id @default(autoincrement())
+  firmId         Int
+  clientId       Int
+  title          String
+  notes          String?
+  dueDate        DateTime?
+  /// PENDING, RECEIVED or CANCELLED
+  status         String    @default("PENDING")
+  requestedBy    Int?
+  receivedAt     DateTime?
+  lastRemindedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  firm           Firm      @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  client         Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([firmId, status, dueDate])
+  @@index([clientId, status])
+  @@map("document_requests")
 }
 
 model Lead {
@@ -553,7 +604,6 @@ model Lead {
   firm               Firm              @relation(fields: [firmId], references: [id], onDelete: Cascade)
 
   @@index([firmId, deletedAt, stage])
-
   @@map("leads")
 }
 
@@ -569,7 +619,6 @@ model LeadCallLog {
   lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
-
   @@map("lead_call_logs")
 }
 
@@ -585,7 +634,6 @@ model LeadMeetingNote {
   lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
-
   @@map("lead_meeting_notes")
 }
 
@@ -601,7 +649,6 @@ model LeadProposal {
   lead             Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
-
   @@map("lead_proposals")
 }
 
@@ -638,7 +685,6 @@ model Invoice {
   @@index([firmId, deletedAt, issueDate])
   @@index([clientId, deletedAt])
   @@index([firmId, invoiceType])
-
   @@map("invoices")
 }
 
@@ -668,7 +714,6 @@ model InvoiceItem {
   invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@index([invoiceId])
-
   @@map("invoice_items")
 }
 
@@ -685,7 +730,6 @@ model PaymentRecord {
 
   @@index([invoiceId])
   @@index([paymentDate])
-
   @@map("payment_records")
 }
 
@@ -705,7 +749,6 @@ model AttendanceRecord {
 
   @@unique([userId, date])
   @@index([firmId, date])
-
   @@map("attendance_records")
 }
 
@@ -726,7 +769,6 @@ model AttendanceEntry {
   record           AttendanceRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
   @@index([recordId, checkOutTime])
-
   @@map("attendance_entries")
 }
 
@@ -750,7 +792,6 @@ model LeaveRequest {
 
   @@index([firmId, status])
   @@index([userId, startDate])
-
   @@map("leave_requests")
 }
 
@@ -771,7 +812,6 @@ model LeaveBalance {
 
   @@unique([userId, year])
   @@index([firmId, year])
-
   @@map("leave_balances")
 }
 
@@ -790,7 +830,6 @@ model LeavePolicy {
   firm             Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
 
   @@index([firmId])
-
   @@map("leave_policies")
 }
 
@@ -800,37 +839,36 @@ enum LeaveAccrualMode {
 }
 
 model DocumentVault {
-  id             Int              @id @default(autoincrement())
-  firmId         Int
-  clientId       Int?
-  taskId         Int?
-  uploadedBy     Int?
+  id                 Int              @id @default(autoincrement())
+  firmId             Int
+  clientId           Int?
+  taskId             Int?
+  uploadedBy         Int?
   /// Set instead of uploadedBy when a client uploads from the client portal
   uploadedByClientId Int?
-  title          String
-  fileName       String
+  title              String
+  fileName           String
   /// External link for older rows; files stored in R2 use storageKey instead
-  fileUrl        String?
+  fileUrl            String?
   /// Object key in R2, always "firms/{firmId}/..."
-  storageKey     String?
-  fileSize       Int              @default(0)
-  mimeType       String           @default("application/pdf")
-  category       DocumentCategory @default(GENERAL)
-  isConfidential Boolean          @default(false)
-  notes          String?
-  deletedAt      DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  client         Client?          @relation("DocumentVaultClient", fields: [clientId], references: [id], onDelete: Cascade)
-  firm           Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
-  task           Task?            @relation(fields: [taskId], references: [id])
-  uploader       User?            @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
-  uploaderClient Client?          @relation("DocumentVaultClientUploader", fields: [uploadedByClientId], references: [id], onDelete: SetNull)
+  storageKey         String?
+  fileSize           Int              @default(0)
+  mimeType           String           @default("application/pdf")
+  category           DocumentCategory @default(GENERAL)
+  isConfidential     Boolean          @default(false)
+  notes              String?
+  deletedAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  client             Client?          @relation("DocumentVaultClient", fields: [clientId], references: [id], onDelete: Cascade)
+  firm               Firm             @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  task               Task?            @relation(fields: [taskId], references: [id])
+  uploader           User?            @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  uploaderClient     Client?          @relation("DocumentVaultClientUploader", fields: [uploadedByClientId], references: [id], onDelete: SetNull)
 
   @@index([firmId, deletedAt, category])
   @@index([clientId])
   @@index([taskId])
-
   @@map("document_vaults")
 }
 
@@ -847,7 +885,6 @@ model Event {
   user      User?     @relation("UserEvents", fields: [userId], references: [id])
 
   @@index([userId, start])
-
   @@map("events")
 }
 
@@ -1023,63 +1060,61 @@ enum MeetingAttendanceStatus {
 }
 
 model Meeting {
-  id              Int                   @id @default(autoincrement())
-  firmId          Int
-  title           String
-  description     String?               @db.Text
-  agenda          String?               @db.Text
-  meetingType     MeetingType           @default(CLIENT)
-  meetingMode     MeetingMode           @default(IN_APP_VIDEO)
-  status          MeetingStatus         @default(SCHEDULED)
-  priority        MeetingPriority       @default(MEDIUM)
-  department      String?
-  location        String?
-  meetingLink     String?
-  meetingDate     DateTime
-  startTime       DateTime
-  endTime         DateTime
-  timezone        String                @default("Asia/Kolkata")
-  createdById     Int
-  isLocked        Boolean               @default(false)
-  isRecording     Boolean               @default(false)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  id          Int             @id @default(autoincrement())
+  firmId      Int
+  title       String
+  description String?         @db.Text
+  agenda      String?         @db.Text
+  meetingType MeetingType     @default(CLIENT)
+  meetingMode MeetingMode     @default(IN_APP_VIDEO)
+  status      MeetingStatus   @default(SCHEDULED)
+  priority    MeetingPriority @default(MEDIUM)
+  department  String?
+  location    String?
+  meetingLink String?
+  meetingDate DateTime
+  startTime   DateTime
+  endTime     DateTime
+  timezone    String          @default("Asia/Kolkata")
+  createdById Int
+  isLocked    Boolean         @default(false)
+  isRecording Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
-  firm            Firm                  @relation(fields: [firmId], references: [id], onDelete: Cascade)
-  createdBy       User                  @relation("CreatedMeetings", fields: [createdById], references: [id])
-  participants    MeetingParticipant[]
+  firm           Firm                 @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  createdBy      User                 @relation("CreatedMeetings", fields: [createdById], references: [id])
+  participants   MeetingParticipant[]
   attendanceLogs MeetingAttendance[]
-  notes           MeetingNote[]
-  files           MeetingFile[]
-  chats           MeetingChat[]
-  recordings      MeetingRecording[]
-  actionItems     MeetingActionItem[]
+  notes          MeetingNote[]
+  files          MeetingFile[]
+  chats          MeetingChat[]
+  recordings     MeetingRecording[]
+  actionItems    MeetingActionItem[]
 
   @@index([firmId, status, meetingDate])
   @@index([createdById])
-
   @@map("meetings")
 }
 
 model MeetingParticipant {
-  id            Int               @id @default(autoincrement())
-  meetingId     Int
-  userId        Int?
-  clientId      Int?
-  email         String?
-  status        InvitationStatus  @default(PENDING)
-  invitedAt     DateTime          @default(now())
-  respondedAt   DateTime?
+  id          Int              @id @default(autoincrement())
+  meetingId   Int
+  userId      Int?
+  clientId    Int?
+  email       String?
+  status      InvitationStatus @default(PENDING)
+  invitedAt   DateTime         @default(now())
+  respondedAt DateTime?
 
-  meeting       Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  user          User?             @relation(fields: [userId], references: [id])
-  client        Client?           @relation(fields: [clientId], references: [id])
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+  client  Client? @relation(fields: [clientId], references: [id])
 
   @@index([meetingId])
   @@index([userId])
   @@index([clientId])
   @@index([email])
-
   @@map("meeting_participants")
 }
 
@@ -1093,13 +1128,12 @@ model MeetingAttendance {
   durationMinutes Int                     @default(0)
   status          MeetingAttendanceStatus @default(PRESENT)
 
-  meeting         Meeting                 @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  user            User?                   @relation(fields: [userId], references: [id])
-  client          Client?                 @relation(fields: [clientId], references: [id])
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+  client  Client? @relation(fields: [clientId], references: [id])
 
   @@index([meetingId])
   @@index([userId])
-
   @@map("meeting_attendance")
 }
 
@@ -1113,11 +1147,10 @@ model MeetingNote {
   nextSteps   String?  @db.Text
   createdAt   DateTime @default(now())
 
-  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  createdBy User    @relation(fields: [createdById], references: [id])
 
   @@index([meetingId])
-
   @@map("meeting_notes")
 }
 
@@ -1131,11 +1164,10 @@ model MeetingFile {
   fileType     String
   createdAt    DateTime @default(now())
 
-  meeting      Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  meeting    Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  uploadedBy User    @relation(fields: [uploadedById], references: [id])
 
   @@index([meetingId])
-
   @@map("meeting_files")
 }
 
@@ -1148,12 +1180,11 @@ model MeetingChat {
   fileUrl        String?
   createdAt      DateTime @default(now())
 
-  meeting        Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  senderUser     User?    @relation(fields: [senderUserId], references: [id])
-  senderClient   Client?  @relation(fields: [senderClientId], references: [id])
+  meeting      Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  senderUser   User?   @relation(fields: [senderUserId], references: [id])
+  senderClient Client? @relation(fields: [senderClientId], references: [id])
 
   @@index([meetingId, createdAt])
-
   @@map("meeting_chat")
 }
 
@@ -1165,7 +1196,7 @@ model MeetingRecording {
   fileSize        Int
   createdAt       DateTime @default(now())
 
-  meeting         Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   @@map("meeting_recordings")
 }
@@ -1181,10 +1212,8 @@ model MeetingActionItem {
   taskId             Int?
   createdAt          DateTime  @default(now())
 
-  meeting            Meeting   @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   @@index([meetingId])
-
   @@map("meeting_action_items")
 }
-

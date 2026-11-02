@@ -1,6 +1,7 @@
 require('dotenv').config();
 const app = require('./app');
 const prisma = require('./config/db');
+const { initRealtime, closeRealtime } = require('./realtime/socket');
 
 const PORT = process.env.PORT || 8080;
 const HOST = '0.0.0.0';
@@ -30,6 +31,7 @@ process.on('unhandledRejection', (err) => {
 // Handle system termination signals (e.g. Docker, Heroku, Systemd)
 process.on('SIGTERM', () => {
   console.log('👋 SIGTERM received. Shutting down gracefully...');
+  closeRealtime();
   server.close(() => {
     prisma.$disconnect().then(() => {
       console.log('Database client disconnected. Process terminated.');
@@ -41,3 +43,6 @@ process.on('SIGTERM', () => {
 const server = app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on ${HOST}:${PORT}`);
 });
+
+// Live updates (socket.io) share the HTTP port, so no extra port or proxy rule is needed.
+initRealtime(server);

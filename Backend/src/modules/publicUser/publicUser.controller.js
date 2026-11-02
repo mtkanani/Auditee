@@ -96,7 +96,7 @@ class PublicUserController {
       const firmId = req.user.firmId;
       const taskId = parseInt(req.params.taskId, 10);
       const { status } = req.body;
-      const updated = await publicUserService.updateTaskStatus(taskId, status, userId, firmId);
+      const updated = await publicUserService.updateTaskStatus(taskId, status, userId, firmId, req.user);
       return res.status(200).json({
         success: true,
         message: 'Task status updated successfully',
