@@ -637,6 +637,20 @@ model Invoice {
   @@map("invoices")
 }
 
+/// Last invoice number used per firm, invoice type and year. Incremented in one atomic
+/// statement so two invoices created at once never get the same number.
+model InvoiceCounter {
+  id          Int         @id @default(autoincrement())
+  firmId      Int
+  invoiceType InvoiceType
+  year        Int
+  lastNumber  Int
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([firmId, invoiceType, year])
+  @@map("invoice_counters")
+}
+
 model InvoiceItem {
   id          Int     @id @default(autoincrement())
   invoiceId   Int
