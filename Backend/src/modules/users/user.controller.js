@@ -1,5 +1,6 @@
 const userService = require('./user.service');
 const { USER_MESSAGES } = require('./user.constants');
+const { getFirmHome } = require('./firmHome.service');
 
 class UserController {
   async createUser(req, res, next) {
@@ -115,6 +116,16 @@ class UserController {
         message: 'Firm Admin dashboard metrics fetched successfully',
         data,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /** Firm admin home: all of its numbers and lists in one response. */
+  async getHome(req, res, next) {
+    try {
+      const data = await getFirmHome(req.user.firmId);
+      return res.status(200).json({ success: true, data });
     } catch (error) {
       next(error);
     }
