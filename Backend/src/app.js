@@ -41,6 +41,13 @@ const allowedOrigins = [
   'https://auditee.vercel.app',
 ];
 
+// Every Vercel deployment and preview of this project gets its own address, e.g.
+// https://auditee-git-main-meet-kananis-projects.vercel.app or https://auditee-a1b2c3-meet-kananis-projects.vercel.app.
+// Only the Vercel team "meet-kananis-projects" can create addresses with that suffix. Another team can be set
+// with VERCEL_TEAM_SLUG.
+const vercelTeam = (process.env.VERCEL_TEAM_SLUG || 'meet-kananis-projects').replace(/[^a-z0-9-]/gi, '');
+const vercelProjectOrigin = new RegExp(`^https://auditee(-[a-z0-9-]+)?-${vercelTeam}\\.vercel\\.app$`);
+
 // Origins compare without a trailing slash, so "https://app.example.com/" in FRONTEND_URL still matches.
 const normalizeOrigin = (o) => o.trim().replace(/\/+$/, '');
 
@@ -53,7 +60,8 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (e.g. mobile apps, curl, postman, same-origin)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(normalizeOrigin(origin))) return callback(null, origin);
+    const o = normalizeOrigin(origin);
+    if (allowedOrigins.includes(o) || vercelProjectOrigin.test(o)) return callback(null, origin);
     // Unknown site: send no CORS headers, so the browser blocks it. Add the site to FRONTEND_URL to allow it.
     console.warn(`CORS: blocked request from origin ${origin}`);
     return callback(null, false);
