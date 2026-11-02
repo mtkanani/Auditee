@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { ArrowRight, CircleAlert, Receipt, RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
+import { ArrowRight, CircleAlert, FlaskConical, Receipt, RefreshCw, TrendingDown, TrendingUp } from 'lucide-react';
 import { Button, Card } from '../../../components/ui';
 import { StatusBar } from '../../../components/dashboard/StatusBar';
 import { ChartModeToggle, ChartSkeleton, RangeToggle } from '../../../components/dashboard/charts/chartKit';
@@ -11,6 +11,7 @@ import { AttendanceChart } from '../../../components/dashboard/charts/Attendance
 import { TopOutstanding } from '../../../components/dashboard/charts/TopOutstanding';
 import { firmInsightsQuery } from '../../../queries/homeQueries';
 import { inrShort } from './format';
+import { sampleInsights } from './sampleInsights';
 
 const LinkButton = ({ to, children }) => {
   const navigate = useNavigate();
@@ -58,23 +59,63 @@ const MonthChange = ({ revenue }) => {
   );
 };
 
+// TEMPORARY sample data switch: lasts for this browser tab only, so real data always comes back.
+const SAMPLE_KEY = 'auditee-sample-charts';
+const readSample = () => {
+  try {
+    return sessionStorage.getItem(SAMPLE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+const SampleBanner = ({ onOff }) => (
+  <div className="rise flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-warning/40 bg-warning-soft px-4 py-3">
+    <p className="flex items-center gap-2 text-sm font-medium text-warning">
+      <FlaskConical className="w-4 h-4 shrink-0" aria-hidden="true" />
+      Sample data, not your firm's numbers. Turn it off to see your real charts.
+    </p>
+    <Button size="sm" variant="secondary" onClick={onOff}>
+      Show real data
+    </Button>
+  </div>
+);
+
 /** Trend charts for the firm admin home, from GET /firm-admin/home/insights (loads after the home). */
 export const Insights = () => {
+  const [sample, setSampleState] = useState(readSample);
+  const setSample = (on) => {
+    setSampleState(on);
+    try {
+      if (on) sessionStorage.setItem(SAMPLE_KEY, '1');
+      else sessionStorage.removeItem(SAMPLE_KEY);
+    } catch {
+      // storage blocked: the switch still applies until the page reloads
+    }
+  };
   const [months, setMonths] = useState(6);
   const [revenueMode, setRevenueMode] = useChartMode('revenue', 'bar');
   const [attendanceMode, setAttendanceMode] = useChartMode('attendance', 'bar');
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({ ...firmInsightsQuery(months), placeholderData: keepPreviousData });
+  const real = useQuery({ ...firmInsightsQuery(months), placeholderData: keepPreviousData, enabled: !sample });
+  const data = sample ? sampleInsights(months) : real.data;
+  const isLoading = !sample && real.isLoading;
+  const { isError, refetch, isFetching } = real;
 
-  if (isError && !data) {
+  if (!sample && isError && !data) {
     return (
       <div className="rise flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-5">
         <p className="flex items-center gap-2 text-sm text-muted">
           <CircleAlert className="w-4 h-4 text-warning shrink-0" aria-hidden="true" />
           Charts couldn't load. If the server was just updated, it may still be restarting.
         </p>
-        <Button size="sm" icon={RefreshCw} loading={isFetching} onClick={() => refetch()}>
-          Try again
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" icon={FlaskConical} onClick={() => setSample(true)}>
+            Show sample data
+          </Button>
+          <Button size="sm" icon={RefreshCw} loading={isFetching} onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
       </div>
     );
   }
@@ -87,6 +128,15 @@ export const Insights = () => {
 
   return (
     <section className="space-y-6" aria-label="Trends">
+      {sample ? (
+        <SampleBanner onOff={() => setSample(false)} />
+      ) : (
+        <div className="flex justify-end -mb-3">
+          <Button size="sm" variant="ghost" icon={FlaskConical} onClick={() => setSample(true)}>
+            Show sample data
+          </Button>
+        </div>
+      )}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         <Card
           title="Billed vs collected"
