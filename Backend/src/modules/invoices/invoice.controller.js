@@ -1,5 +1,8 @@
 const invoiceService = require('./invoice.service');
 
+// Client users only ever see their own invoices; null for firm admins.
+const clientScope = (user) => (user.role === 'CLIENT' ? user.clientId || user.id : null);
+
 class InvoiceController {
   async createInvoice(req, res, next) {
     try {
@@ -20,7 +23,7 @@ class InvoiceController {
       const firmId = req.user.firmId;
       const queryParams = { ...req.query };
       if (req.user.role === 'CLIENT') {
-        queryParams.clientId = req.user.clientId || req.user.id;
+        queryParams.clientId = clientScope(req.user);
       }
       const { data, pagination, summary } = await invoiceService.getAllInvoices(queryParams, firmId);
       return res.status(200).json({
@@ -39,7 +42,7 @@ class InvoiceController {
     try {
       const firmId = req.user.firmId;
       const id = parseInt(req.params.id, 10);
-      const invoice = await invoiceService.getInvoiceById(id, firmId);
+      const invoice = await invoiceService.getInvoiceById(id, firmId, clientScope(req.user));
       return res.status(200).json({
         success: true,
         message: 'Invoice details fetched successfully',
@@ -54,7 +57,7 @@ class InvoiceController {
     try {
       const firmId = req.user.firmId;
       const id = parseInt(req.params.id, 10);
-      const invoice = await invoiceService.recordPayment(id, req.body, firmId);
+      const invoice = await invoiceService.recordPayment(id, req.body, firmId, clientScope(req.user));
       return res.status(200).json({
         success: true,
         message: 'Payment recorded successfully',
