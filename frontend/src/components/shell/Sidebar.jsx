@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getNavGroups } from '../../layouts/navigation';
 import { formatRoleName } from '../../utils/helpers';
@@ -45,7 +45,7 @@ const NavItem = ({ item, collapsed, onNavigate }) => {
  * Below lg: an off-canvas drawer controlled by mobileOpen.
  */
 export const Sidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileClose }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const groups = getNavGroups(user?.role);
   // The drawer always shows labels, even when the desktop sidebar is collapsed.
   const compact = collapsed && !mobileOpen;
@@ -108,7 +108,7 @@ export const Sidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileClose
           ))}
         </nav>
 
-        {/* Footer: who's signed in + collapse toggle */}
+        {/* Footer: who's signed in, sign out, and the collapse toggle. Always visible: the menu above scrolls. */}
         <div className={cn('border-t border-line p-3 shrink-0', compact ? 'space-y-2' : 'flex items-center gap-2')}>
           <div className={cn('flex items-center gap-3 min-w-0', compact ? 'justify-center' : 'flex-1 px-1')}>
             <Avatar firstName={user?.firstName} lastName={user?.lastName} size="sm" />
@@ -121,6 +121,19 @@ export const Sidebar = ({ collapsed, onToggleCollapse, mobileOpen, onMobileClose
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={logout}
+            aria-label="Sign out"
+            title="Sign out"
+            className={cn(
+              'grid place-items-center w-8 h-8 rounded-lg text-subtle hover:text-danger hover:bg-danger-soft shrink-0 transition-colors',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/50',
+              compact && 'mx-auto'
+            )}
+          >
+            <LogOut className="w-[18px] h-[18px]" aria-hidden="true" />
+          </button>
           <button
             type="button"
             onClick={onToggleCollapse}
