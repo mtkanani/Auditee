@@ -144,6 +144,7 @@ export const AppRoutes = () => {
             <Route path="/client/document-vault" element={<DocumentVault />} />
             <Route path="/client/meetings" element={<MeetingsManagement />} />
             <Route path="/client/profile" element={<ClientProfile />} />
+            <Route path="/client/delete-account" element={<DeleteAccount />} />
           </Route>
         </Route>
 

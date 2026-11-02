@@ -7,12 +7,15 @@ import { useDeleteAccount } from './useDeleteAccount';
 const formatTime = (time) => `${String(Math.floor(time / 60)).padStart(2, '0')}:${String(time % 60).padStart(2, '0')}`;
 
 const DeleteAccount = () => {
-  const { form, step, setStep, emailAddress, submitting, timer, onSubmit, resend, handleConfirmDelete, cancel } = useDeleteAccount();
+  const { form, step, setStep, emailAddress, submitting, timer, onSubmit, resend, handleConfirmDelete, cancel, isClient } = useDeleteAccount();
   const { register, handleSubmit, formState: { errors } } = form;
 
   return (
     <div className="space-y-6 max-w-xl">
-      <PageHeader title="Delete account" description="Permanently delete your account and personal data." />
+      <PageHeader
+        title={isClient ? 'Delete portal login' : 'Delete account'}
+        description={isClient ? 'Stop using the client portal. Your firm keeps your records.' : 'Permanently delete your account and personal data.'}
+      />
 
       <Card>
         <StepTracker step={step} steps={['Email', 'Code', 'Confirm']} />
@@ -96,14 +99,18 @@ const DeleteAccount = () => {
                   <TriangleAlert className="w-4 h-4" aria-hidden="true" />
                   This can't be undone
                 </h2>
-                <p className="text-sm text-muted">Your profile, sign-in sessions and settings will be permanently deleted.</p>
+                <p className="text-sm text-muted">
+                  {isClient
+                    ? "Your login is removed and you are signed out everywhere. Invoices, requests and documents stay with your firm, as they are required to keep them."
+                    : 'Your profile, sign-in sessions and settings will be permanently deleted.'}
+                </p>
               </div>
               <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-line">
                 <Button type="button" variant="ghost" disabled={submitting} onClick={cancel}>
                   Cancel
                 </Button>
                 <Button type="button" variant="danger" icon={Trash2} loading={submitting} onClick={handleConfirmDelete}>
-                  Delete account
+                  {isClient ? 'Delete login' : 'Delete account'}
                 </Button>
               </div>
             </>

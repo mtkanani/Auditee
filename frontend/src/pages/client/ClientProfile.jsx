@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useForm } from 'react-hook-form';
-import { Briefcase, Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Briefcase, Save, TriangleAlert } from 'lucide-react';
 import { Button, Card, Field, Input, PageHeader } from '../../components/ui';
 import { useUpdateClientProfile } from '../../queries/useClients';
 
@@ -71,6 +72,22 @@ export const ClientProfile = () => {
           </Button>
         </form>
       </Card>
+
+      <section className="p-5 rounded-2xl bg-danger-soft border border-danger/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold text-danger flex items-center gap-2">
+            <TriangleAlert className="w-4 h-4" aria-hidden="true" />
+            Delete portal login
+          </h2>
+          <p className="text-sm text-muted mt-1">Stop using the client portal. Your firm keeps your records.</p>
+        </div>
+        <Link
+          to="/client/delete-account"
+          className="inline-flex items-center justify-center h-9 px-4 rounded-xl bg-danger text-white text-sm font-medium hover:opacity-90 transition-opacity w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/50"
+        >
+          Delete login
+        </Link>
+      </section>
     </div>
   );
 };
