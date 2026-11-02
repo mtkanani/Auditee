@@ -101,10 +101,12 @@ class DocumentRepository {
     }, { page, limit });
   }
 
-  async findUserDocuments({ firmId, category, search, page, limit }) {
+  /** Employees see every non-confidential document in the firm, plus confidential ones they uploaded. */
+  async findUserDocuments({ firmId, userId, category, search, page, limit }) {
     const where = {
       firmId,
       deletedAt: null,
+      AND: [{ OR: [{ isConfidential: false }, { uploadedBy: userId }] }],
     };
 
     if (category && category !== 'ALL') {
