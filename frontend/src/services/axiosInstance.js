@@ -1,10 +1,13 @@
 import axios from 'axios';
 
+// The backend runs on the Dokploy VPS. Its address comes from VITE_API_URL
+// (set it in Vercel, e.g. https://api.yourdomain.com/api). Local dev falls back to localhost.
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl && envUrl.startsWith('http')) return envUrl;
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return 'https://auditee-production.up.railway.app/api';
+  const isLocal = typeof window === 'undefined' || ['localhost', '127.0.0.1'].includes(window.location.hostname);
+  if (!isLocal) {
+    console.error('VITE_API_URL is not set for this deployment, so the app cannot reach the backend.');
   }
   return 'http://localhost:8080/api';
 };

@@ -19,7 +19,7 @@ const options = {
     servers: [
       {
         url: '/',
-        description: 'Current Environment Server (Relative to Hosted URL - Railway / Production / Localhost)',
+        description: 'Current environment server (relative to the hosted URL: Dokploy production or localhost)',
       },
       {
         url: `http://localhost:${process.env.PORT || 8080}`,
