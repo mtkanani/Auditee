@@ -46,7 +46,8 @@ export const monotonePath = (pts) => {
   for (let i = 0; i < n - 1; i++) {
     dx.push(pts[i + 1][0] - pts[i][0]);
     dy.push(pts[i + 1][1] - pts[i][1]);
-    m.push(dy[i] / dx[i]);
+    // Points on the same x (a chart narrower than its padding) would divide by zero.
+    m.push(dx[i] ? dy[i] / dx[i] : 0);
   }
   const t = [m[0]];
   for (let i = 1; i < n - 1; i++) t.push(m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2);

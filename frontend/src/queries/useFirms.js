@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { superAdminService } from '../services/superAdminService';
 import { firmAdminService } from '../services/firmAdminService';
 import { firmKeys, dashboardKeys } from './keys';
-import { firmHomeQuery, firmsListQuery } from './homeQueries';
+import { firmHomeQuery, firmWorkspaceQuery, firmsListQuery } from './homeQueries';
 
 // ----------------------------------------------------
 // QUERIES
@@ -126,3 +126,18 @@ export const useFirmHome = () =>
     ...firmHomeQuery,
     refetchInterval: 60_000, // keeps "today" fresh while the page is open
   });
+
+/** Home widgets (GET /firm-admin/home/workspace); live updates refetch it when anything changes. */
+export const useFirmWorkspace = (options = {}) => useQuery({ ...firmWorkspaceQuery, ...options });
+
+export const useSetBillingTarget = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (monthlyTarget) => firmAdminService.setHomeTarget(monthlyTarget),
+    onSuccess: (res) => {
+      toast.success(res?.data?.monthlyTarget ? 'Monthly target saved' : 'Monthly target cleared');
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.firmWorkspace() });
+    },
+    onError: (err) => toast.error(err.message || 'Could not save the target'),
+  });
+};

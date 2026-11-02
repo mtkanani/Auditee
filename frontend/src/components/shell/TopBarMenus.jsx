@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, LogOut, Moon, Plus, Sun, User } from 'lucide-react';
+import { ChevronDown, LogOut, Moon, Plus, Sun, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getCreateActions, getProfilePath } from '../../layouts/navigation';
@@ -45,38 +45,7 @@ export const NewMenu = () => {
   );
 };
 
-// Placeholder feed until a notifications API exists (same samples as before the redesign).
-const sampleNotifications = [
-  { id: 1, title: 'New work request', desc: 'ABC Pvt Ltd submitted a GST filing request', time: '5m ago' },
-  { id: 2, title: 'Task completed', desc: 'Amit completed the income tax audit report', time: '1h ago' },
-  { id: 3, title: 'Compliance reminder', desc: 'Quarterly TDS return due in 3 days', time: '3h ago' },
-];
-
-export const NotificationsMenu = () => (
-  <Menu
-    width="w-80"
-    trigger={(p) => (
-      <Button {...p} variant="ghost" size="icon" aria-label="Notifications" className="relative">
-        <Bell className="w-[18px] h-[18px]" aria-hidden="true" />
-        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-danger ring-2 ring-surface" aria-hidden="true" />
-      </Button>
-    )}
-  >
-    <div className="flex items-center justify-between px-2.5 pt-1.5 pb-2">
-      <p className="text-sm font-semibold text-fg">Notifications</p>
-      <span className="text-xs font-medium text-accent-fg">{sampleNotifications.length} new</span>
-    </div>
-    <div className="max-h-72 overflow-y-auto">
-      {sampleNotifications.map((n) => (
-        <div key={n.id} className="px-2.5 py-2 rounded-xl hover:bg-hover">
-          <p className="text-sm font-medium text-fg">{n.title}</p>
-          <p className="text-xs text-muted line-clamp-1">{n.desc}</p>
-          <p className="text-xs text-subtle mt-0.5">{n.time}</p>
-        </div>
-      ))}
-    </div>
-  </Menu>
-);
+export { NotificationsMenu } from './NotificationsMenu';
 
 export const ProfileMenu = () => {
   const { user, logout } = useAuth();

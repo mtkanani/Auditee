@@ -126,4 +126,15 @@ export const firmAdminService = {
     const res = await axiosInstance.get('/firm-admin/home/insights', { params: { months } });
     return res.data;
   },
+
+  // Home widgets below the first screen (billing, workload, calendar, agenda, leads, activity)
+  getHomeWorkspace: async () => {
+    const res = await axiosInstance.get('/firm-admin/home/workspace');
+    return res.data;
+  },
+
+  setHomeTarget: async (monthlyTarget) => {
+    const res = await axiosInstance.put('/firm-admin/home/target', { monthlyTarget });
+    return res.data;
+  },
 };

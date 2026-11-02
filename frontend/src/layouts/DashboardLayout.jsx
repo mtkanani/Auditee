@@ -4,6 +4,7 @@ import { Sidebar } from '../components/shell/Sidebar';
 import { TopBar } from '../components/shell/TopBar';
 import { CommandPalette } from '../components/shell/CommandPalette';
 import { TopProgress } from '../components/shell/TopProgress';
+import { RealtimeBridge } from '../components/shell/RealtimeBridge';
 import { useAuth } from '../context/AuthContext';
 import { getNavGroups } from './navigation';
 import { preloadRoute } from '../routes/pages';
@@ -80,6 +81,7 @@ export const DashboardLayout = () => {
   return (
     <div className="min-h-screen bg-page text-fg font-sans antialiased overflow-x-hidden">
       <TopProgress />
+      <RealtimeBridge />
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={toggleCollapsed}

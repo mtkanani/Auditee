@@ -28,8 +28,8 @@ export const Reports = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
   // Dropdown filter lookups via React Query
-  const { data: employees = [] } = useFirmUsers({ limit: 200 });
-  const { data: clients = [] } = useFirmClients({ limit: 200 });
+  const { data: employees = [] } = useFirmUsers({ limit: 100 });
+  const { data: clients = [] } = useFirmClients({ limit: 100 });
 
   // Custom Report Builder state
   const [customEntity, setCustomEntity] = useState('tasks');

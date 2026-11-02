@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCheck, ChevronDown, Megaphone, Plus, Trash2, Users } from 'lucide-react';
+import { CheckCheck, ChevronDown, Megaphone, Plus, Send, Trash2, Users } from 'lucide-react';
 import { CreateNoticeModal } from '../../components/announcements/CreateNoticeModal';
 import { NoticeCard } from '../../components/announcements/NoticeCard';
 import { useAdminAnnouncements, useCreateNotice, useDeleteNotice } from '../../queries/useAnnouncements';
@@ -15,14 +15,24 @@ const Receipts = ({ notice, expanded, onToggle }) => {
   const metrics = notice.metrics || {};
   const percent = metrics.acknowledgedPercentage || 0;
   const reads = notice.reads || [];
+  const chosen = notice.audience === 'SELECTED' ? (notice.recipients || []).map((r) => `${r.user?.firstName || ''} ${r.user?.lastName || ''}`.trim()) : null;
   return (
     <div className="space-y-3">
+      {chosen && (
+        <p className="flex items-start gap-1.5 text-sm text-muted">
+          <Send className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+          <span>
+            Sent to <span className="text-fg">{chosen.slice(0, 4).join(', ')}</span>
+            {chosen.length > 4 && ` and ${metrics.totalUsers - 4} more`}
+          </span>
+        </p>
+      )}
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="flex items-center gap-1.5 text-muted">
           <Users className="w-4 h-4" aria-hidden="true" /> Acknowledged
         </span>
         <span className="font-medium text-fg tabular-nums">
-          {metrics.acknowledgedCount ?? 0} of {metrics.totalUsers ?? 0} staff <span className="text-subtle font-normal">({percent}%)</span>
+          {metrics.acknowledgedCount ?? 0} of {metrics.totalUsers ?? 0} {notice.audience === 'SELECTED' ? 'chosen' : 'staff'} <span className="text-subtle font-normal">({percent}%)</span>
         </span>
       </div>
       <div className="h-1.5 rounded-full bg-hover overflow-hidden" role="progressbar" aria-label="Staff acknowledged" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
@@ -91,7 +101,7 @@ export const FirmAnnouncements = () => {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Notices"
-        description="Share policies, deadlines and instructions with your whole firm, and see who has read them."
+        description="Share policies, deadlines and instructions with the whole firm or chosen people, and see who has read them."
         actions={newButton}
       />
 

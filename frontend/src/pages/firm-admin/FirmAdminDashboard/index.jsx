@@ -12,11 +12,13 @@ import { HomeHero } from './HomeHero';
 import { KpiTiles } from './KpiTiles';
 import { FocusTimeline } from './FocusTimeline';
 import { FeesCollected, WorkByStatus } from './WorkAndFees';
-import { NewOnTeam, TeamToday } from './TeamToday';
+import { NewOnTeam } from './TeamToday';
 import { Insights } from './Insights';
 import { sampleHome } from './sampleHome';
 import { SampleBanner, SampleButton, useSampleMode } from './SampleMode';
 import { daysUntil, plural } from './format';
+import { useWorkspace } from './workspace/useWorkspace';
+import { CalendarSection, MoneyRow, PipelineRow, TeamRow, TodayRow } from './workspace/Sections';
 
 const QUICK_ACTIONS = [
   { label: 'New task', hint: 'Assign work to the team', icon: SquareCheckBig, to: '/firm-admin/tasks', state: { openCreate: true } },
@@ -27,14 +29,23 @@ const QUICK_ACTIONS = [
   { label: 'Attendance', hint: "See who's in today", icon: CalendarCheck, to: '/firm-admin/attendance' },
 ];
 
-/** Firm admin home: today's numbers, deadlines and team, from one request (GET /firm-admin/home), or sample data. */
+// A firm with nothing in it yet: no clients, no tasks and nothing billed.
+const isEmptyFirm = ({ metrics, invoices }) =>
+  !metrics.totalClients && !(metrics.pendingTasks + metrics.inProgressTasks + metrics.underReviewTasks + metrics.completedTasks) && !invoices.totalAmount;
+
+/**
+ * Firm admin home: today's numbers, deadlines and team (GET /firm-admin/home), then the workspace
+ * widgets (GET /firm-admin/home/workspace). A firm with no data yet sees sample data until it adds some.
+ */
 export const FirmAdminDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isGeofenceModalOpen, setIsGeofenceModalOpen] = useState(false);
-  const [sample, setSample] = useSampleMode();
+  const [choice, setSample] = useSampleMode();
   const real = useFirmHome();
+  const sample = choice ?? Boolean(real.data && isEmptyFirm(real.data));
   const data = sample ? sampleHome() : real.data;
+  const ws = useWorkspace(sample);
   const isLoading = !sample && real.isLoading;
   const isError = !sample && real.isError;
   const { isFetching, refetch } = real;
@@ -80,7 +91,7 @@ export const FirmAdminDashboard = () => {
 
   return (
     <div className="space-y-6 pb-8">
-      {sample && <SampleBanner onOff={() => setSample(false)} />}
+      {sample && <SampleBanner auto={choice === null} onOff={() => setSample(false)} />}
       <HomeHero
         firstName={user?.firstName}
         summary={summary}
@@ -106,6 +117,8 @@ export const FirmAdminDashboard = () => {
 
       <KpiTiles metrics={metrics} invoices={invoices} />
 
+      <TodayRow ws={ws} sample={sample} />
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start" style={{ '--i': 5 }}>
         <div className="xl:col-span-2">
           <FocusTimeline compliance={compliance} dueTasks={dueTasks} overdueInvoices={invoices.overdueCount} />
@@ -116,7 +129,13 @@ export const FirmAdminDashboard = () => {
         </div>
       </div>
 
+      <CalendarSection ws={ws} />
+
       <Insights sample={sample} onSample={() => setSample(true)} />
+
+      <MoneyRow ws={ws} sample={sample} />
+      <TeamRow ws={ws} attendance={attendance} leave={leave} sample={sample} />
+      <PipelineRow ws={ws} sample={sample} />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start" style={{ '--i': 8 }}>
         <div className="xl:col-span-2">
@@ -124,10 +143,7 @@ export const FirmAdminDashboard = () => {
             <QuickActions actions={QUICK_ACTIONS} />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-6">
-          <TeamToday attendance={attendance} leave={leave} sample={sample} />
-          <NewOnTeam people={data.recentUsers} />
-        </div>
+        <NewOnTeam people={data.recentUsers} />
       </div>
 
       <ConfigureGeofenceModal isOpen={isGeofenceModalOpen} onClose={() => setIsGeofenceModalOpen(false)} />

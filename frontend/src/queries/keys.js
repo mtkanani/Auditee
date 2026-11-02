@@ -11,6 +11,7 @@ export const dashboardKeys = {
   byRole: (role) => ['dashboard', role],
   firmHome: () => ['dashboard', 'firm-home'],
   firmInsights: (months = 6) => ['dashboard', 'firm-insights', months],
+  firmWorkspace: () => ['dashboard', 'firm-workspace'],
 };
 
 export const lookupKeys = {
@@ -117,3 +118,13 @@ export const firmKeys = {
 
 
 
+
+export const notificationKeys = {
+  all: ['notifications'],
+  list: () => [...notificationKeys.all, 'list'],
+};
+
+export const documentRequestKeys = {
+  all: ['document-requests'],
+  list: (status) => [...documentRequestKeys.all, 'list', status],
+};

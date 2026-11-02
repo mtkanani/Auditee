@@ -7,24 +7,28 @@ import { Button } from '../../../components/ui';
 const SAMPLE_KEY = 'auditee-sample-charts';
 const readSample = () => {
   try {
-    return sessionStorage.getItem(SAMPLE_KEY) === '1';
+    const v = sessionStorage.getItem(SAMPLE_KEY);
+    return v === '1' ? true : v === '0' ? false : null;
   } catch {
-    return false;
+    return null;
   }
 };
 
+/**
+ * [choice, setChoice]: true or false once someone has clicked the switch in this tab, null before
+ * that (the page then shows sample data only while the firm has no data of its own).
+ */
 export const useSampleMode = () => {
-  const [sample, setSampleState] = useState(readSample);
-  const setSample = (on) => {
-    setSampleState(on);
+  const [choice, setChoiceState] = useState(readSample);
+  const setChoice = (on) => {
+    setChoiceState(on);
     try {
-      if (on) sessionStorage.setItem(SAMPLE_KEY, '1');
-      else sessionStorage.removeItem(SAMPLE_KEY);
+      sessionStorage.setItem(SAMPLE_KEY, on ? '1' : '0');
     } catch {
       // storage blocked: the switch still applies until the page reloads
     }
   };
-  return [sample, setSample];
+  return [choice, setChoice];
 };
 
 export const SampleButton = ({ onClick }) => (
@@ -33,11 +37,13 @@ export const SampleButton = ({ onClick }) => (
   </Button>
 );
 
-export const SampleBanner = ({ onOff }) => (
+export const SampleBanner = ({ onOff, auto = false }) => (
   <div className="rise flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-warning/40 bg-warning-soft px-4 py-3">
     <p className="flex items-center gap-2 text-sm font-medium text-warning">
       <FlaskConical className="w-4 h-4 shrink-0" aria-hidden="true" />
-      Sample data, not your firm's numbers. Nothing you click here changes real records.
+      {auto
+        ? "Your firm has no clients, tasks or invoices yet, so this is sample data to show how the home page works. Your real numbers replace it as soon as you add some."
+        : "Sample data, not your firm's numbers. Nothing you click here changes real records."}
     </p>
     <Button size="sm" variant="secondary" onClick={onOff}>
       Show real data

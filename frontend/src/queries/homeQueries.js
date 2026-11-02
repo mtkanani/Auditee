@@ -26,6 +26,16 @@ export const firmInsightsQuery = (months = 6) => ({
   staleTime: 5 * 60_000,
 });
 
+/** The widgets below the firm admin home's first screen (one request). */
+export const firmWorkspaceQuery = {
+  queryKey: dashboardKeys.firmWorkspace(),
+  queryFn: async () => {
+    const res = await firmAdminService.getHomeWorkspace();
+    return res.data || res;
+  },
+  staleTime: 60_000,
+};
+
 export const userHomeQuery = {
   queryKey: dashboardKeys.byRole('user'),
   queryFn: () => userService.getDashboard(),

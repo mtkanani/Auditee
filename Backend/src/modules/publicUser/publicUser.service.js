@@ -169,14 +169,27 @@ class PublicUserService {
 
   async updateTaskStatus(taskId, status, userId, firmId, actor = { id: userId }) {
     const task = await this.getTaskDetails(taskId, userId, firmId);
-    if (task.status !== status) notify.taskStatus(task.id, status, actor);
-    return await prisma.task.update({
+    const updated = await prisma.task.update({
       where: { id: task.id },
       data: { status },
       include: {
         client: { select: { id: true, clientName: true } },
       },
     });
+    if (task.status !== status) {
+      // Same history line the firm admin's status change writes, so it shows in the task and on the home feed.
+      await prisma.taskHistory.create({
+        data: {
+          taskId: task.id,
+          action: 'STATUS_UPDATED',
+          details: `Task status changed from '${task.status}' to '${status}'.`,
+          performedBy: userId,
+          performedName: [actor.firstName, actor.lastName].filter(Boolean).join(' ') || 'Employee',
+        },
+      });
+      notify.taskStatus(task.id, status, actor);
+    }
+    return updated;
   }
 
   async uploadTaskDocument(taskId, docData, userId, firmId) {

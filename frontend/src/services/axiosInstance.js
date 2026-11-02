@@ -66,4 +66,6 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+export const apiBaseUrl = getApiBaseUrl();
+
 export default axiosInstance;

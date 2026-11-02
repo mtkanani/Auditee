@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Modal } from '../common/Modal';
 import { Button, Field, Input, Select, Textarea } from '../ui';
+import { NoticeAudiencePicker } from './NoticeAudiencePicker';
 
 const CATEGORY_OPTIONS = [
   { value: 'COMPLIANCE', label: 'Compliance' },
@@ -17,14 +18,18 @@ const PRIORITY_OPTIONS = [
   { value: 'URGENT', label: 'Urgent (shown as a banner)' },
 ];
 
+const EMPTY_FORM = {
+  title: '',
+  content: '',
+  category: 'COMPLIANCE',
+  priority: 'INFO',
+  expiresAt: '',
+  audience: 'ALL',
+  recipientIds: [],
+};
+
 export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
-  const [form, setForm] = useState({
-    title: '',
-    content: '',
-    category: 'COMPLIANCE',
-    priority: 'INFO',
-    expiresAt: '',
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const set = (key) => (e) => setForm({ ...form, [key]: e.target.value });
@@ -33,6 +38,10 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
     e.preventDefault();
     if (!form.title.trim() || !form.content.trim()) {
       toast.error('Title and content are required');
+      return;
+    }
+    if (form.audience === 'SELECTED' && form.recipientIds.length === 0) {
+      toast.error('Pick at least one person to send this notice to');
       return;
     }
 
@@ -44,15 +53,11 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
         category: form.category,
         priority: form.priority,
         expiresAt: form.expiresAt || null,
+        audience: form.audience,
+        recipientIds: form.audience === 'SELECTED' ? form.recipientIds : [],
       });
       onClose();
-      setForm({
-        title: '',
-        content: '',
-        category: 'COMPLIANCE',
-        priority: 'INFO',
-        expiresAt: '',
-      });
+      setForm(EMPTY_FORM);
     } catch {
       // Handled in parent
     } finally {
@@ -63,6 +68,13 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="New notice" maxWidth="max-w-lg">
       <form onSubmit={handleSubmit} className="space-y-4">
+        <NoticeAudiencePicker
+          audience={form.audience}
+          onAudience={(audience) => setForm({ ...form, audience })}
+          selected={form.recipientIds}
+          onSelected={(recipientIds) => setForm({ ...form, recipientIds })}
+        />
+
         <Field label="Title" required>
           {(p) => <Input {...p} required placeholder="e.g. GSTR-3B reconciliation checklist" value={form.title} onChange={set('title')} />}
         </Field>
@@ -81,12 +93,12 @@ export const CreateNoticeModal = ({ isOpen, onClose, onSuccess }) => {
         </Field>
 
         <Field label="Message" required>
-          {(p) => <Textarea {...p} rows={5} required placeholder="What everyone needs to know or do" value={form.content} onChange={set('content')} />}
+          {(p) => <Textarea {...p} rows={5} required placeholder={form.audience === 'SELECTED' ? 'What these people need to know or do' : 'What everyone needs to know or do'} value={form.content} onChange={set('content')} />}
         </Field>
 
         <div className="pt-4 border-t border-line flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" icon={Send} loading={isSubmitting}>Post notice</Button>
+          <Button type="submit" variant="primary" icon={Send} loading={isSubmitting}>{form.audience === 'SELECTED' ? 'Send notice' : 'Post notice'}</Button>
         </div>
       </form>
     </Modal>
