@@ -380,6 +380,7 @@ model UserSession {
 
   @@index([userId])
   @@index([clientId])
+  @@index([refreshTokenExpiresAt])
 
   @@map("user_sessions")
 }
