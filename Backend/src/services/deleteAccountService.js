@@ -4,6 +4,17 @@ const { sendDeleteAccountEmail } = require('./emailService');
 const { BadRequestError, RateLimitError, NotFoundError } = require('../utils/errors');
 const { invalidateSessionCache } = require('../middlewares/auth.middleware');
 
+// A verified code allows deletion for this long; after that the person must verify again.
+const VERIFIED_WINDOW_MS = 15 * 60 * 1000;
+
+/** The employee/admin user or the client (portal login) behind an email, or null. */
+const findAccount = async (email) => {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (user) return { kind: 'user', account: user };
+  const client = await prisma.client.findFirst({ where: { email, deletedAt: null } });
+  return client ? { kind: 'client', account: client } : null;
+};
+
 /**
  * Business logic for requesting and sending an account deletion OTP.
  * @param {string} email User email address
@@ -12,11 +23,8 @@ const requestDeleteOtp = async (email) => {
   const normalizedEmail = email.toLowerCase().trim();
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-  // 1. Verify that target user exists in the database
-  const user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
-  if (!user) {
+  // 1. Verify that the account exists (employee/admin user or client portal login)
+  if (!(await findAccount(normalizedEmail))) {
     throw new NotFoundError('User account not found.');
   }
 
@@ -108,31 +116,48 @@ const verifyDeleteOtp = async (email, otp) => {
 const deleteUserAccount = async (email) => {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // 1. Confirm user exists in the database
-  const user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
-  if (!user) {
+  // 1. Confirm the account exists
+  const found = await findAccount(normalizedEmail);
+  if (!found) {
     throw new NotFoundError('User account not found.');
   }
 
-  // 2. Validate that a verified deletion OTP is present
+  // 2. Validate that a recently verified deletion OTP is present. This endpoint needs no login, so
+  //    an old verification must not let someone who only knows the email delete the account later.
   const otpRecord = await prisma.deleteAccountOtp.findFirst({
     where: {
       email: normalizedEmail,
       verified: true,
+      createdAt: { gte: new Date(Date.now() - VERIFIED_WINDOW_MS) },
     },
   });
   if (!otpRecord) {
     throw new BadRequestError('OTP verification is required before deleting your account.');
   }
 
-  // 3. Delete user account and purge all related tracking entries transactionally
+  // 3. Remove the account. Clients are the firm's records (invoices, tasks, documents the firm must
+  //    keep), so for them only the portal login goes: password cleared and sessions signed out.
+  const removeAccount =
+    found.kind === 'user'
+      ? [
+          // Delete user (cascades to user sessions automatically due to schema definitions)
+          prisma.user.delete({ where: { id: found.account.id } }),
+        ]
+      : [
+          prisma.client.update({ where: { id: found.account.id }, data: { password: null } }),
+          prisma.userSession.deleteMany({ where: { clientId: found.account.id } }),
+          prisma.clientActivityLog.create({
+            data: {
+              clientId: found.account.id,
+              action: 'PORTAL_ACCOUNT_DELETED',
+              description: 'Client deleted their portal login. Their records stay with the firm.',
+              performedName: found.account.clientName || 'Client',
+            },
+          }),
+        ];
+
   await prisma.$transaction([
-    // Delete user (cascades to user sessions automatically due to schema definitions)
-    prisma.user.delete({
-      where: { id: user.id },
-    }),
+    ...removeAccount,
     // Clean up deletion OTP logs
     prisma.deleteAccountOtp.deleteMany({
       where: { email: normalizedEmail },
@@ -152,7 +177,12 @@ const deleteUserAccount = async (email) => {
   console.log(`[Security Log] Account permanently deleted for email: ${normalizedEmail}`);
   invalidateSessionCache();
 
-  return { message: 'Account deleted successfully.' };
+  return {
+    message:
+      found.kind === 'user'
+        ? 'Account deleted successfully.'
+        : 'Your portal login has been deleted. Your firm keeps the records of work done for you.',
+  };
 };
 
 
