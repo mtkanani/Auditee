@@ -36,7 +36,7 @@ export const StatusBar = ({ segments, isLoading, emptyText = 'Nothing here yet.'
                 key={s.key}
                 onMouseEnter={() => setHover(s.key)}
                 onMouseLeave={() => setHover(null)}
-                className={cn('h-full transition-opacity duration-150', hover && hover !== s.key && 'opacity-40')}
+                className={cn('grow-x h-full transition-opacity duration-150', hover && hover !== s.key && 'opacity-40')}
                 style={{ width: `${(s.value / total) * 100}%`, minWidth: 6, background: s.color }}
               />
             ))}

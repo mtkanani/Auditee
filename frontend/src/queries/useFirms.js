@@ -45,21 +45,6 @@ export const useFirmDetail = (id) => {
   };
 };
 
-export const useFirmAdminDashboard = () => {
-  const query = useQuery({
-    queryKey: dashboardKeys.byRole('firm-admin'),
-    queryFn: async () => {
-      const res = await firmAdminService.getDashboard();
-      return res.data || res;
-    },
-  });
-
-  return {
-    dashboard: query.data,
-    ...query,
-  };
-};
-
 // ----------------------------------------------------
 // MUTATIONS
 // ----------------------------------------------------
@@ -137,3 +122,14 @@ export const useResetFirmAdminPassword = () => {
     },
   });
 };
+
+/** The firm admin home in one request (GET /firm-admin/home). */
+export const useFirmHome = () =>
+  useQuery({
+    queryKey: dashboardKeys.firmHome(),
+    queryFn: async () => {
+      const res = await firmAdminService.getHome();
+      return res.data || res;
+    },
+    refetchInterval: 60_000, // keeps "today" fresh while the page is open
+  });

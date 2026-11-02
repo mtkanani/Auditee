@@ -114,4 +114,10 @@ export const firmAdminService = {
     const res = await axiosInstance.get('/firm-admin/dashboard');
     return res.data;
   },
+
+  // Everything the firm admin home shows, in one request
+  getHome: async () => {
+    const res = await axiosInstance.get('/firm-admin/home');
+    return res.data;
+  },
 };
