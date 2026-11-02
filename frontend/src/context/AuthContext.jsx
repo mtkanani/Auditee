@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axiosInstance from '../services/axiosInstance';
 import { queryClient } from '../lib/queryClient';
+import { prefetchHome } from '../queries/homeQueries';
 
 const AuthContext = createContext(null);
 
@@ -30,8 +31,13 @@ export const AuthProvider = ({ children }) => {
         setAccessToken(storedToken);
         if (storedUser) {
           try {
-            setUser(JSON.parse(storedUser));
+            const cached = JSON.parse(storedUser);
+            setUser(cached);
             setIsAuthenticated(true);
+            // Show the app straight away from the saved profile and check the session in the
+            // background; a 401 still signs the user out (below and via the axios interceptor).
+            setIsLoading(false);
+            prefetchHome(cached.role);
           } catch {
             // parsing error
           }
@@ -86,6 +92,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('userRole', userData.role || 'user');
 
       queryClient.clear();
+      // Start loading the home page's data now, in parallel with downloading the page itself.
+      prefetchHome(userData.role);
       setAccessToken(token);
       setUser(userData);
       setIsAuthenticated(true);

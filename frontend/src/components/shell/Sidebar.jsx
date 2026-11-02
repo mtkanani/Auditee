@@ -6,6 +6,7 @@ import { getNavGroups } from '../../layouts/navigation';
 import { formatRoleName } from '../../utils/helpers';
 import { Avatar } from '../common/Avatar';
 import { cn } from '../../lib/cn';
+import { preloadRoute } from '../../routes/pages';
 
 const NavItem = ({ item, collapsed, onNavigate }) => {
   const Icon = item.icon;
@@ -13,6 +14,9 @@ const NavItem = ({ item, collapsed, onNavigate }) => {
     <NavLink
       to={item.path}
       onClick={onNavigate}
+      // Start downloading the page as soon as the pointer or keyboard focus lands on the link.
+      onMouseEnter={() => preloadRoute(item.path)}
+      onFocus={() => preloadRoute(item.path)}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(

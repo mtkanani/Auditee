@@ -4,6 +4,7 @@ import { taskService } from '../services/taskService';
 import { userService } from '../services/userService';
 import { clientService } from '../services/clientService';
 import { taskKeys, dashboardKeys } from './keys';
+import { myTasksQuery } from './homeQueries';
 
 // ----------------------------------------------------
 // QUERIES
@@ -24,10 +25,7 @@ export const useFirmTasks = (filters = {}) => {
 };
 
 export const useMyTasks = (filters = {}) => {
-  const query = useQuery({
-    queryKey: taskKeys.list('user', filters),
-    queryFn: () => userService.getTasks(filters),
-  });
+  const query = useQuery(myTasksQuery(filters));
 
   return {
     tasks: query.data?.data ?? query.data?.tasks ?? (Array.isArray(query.data) ? query.data : []),

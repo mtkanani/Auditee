@@ -3,6 +3,10 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from '../components/shell/Sidebar';
 import { TopBar } from '../components/shell/TopBar';
 import { CommandPalette } from '../components/shell/CommandPalette';
+import { TopProgress } from '../components/shell/TopProgress';
+import { useAuth } from '../context/AuthContext';
+import { getNavGroups } from './navigation';
+import { preloadRoute } from '../routes/pages';
 import { cn } from '../lib/cn';
 
 const AICopilotDrawer = lazy(() => import('../components/common/AICopilotDrawer').then(m => ({ default: m.AICopilotDrawer })));
@@ -16,8 +20,33 @@ const readCollapsed = () => {
   }
 };
 
+// Downloads every page in the user's menu in the background, one at a time while the browser is
+// idle, so opening any of them later needs no download.
+const usePreloadMenuPages = (role) => {
+  useEffect(() => {
+    const paths = getNavGroups(role).flatMap((g) => g.items.map((i) => i.path));
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 300));
+    const cancelIdle = window.cancelIdleCallback || clearTimeout;
+    let handle;
+    let cancelled = false;
+    const next = (i) => {
+      if (cancelled || i >= paths.length) return;
+      handle = idle(() => Promise.resolve(preloadRoute(paths[i])).then(() => next(i + 1)));
+    };
+    // Give the first screen a moment to finish before starting.
+    const start = setTimeout(() => next(0), 1500);
+    return () => {
+      cancelled = true;
+      clearTimeout(start);
+      cancelIdle(handle);
+    };
+  }, [role]);
+};
+
 export const DashboardLayout = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  usePreloadMenuPages(user?.role);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -50,6 +79,7 @@ export const DashboardLayout = () => {
 
   return (
     <div className="min-h-screen bg-page text-fg font-sans antialiased overflow-x-hidden">
+      <TopProgress />
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={toggleCollapsed}

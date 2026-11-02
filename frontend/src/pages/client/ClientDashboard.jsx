@@ -12,8 +12,7 @@ import { ProgressRing } from '../../components/dashboard/ProgressRing';
 import { QuickActions } from '../../components/dashboard/QuickActions';
 import { TaskList } from '../../components/dashboard/TaskList';
 import { useAuth } from '../../context/AuthContext';
-import { clientService } from '../../services/clientService';
-import { dashboardKeys } from '../../queries/keys';
+import { clientHomeQuery } from '../../queries/homeQueries';
 import { useClientInvoices } from '../../queries/useInvoices';
 import { inr } from '../firm-admin/BillingManagement/format';
 
@@ -62,19 +61,7 @@ export const ClientDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { data: dashResult, error, isLoading } = useQuery({
-    queryKey: dashboardKeys.byRole('client'),
-    queryFn: async () => {
-      const [dashRes, myUserRes] = await Promise.all([
-        clientService.getDashboard(),
-        clientService.getMyUser().catch(() => null),
-      ]);
-      return {
-        dashboard: dashRes.data || dashRes,
-        assignedUser: myUserRes?.data || myUserRes?.user || null,
-      };
-    },
-  });
+  const { data: dashResult, error, isLoading } = useQuery(clientHomeQuery);
   // limit 1: only the totals in summary are needed here.
   const { summary: invoiceSummary, isLoading: invoicesLoading } = useClientInvoices({ page: 1, limit: 1 });
 

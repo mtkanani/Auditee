@@ -14,8 +14,7 @@ import { ProgressRing } from '../../components/dashboard/ProgressRing';
 import { QuickActions } from '../../components/dashboard/QuickActions';
 import { StatusBar } from '../../components/dashboard/StatusBar';
 import { TaskList } from '../../components/dashboard/TaskList';
-import { userService } from '../../services/userService';
-import { dashboardKeys } from '../../queries/keys';
+import { userHomeQuery } from '../../queries/homeQueries';
 import { useMyTasks } from '../../queries/useTasks';
 import { daysUntil } from '../../utils/dueDate';
 
@@ -33,10 +32,7 @@ export const UserDashboard = () => {
   const navigate = useNavigate();
   const [openTaskId, setOpenTaskId] = useState(null);
 
-  const { data: dashboardRes, error, isLoading } = useQuery({
-    queryKey: dashboardKeys.byRole('user'),
-    queryFn: () => userService.getDashboard(),
-  });
+  const { data: dashboardRes, error, isLoading } = useQuery(userHomeQuery);
   // Same query (and cache) as the My tasks page.
   const { tasks, isLoading: tasksLoading } = useMyTasks({});
 
