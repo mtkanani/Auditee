@@ -67,17 +67,18 @@ class InvoiceService {
     return await invoiceRepository.findAllInvoices({ ...queryParams, firmId });
   }
 
-  async getInvoiceById(id, firmId) {
+  /** clientId: set for client users, who may only see their own invoices. */
+  async getInvoiceById(id, firmId, clientId = null) {
     const invoice = await invoiceRepository.findInvoiceById(id, firmId);
-    if (!invoice) {
+    if (!invoice || (clientId && Number(invoice.clientId) !== Number(clientId))) {
       throw new NotFoundError('Invoice not found');
     }
     return invoice;
   }
 
-  async recordPayment(id, paymentData, firmId) {
+  async recordPayment(id, paymentData, firmId, clientId = null) {
     const invoice = await invoiceRepository.findInvoiceById(id, firmId);
-    if (!invoice) {
+    if (!invoice || (clientId && Number(invoice.clientId) !== Number(clientId))) {
       throw new NotFoundError('Invoice not found');
     }
 

@@ -15,6 +15,9 @@ const authorizeRoles = require('../../middlewares/roleMiddleware');
 const router = express.Router();
 
 router.use(authenticateSession);
+// Firm admins only. Employees and clients have their own task routes (/api/user, /api/client)
+// that check the task is assigned to them; these routes only check the firm.
+router.use(authorizeRoles('FIRM_ADMIN'));
 
 // Firm Admin / Employee / User accessible task endpoints
 router.get('/', taskController.getAllTasks);
