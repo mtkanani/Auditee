@@ -38,9 +38,15 @@ export const TopBar = ({ onMenuClick, onSearchClick }) => {
 
       <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
         {isStaff && (
-          <div className="hidden md:block mr-1">
-            <AttendanceControl />
-          </div>
+          <>
+            {/* Full control on wide screens, an icon button on phones and tablets (never hidden). */}
+            <div className="hidden lg:block mr-1">
+              <AttendanceControl />
+            </div>
+            <div className="lg:hidden">
+              <AttendanceControl compact />
+            </div>
+          </>
         )}
         <NewMenu />
         <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'} className="hidden sm:inline-flex">

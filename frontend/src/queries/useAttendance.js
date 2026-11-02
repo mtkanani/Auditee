@@ -18,9 +18,11 @@ export const useTodayAttendance = ({ enabled = true } = {}) => {
     refetchInterval: 60_000,
   });
 
+  // `status` must come after the spread: React Query's result has its own `status` ("success",
+  // "pending"...), which used to overwrite the attendance data, so the app never saw a check-in.
   return {
-    status: query.data,
     ...query,
+    status: query.data,
   };
 };
 
