@@ -1,16 +1,19 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Layouts (loaded eagerly)
 import { AuthLayout } from '../layouts/AuthLayout';
-import { DashboardLayout } from '../layouts/DashboardLayout';
 
 // Protected Route Guard
 import { ProtectedRoute } from './ProtectedRoute';
 
 // Auth Pages (eager login, lazy secondary)
 import { Login } from '../pages/auth/Login';
+// The app shell (sidebar, top bar, command palette) is only needed after sign-in, so it stays out of
+// the login bundle; it is preloaded in the background once the first screen is idle.
+const loadDashboardLayout = () => import('../layouts/DashboardLayout');
+const DashboardLayout = lazy(() => loadDashboardLayout().then((m) => ({ default: m.DashboardLayout })));
 const Register = lazy(() => import('../pages/Register'));
 const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/auth/ResetPassword').then((m) => ({ default: m.ResetPassword })));
@@ -56,16 +59,29 @@ const WorkRequests = lazy(() => import('../pages/client/WorkRequests').then((m) 
 const ClientTasks = lazy(() => import('../pages/client/ClientTasks').then((m) => ({ default: m.ClientTasks })));
 const ClientProfile = lazy(() => import('../pages/client/ClientProfile').then((m) => ({ default: m.ClientProfile })));
 
-// Sleek Loading Fallback for Suspense
+// Shown while a page's code downloads: the Auditee mark with an orbiting arc and a sliding bar.
 const RouteLoadingFallback = () => (
-  <div className="min-h-[50vh] flex flex-col items-center justify-center p-6 space-y-3">
-    <div className="w-9 h-9 border-3 border-accent/20 border-t-accent rounded-full animate-spin" aria-hidden="true" />
-    <span className="text-xs font-medium text-muted" role="status">Loading…</span>
+  <div className="min-h-[60vh] flex flex-col items-center justify-center gap-5 p-6" role="status" aria-label="Loading">
+    <div className="relative w-16 h-16" aria-hidden="true">
+      <span className="spin-slow absolute inset-0 rounded-full border-2 border-transparent border-t-accent border-r-accent/40" />
+      <span className="absolute inset-2 grid place-items-center rounded-2xl bg-gradient-to-br from-accent to-accent-2 text-on-accent text-xl font-semibold shadow-glow">
+        A
+      </span>
+    </div>
+    <div className="w-40 h-1 rounded-full bg-hover overflow-hidden" aria-hidden="true">
+      <span className="indeterminate block h-full w-1/3 rounded-full bg-accent" />
+    </div>
+    <span className="text-xs font-medium text-muted">Loading…</span>
   </div>
 );
 
 export const AppRoutes = () => {
   const { isAuthenticated, user, getRoleDashboardPath } = useAuth();
+
+  useEffect(() => {
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+    idle(() => loadDashboardLayout().catch(() => {}));
+  }, []);
 
   return (
     <Suspense fallback={<RouteLoadingFallback />}>

@@ -19,7 +19,7 @@ Roles: SUPER_ADMIN, FIRM_ADMIN, USER/EMPLOYEE, CLIENT.
 - Services in `src/services/*Service.js` wrap axios (`services/axiosInstance.js`). Role-dependent base URLs use `getRole()` from `utils/helpers.js` (reads `userData` in localStorage).
 - **UI:** pop-ups use `components/common/Modal` (accessible, focus-trapped, stackable; props `title, maxWidth, headerActions, footer`). Confirmations use `useConfirm()` from `components/common/ConfirmProvider` — never `window.confirm`/`alert`. Loading: `TableSkeleton` / `CardSkeleton` from `components/common/Skeleton`; empty lists: `components/common/EmptyState`. `DataTable` takes `isLoading` and `emptyState`.
 - Icons: `lucide-react` only. Toasts: `react-hot-toast` only. Font: self-hosted `@fontsource-variable/inter`.
-- Routes are lazy-loaded in `src/routes/AppRoutes.jsx`; heavy libraries (recharts, fullcalendar, framer-motion) must not end up on the login page.
+- Routes are lazy-loaded in `src/routes/AppRoutes.jsx`; heavy libraries (recharts, fullcalendar) must not end up on the login page. Animations are CSS (`index.css` + `hooks/usePresence`), no animation library.
 - Do not change visual design unless asked. Keep components under ~250 lines; large screens are folders (`<Name>/index.jsx` + section files), e.g. `pages/firm-admin/Reports/`.
 
 ## Backend conventions

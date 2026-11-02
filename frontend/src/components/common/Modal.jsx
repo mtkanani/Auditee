@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useId } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { usePresence } from '../../hooks/usePresence';
 import { X } from 'lucide-react';
 
 // Module-level stack for managing open modal instances
@@ -51,6 +51,8 @@ export const Modal = ({
   const panelRef = useRef(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  // Stays mounted for the closing animation (CSS in index.css; no animation library).
+  const { mounted, state } = usePresence(isOpen, 160);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -115,8 +117,7 @@ export const Modal = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
+    mounted && (
         <div
           className="fixed inset-0 z-50 overflow-y-auto"
           role="dialog"
@@ -124,25 +125,20 @@ export const Modal = ({
           aria-labelledby={title ? titleId : undefined}
         >
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+          <div
+            data-state={state}
             onClick={closeOnBackdrop ? onClose : undefined}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            className="overlay fixed inset-0 bg-black/60 backdrop-blur-sm"
           />
 
           {/* Modal Container to ensure perfect centering without top clipping */}
           <div className="flex min-h-full items-center justify-center p-4 sm:p-6 text-center">
-            <motion.div
+            <div
               ref={panelRef}
               tabIndex={-1}
               onKeyDown={handleKeyDown}
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.2 }}
-              className={`relative w-full ${maxWidth} bg-surface border border-line rounded-2xl shadow-raised overflow-hidden z-10 text-left my-8 outline-none`}
+              data-state={state}
+              className={`dialog-panel relative w-full ${maxWidth} bg-surface border border-line rounded-2xl shadow-raised overflow-hidden z-10 text-left my-8 outline-none`}
             >
               {/* Header */}
               <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-line bg-surface/95 backdrop-blur-xl sticky top-0 z-20">
@@ -172,10 +168,9 @@ export const Modal = ({
                   {footer}
                 </div>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
-      )}
-    </AnimatePresence>
+      )
   );
 };
