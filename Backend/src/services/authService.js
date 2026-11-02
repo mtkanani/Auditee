@@ -225,21 +225,29 @@ const registerUser = async (userData) => {
  * Business logic for user login.
  * Validates email and password, generates secure random tokens using crypto, stores them in the db, and purges expired sessions.
  */
+// Expired sessions are cleared in the background at most this often, never on the sign-in path.
+const SESSION_PURGE_INTERVAL_MS = 10 * 60 * 1000;
+let lastSessionPurge = 0;
+const purgeExpiredSessionsSoon = () => {
+  if (Date.now() - lastSessionPurge < SESSION_PURGE_INTERVAL_MS) return;
+  lastSessionPurge = Date.now();
+  setImmediate(() => {
+    prisma.userSession
+      .deleteMany({ where: { refreshTokenExpiresAt: { lt: new Date() } } })
+      .catch((error) => console.error('Session purge failed:', error.message));
+  });
+};
+
 const loginUser = async (email, password) => {
   const normalizedEmail = email.toLowerCase().trim();
 
-  // 1. Try finding user in User table
-  let user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  });
-
-  let client = null;
-  if (!user) {
-    // 2. If not found in User, try finding in Client table
-    client = await prisma.client.findFirst({
-      where: { email: normalizedEmail, deletedAt: null },
-    });
-  }
+  // 1-2. Look the email up as a user and as a client at the same time (both are indexed lookups).
+  const [foundUser, foundClient] = await Promise.all([
+    prisma.user.findUnique({ where: { email: normalizedEmail } }),
+    prisma.client.findFirst({ where: { email: normalizedEmail, deletedAt: null } }),
+  ]);
+  const user = foundUser;
+  const client = foundUser ? null : foundClient;
 
   if (!user && !client) {
     throw new NotFoundError('User or Client account not found');
@@ -256,14 +264,8 @@ const loginUser = async (email, password) => {
     throw new UnauthorizedError('Invalid email or password');
   }
 
-  // 4. Purge expired sessions automatically during login to prevent database bloat
-  await prisma.userSession.deleteMany({
-    where: {
-      refreshTokenExpiresAt: {
-        lt: new Date(),
-      },
-    },
-  });
+  // 4. Clear expired sessions in the background (throttled) so sign-in never waits for it
+  purgeExpiredSessionsSoon();
 
   // 5. Generate secure random tokens using crypto.randomBytes
   const accessToken = crypto.randomBytes(64).toString('hex');
