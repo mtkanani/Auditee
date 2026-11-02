@@ -2,19 +2,36 @@ const prisma = require('../../config/db');
 const { parsePagination, findManyPaginated } = require('../../utils/pagination');
 
 class InvoiceRepository {
+  /**
+   * Next number for the firm, type and year, e.g. INV-2026-0042. One atomic upsert: concurrent
+   * invoices each get their own number, and deleted invoices never free a number for reuse.
+   * The first time a firm/type/year is used, the counter starts after the highest existing number
+   * with that prefix, so numbering carries on from invoices made before the counter existed.
+   */
   async generateNextInvoiceNumber(firmId, invoiceType = 'TAX_INVOICE') {
     const year = new Date().getFullYear();
     const prefix = invoiceType === 'PROFORMA' ? `PRO-${year}-` : `INV-${year}-`;
+    const pattern = `^${prefix}[0-9]+$`;
 
-    const count = await prisma.invoice.count({
-      where: {
-        firmId,
-        invoiceType,
-      },
-    });
+    const [row] = await prisma.$queryRaw`
+      INSERT INTO "invoice_counters" ("firmId", "invoiceType", "year", "lastNumber", "updatedAt")
+      VALUES (
+        ${firmId},
+        ${invoiceType}::"InvoiceType",
+        ${year},
+        (
+          SELECT COALESCE(MAX(CAST(SUBSTRING("invoiceNumber" FROM ${prefix.length + 1}::int) AS INTEGER)), 0) + 1
+          FROM "invoices"
+          WHERE "firmId" = ${firmId} AND "invoiceNumber" ~ ${pattern}
+        ),
+        NOW()
+      )
+      ON CONFLICT ("firmId", "invoiceType", "year")
+      DO UPDATE SET "lastNumber" = "invoice_counters"."lastNumber" + 1, "updatedAt" = NOW()
+      RETURNING "lastNumber"
+    `;
 
-    const sequence = String(count + 1).padStart(4, '0');
-    return `${prefix}${sequence}`;
+    return `${prefix}${String(row.lastNumber).padStart(4, '0')}`;
   }
 
   async createInvoice(invoiceData, itemsData) {

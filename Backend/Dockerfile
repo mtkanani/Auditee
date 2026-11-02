@@ -18,6 +18,6 @@ COPY . .
 # Expose backend port
 EXPOSE 8080
 
-# Start backend (includes prisma db push & server start as defined in package.json)
+# Start backend (applies pending migrations with prisma migrate deploy, then starts the server; see package.json)
 CMD ["npm", "start"]
 

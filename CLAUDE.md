@@ -10,7 +10,7 @@ Roles: SUPER_ADMIN, FIRM_ADMIN, USER/EMPLOYEE, CLIENT.
 
 ## Commands
 - Frontend: `cd frontend && npm run dev | npm run build | npx oxlint src`
-- Backend: `cd Backend && npm run dev`; schema change → `npx prisma migrate dev --name <name>`
+- Backend: `cd Backend && npm run dev`; schema change → `npx prisma migrate dev --name <name>` (never `db push` on a shared DB; `npm start` runs `migrate deploy`, see `Backend/prisma/MIGRATIONS.md`)
 - Always run `npm run build` and `npx oxlint src` (0 errors) before saying frontend work is done.
 
 ## Frontend conventions (follow these)
@@ -36,7 +36,7 @@ Roles: SUPER_ADMIN, FIRM_ADMIN, USER/EMPLOYEE, CLIENT.
   Pure refactor: same behaviour and markup, outer export name and import path unchanged, index.jsx < 200 lines.
 - **Phase 6 — accessibility and responsiveness:** `aria-label` on icon-only buttons; check every table and kanban at 375px (scroll or cards); keyboard-only pass through login → tasks → create invoice.
 - **Phase 7 (optional) — light theme:** move hard-coded colours (`bg-slate-950` etc.) into CSS variables in `src/index.css` first, then add light values.
-- **Backend follow-ups:** invoice numbers use `count + 1` (race condition / duplicates after delete) → use a per-firm counter in a transaction or a Postgres sequence. `npm start` runs `prisma db push`; switch to `prisma migrate deploy`. Client accounts can't use delete-account (service only looks up `users`).
+- **Backend follow-ups:** invoice numbers use `count + 1` (race condition / duplicates after delete) → use a per-firm counter in a transaction or a Postgres sequence. Client accounts can't use delete-account (service only looks up `users`).
 <!-- cloude-code-toolbox:mcp-skills-awareness-begin -->
 
 ### MCP & Skills awareness (Claude Code ToolBox)
