@@ -1,7 +1,7 @@
 # Database migrations
 
-`npm start` runs `prisma migrate deploy`, which applies any migration in `prisma/migrations`
-that the database hasn't seen yet. It never drops or resets anything on its own.
+`npm start` runs `scripts/migrate.js`, which runs `prisma migrate deploy`: it applies any migration in
+`prisma/migrations` that the database hasn't seen yet and never drops or resets anything on its own.
 
 ## Changing the schema
 
@@ -12,7 +12,15 @@ that the database hasn't seen yet. It never drops or resets anything on its own.
 
 Don't use `prisma db push` on a shared database: it changes tables without recording a migration.
 
-## One-time step for the existing production database
+## Existing production database (handled automatically)
+
+Production was built with `db push`, so it has the tables but no migration history, and plain
+`migrate deploy` stops with P3005. `scripts/migrate.js` handles this on startup: if the database has
+the tables the two baseline migrations create and no history yet, it marks those two as applied and
+runs `migrate deploy` again. Anything else that fails stops the start with a message, and nothing is
+changed. The manual steps below are only needed if it refuses.
+
+## Manual baseline (only if the automatic step refuses)
 
 Production was built with `db push`, so it already has every table but no migration history.
 `migrate deploy` refuses a non-empty database without history (error P3005). **Before** the first
